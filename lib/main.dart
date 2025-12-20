@@ -50,7 +50,7 @@ class MyApp extends StatelessWidget {
         title: 'Fyndr NG',
 
         getPages: AppRoutes.routes,
-        initialRoute: AppRoutes.homeScreen,
+        initialRoute: AppRoutes.switchScreen,
         builder: (context, child) {
           final loaderController =
           Get.find<GlobalLoaderController>();
