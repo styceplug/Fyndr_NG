@@ -2,18 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 
-import '../../controllers/app_controller.dart';
-import '../../utils/dimensions.dart';
-import '../../widgets/home_screen_bottom_nav_bar.dart';
+import '../../../controllers/app_controller.dart';
+import '../../../utils/dimensions.dart';
+import '../../../widgets/home_screen_bottom_nav_bar.dart';
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+class VendorHomePage extends StatefulWidget {
+  const VendorHomePage({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<VendorHomePage> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<VendorHomePage> {
   AppController appController = Get.find<AppController>();
 
 
@@ -68,8 +68,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   PageView.builder(
                     controller: appController.pageController,
                     physics: const NeverScrollableScrollPhysics(),
-                    itemCount: appController.pages.length,
-                    itemBuilder: (context, index) => appController.pages[index],
+                    itemCount: appController.vendorPages.length,
+                    itemBuilder: (context, index) => appController.vendorPages[index],
                     onPageChanged: (index) {
                       if (appController.currentAppPage.value != index) {
                         appController.changeCurrentAppPage(

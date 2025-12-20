@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fyndr_ng/widgets/custom_appbar.dart';
 
 class VendorLeadScreen extends StatefulWidget {
   const VendorLeadScreen({super.key});
@@ -10,6 +11,11 @@ class VendorLeadScreen extends StatefulWidget {
 class _VendorLeadScreenState extends State<VendorLeadScreen> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold();
+    return Scaffold(
+      appBar: CustomAppbar(
+        leadingIcon: BackButton(),
+        title: 'New Leads',
+      ),
+    );
   }
 }

@@ -26,6 +26,7 @@ import 'package:fyndr_ng/screens/vendor/main/%20vendor_profile.dart';
 import 'package:fyndr_ng/screens/vendor/main/earnings_screen.dart';
 import 'package:fyndr_ng/screens/vendor/main/lead_details.dart';
 import 'package:fyndr_ng/screens/vendor/main/leads_screen.dart';
+import 'package:fyndr_ng/screens/vendor/main/vendo_home_page.dart';
 import 'package:fyndr_ng/screens/vendor/main/vendor_home.dart';
 import 'package:fyndr_ng/screens/vendor/main/vendor_jobs.dart';
 import 'package:fyndr_ng/screens/vendor/onboard/become_vendor.dart';
@@ -90,6 +91,7 @@ class AppRoutes {
   static const String vendorRegistrationScreen = '/vendor-registration-screen';
   static const String vendorLoadingScreen = '/vendor-loading-screen';
   static const String switchScreen = '/switch-screen';
+  static const String vendorHomePage = '/vendor-home-page';
 
 
 
@@ -102,6 +104,13 @@ class AppRoutes {
       name: vendorHomeScreen,
       page: () {
         return VendorHome();
+      },
+      transition: Transition.fadeIn,
+    ),
+    GetPage(
+      name: vendorHomePage,
+      page: () {
+        return VendorHomePage();
       },
       transition: Transition.fadeIn,
     ),

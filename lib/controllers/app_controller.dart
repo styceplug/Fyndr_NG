@@ -4,6 +4,7 @@ import 'package:fyndr_ng/screens/home/pages/genie_screen.dart';
 import 'package:fyndr_ng/screens/home/pages/home_screen.dart';
 import 'package:fyndr_ng/screens/home/pages/jobs_screen.dart';
 import 'package:fyndr_ng/screens/home/pages/profile_scree.dart';
+import 'package:fyndr_ng/screens/vendor/main/vendor_home.dart';
 
 import 'package:get/get.dart';
 
@@ -29,7 +30,14 @@ class AppController extends GetxController {
     BrowseScreen(),
     GenieScreen(),
     JobsScreen(),
-    ProfileScree()
+    ProfileScree(),
+  ];
+  final List<Widget> vendorPages = [
+    VendorHome(),
+    BrowseScreen(),
+    GenieScreen(),
+    JobsScreen(),
+    ProfileScree(),
   ];
 
   @override
