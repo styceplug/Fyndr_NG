@@ -261,7 +261,7 @@ class _BecomeVendorState extends State<BecomeVendor> {
               ),
               SizedBox(height: Dimensions.height20),
               CustomButton(text: 'Register as a vendor', onPressed: () {
-                Get.offAllNamed(AppRoutes.switchScreen);
+                Get.toNamed(AppRoutes.switchScreen);
               }),
               SizedBox(height: Dimensions.height20),
               CustomButton(
