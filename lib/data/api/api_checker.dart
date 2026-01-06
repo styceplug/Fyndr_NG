@@ -1,39 +1,54 @@
+import 'package:fyndr_ng/controllers/app_controller.dart';
+import 'package:fyndr_ng/utils/app_constants.dart';
 import 'package:get/get.dart';
 
+import '../../controllers/auth_controller.dart';
 import '../../routes/routes.dart';
 import '../../widgets/snackbars.dart';
 
 
 class ApiChecker {
   static void checkApi(Response response) {
-    print('🧩 ApiChecker triggered → Status: ${response.statusCode}');
+    print('🧩 ApiChecker triggered → Status: ${response.statusCode} [${response.request?.url}]');
 
-    if (response.statusCode == 401) {
-      print('🚫 Unauthorized — redirecting to onboarding');
-      CustomSnackBar.failure(message: 'Session expired. Please sign in again.');
-      Get.offAllNamed(AppRoutes.splashScreen);
-    } else if (response.statusCode == 403) {
-      print('🔒 Forbidden request');
-      CustomSnackBar.failure(message: 'You don’t have permission for this action.');
-    } else if (response.statusCode == 404) {
-      print('❓ Resource not found');
-      CustomSnackBar.failure(message: 'Resource not found.');
-    } else if (response.statusCode == 408 || response.statusCode == 504) {
-      print('⏱ Request timed out');
-      CustomSnackBar.failure(message: 'Request timed out. Please try again.');
-    } else if (response.statusCode == 500) {
-      print('💥 Server error');
-      CustomSnackBar.failure(message: 'Server error. Please try again later.');
-    } else if (response.statusCode == 0 || response.statusCode == 1) {
-      print('📡 No internet / unknown error');
-      CustomSnackBar.failure(message: 'No internet connection. Please reconnect.');
-    } else if (response.body is Map && response.body['code'] == '99') {
-      print('❌ App-level error: ${response.body['message']}');
-      CustomSnackBar.failure(
-        message: response.body['message'] ?? 'Something went wrong',
-      );
-    } else {
-      print('✅ Request passed API check.');
+    switch (response.statusCode) {
+      case 401:
+        print('🚫 Unauthorized — Session expired.');
+        Get.find<AppController>().clearSharedData();
+        Get.offAllNamed(AppRoutes.getStartedScreen);
+        break;
+
+      case 403:
+        print('🔒 Forbidden request - Permission denied');
+        break;
+
+      case 404:
+        print('❓ Resource not found');
+        break;
+
+      case 408:
+      case 504:
+        print('⏱ Request timed out');
+        break;
+
+      case 500:
+        print('💥 Server error: ${response.statusText}');
+        break;
+
+      case 0:
+      case 1:
+        print('📡 No internet / Connection refused');
+        Get.offAllNamed(AppRoutes.noInternetScreen);
+        break;
+
+      default:
+        if (response.body is Map && response.body['code'] == '99') {
+          print('❌ App-level error: ${response.body['message']}');
+        } else if (response.hasError) {
+          print('⚠️ Unknown Error: ${response.statusText}');
+        } else {
+          print('✅ Request passed API check.');
+        }
     }
   }
 }

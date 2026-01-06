@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:fyndr_ng/controllers/auth_controller.dart';
+import 'package:fyndr_ng/data/api/api_checker.dart';
+import 'package:fyndr_ng/data/api/api_client.dart';
 import 'package:fyndr_ng/screens/home/pages/browse_screen.dart';
 import 'package:fyndr_ng/screens/home/pages/genie_screen.dart';
 import 'package:fyndr_ng/screens/home/pages/home_screen.dart';
@@ -7,6 +10,7 @@ import 'package:fyndr_ng/screens/home/pages/profile_scree.dart';
 import 'package:fyndr_ng/screens/vendor/main/%20vendor_profile.dart';
 import 'package:fyndr_ng/screens/vendor/main/vendor_home.dart';
 import 'package:fyndr_ng/screens/vendor/main/vendor_jobs.dart';
+import 'package:fyndr_ng/utils/app_constants.dart';
 
 import 'package:get/get.dart';
 
@@ -17,13 +21,16 @@ import '../routes/routes.dart';
 class AppController extends GetxController {
   final AppRepo appRepo;
 
-  AppController({required this.appRepo});
+  AppController({required this.appRepo, required this.apiClient, required this.apiChecker});
 
   Rx<ThemeMode> themeMode = Rx<ThemeMode>(ThemeMode.system);
 
   var currentAppPage = 0.obs;
   var isFirstTime = false.obs;
   PageController pageController = PageController();
+  AuthController authController = Get.find<AuthController>();
+  ApiClient apiClient;
+  ApiChecker apiChecker;
 
 
 
@@ -45,32 +52,40 @@ class AppController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    // initializeApp();
   }
 
   Future<void> initializeApp() async {
-    print('Initializing....');
+    print('Initializing App...');
+
     await checkFirstTimeUse();
 
-  }
-
-
- /* Future<void> checkLoginAndNavigate() async {
-    final loggedIn = authController.userLoggedIn();
-
     if (isFirstTime.value) {
+      print("First time user -> Onboarding");
       Get.offAllNamed(AppRoutes.onboardingScreen);
-    } else if (loggedIn) {
-      Get.offAllNamed(AppRoutes.homeScreen);
-    } else {
-      Get.offAllNamed(AppRoutes.splashScreen);
+      return;
     }
-  }*/
+
+    String? token = appRepo.sharedPreferences.getString(AppConstants.authToken);
+
+    if (token != null && token.isNotEmpty) {
+      print("Token found. Verifying session...");
+
+      authController.apiClient.updateHeader(token);
+
+      await authController.getUserProfile();
+
+    } else {
+      print("No token found -> Get Started");
+      Get.offAllNamed(AppRoutes.getStartedScreen);
+    }
+  }
 
   Future<void> checkFirstTimeUse() async {
     final prefs = appRepo.sharedPreferences;
-    final seen = prefs.getBool('hasSeenOnboarding') ?? false;
+    bool hasSeen = prefs.getBool('hasSeenOnboarding') ?? false;
 
-    if (!seen) {
+    if (!hasSeen) {
       isFirstTime.value = true;
       await prefs.setBool('hasSeenOnboarding', true);
     } else {
@@ -102,5 +117,11 @@ class AppController extends GetxController {
     }
 
     update();
+  }
+
+  void clearSharedData() {
+    appRepo.sharedPreferences.remove(AppConstants.authToken);
+    apiClient.token = '';
+    apiClient.updateHeader('');
   }
 }

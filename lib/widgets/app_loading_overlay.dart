@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fyndr_ng/utils/app_constants.dart';
 
 import '../utils/colors.dart';
 import '../utils/dimensions.dart';
@@ -43,10 +44,11 @@ class _AppLoadingOverlayState extends State<AppLoadingOverlay>
         child: ScaleTransition(
           scale: _scaleAnimation,
           child: Container(
-            padding: EdgeInsets.all(Dimensions.height30),
+            height: Dimensions.height100,
+            width: Dimensions.width100,
+            padding: EdgeInsets.all(Dimensions.height15),
             decoration: BoxDecoration(
-              color: AppColors.color1.withOpacity(0.95),
-              borderRadius: BorderRadius.circular(Dimensions.radius20),
+              color: AppColors.white,
               boxShadow: [
                 BoxShadow(
                   color: AppColors.color1.withOpacity(0.4),
@@ -54,26 +56,9 @@ class _AppLoadingOverlayState extends State<AppLoadingOverlay>
                   spreadRadius: 1,
                 ),
               ],
+              shape: BoxShape.circle
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const CircularProgressIndicator(
-                  strokeWidth: 4,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
-                SizedBox(height: Dimensions.height20),
-                Text(
-                  "Please wait...",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: Dimensions.font14,
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ],
-            ),
+            child: Image.asset(AppConstants.getPngAsset('logo')),
           ),
         ),
       ),

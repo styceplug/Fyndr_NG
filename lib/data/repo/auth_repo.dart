@@ -1,14 +1,20 @@
+import 'package:fyndr_ng/data/api/api_client.dart';
 import 'package:fyndr_ng/utils/app_constants.dart';
 import 'package:get/get.dart';
 
 class AuthRepo extends GetConnect {
+
+  final ApiClient apiClient;
+
+  AuthRepo({required this.apiClient});
+
 
   Future<Response> login(String number, String password) async {
     final body = {
       "number": number,
       "password": password,
     };
-    return await post(AppConstants.POST_LOGIN, body);
+    return await apiClient.postData(AppConstants.POST_LOGIN, body);
   }
 
   Future<Response> registerCustomer(String name, String number, String password) async {
@@ -17,7 +23,7 @@ class AuthRepo extends GetConnect {
       "number": number,
       "password": password,
     };
-    return await post(AppConstants.POST_REGISTER_CUSTOMER, body);
+    return await apiClient.postData(AppConstants.POST_REGISTER_CUSTOMER, body);
   }
 
   Future<Response> verifyOtp(String number, String otp) async {
@@ -25,17 +31,17 @@ class AuthRepo extends GetConnect {
       "number": number,
       "otp": otp,
     };
-    return await post(AppConstants.POST_VERIFY_OTP, body);
+    return await apiClient.postData(AppConstants.POST_VERIFY_OTP, body);
   }
 
   Future<Response> resendOtp(String number) async {
     final body = {
       "number": number,
     };
-    return await post(AppConstants.POST_RESEND_OTP, body);
+    return await apiClient.postData(AppConstants.POST_RESEND_OTP, body);
   }
 
   Future<Response> getUserProfile() async {
-    return await get(AppConstants.GET_USER_PROFILE);
+    return await apiClient.getData(AppConstants.GET_USER_PROFILE);
   }
 }

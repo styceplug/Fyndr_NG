@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fyndr_ng/controllers/app_controller.dart';
 import 'package:fyndr_ng/routes/routes.dart';
 import '../../utils/app_constants.dart';
 import '../../utils/dimensions.dart';
@@ -18,10 +19,11 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
 
+    AppController appController = Get.find<AppController>();
+
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Future.delayed(const Duration(seconds: 3), () {
-        Get.offAllNamed(AppRoutes.onboardingScreen);
-      });
+      appController.initializeApp();
     });
   }
 

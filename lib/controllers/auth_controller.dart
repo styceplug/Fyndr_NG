@@ -33,11 +33,7 @@ class AuthController extends GetxController {
       print("Login Success: User ${_userModel!.name} logged in.");
       print(token);
       apiClient.updateHeader(token);
-      if (userModel?.currentRole == 'customer') {
-        Get.offAllNamed(AppRoutes.homeScreen);
-      } else {
-        Get.offAllNamed(AppRoutes.vendorHomePage);
-      }
+      getUserProfile();
     } else if (response.statusCode == 423) {
       print("Error: ${response.body['error']}");
 
@@ -51,7 +47,11 @@ class AuthController extends GetxController {
     update();
   }
 
-  Future<void> registerCustomer(String name, String number, String password) async {
+  Future<void> registerCustomer(
+    String name,
+    String number,
+    String password,
+  ) async {
     loader.showLoader();
     update();
 
@@ -67,12 +67,11 @@ class AuthController extends GetxController {
         arguments: {'number': number},
       );
     } else {
-
       String message;
 
       switch (response.statusCode) {
         case 409:
-          message = "Account Exists: This phone number is already registered.";
+          message = "Account Exists: please login instead";
           break;
         case 400:
           message = response.body['error'] ?? "Invalid Input";
@@ -104,11 +103,7 @@ class AuthController extends GetxController {
 
       print("Verification Success: User ${_userModel!.name} verified.");
 
-      if (userModel?.currentRole == 'customer') {
-        Get.offAllNamed(AppRoutes.homeScreen);
-      } else {
-        Get.offAllNamed(AppRoutes.vendorHomePage);
-      }
+      getUserProfile();
     } else {
       String errorMsg = response.body['error'] ?? "Verification failed";
       print("Error: $errorMsg");
@@ -135,4 +130,27 @@ class AuthController extends GetxController {
     loader.hideLoader();
     update();
   }
+
+  Future<void> getUserProfile() async {
+    update();
+    Response response = await authRepo.getUserProfile();
+    if (response.statusCode == 200) {
+      var responseData = response.body['data'];
+      _userModel = UserModel.fromJson(responseData);
+      print("Profile Acquired: ${_userModel!.name}");
+
+      if (userModel?.currentRole == 'customer')
+        Get.offAllNamed(AppRoutes.homeScreen);
+      else
+        Get.offAllNamed(AppRoutes.vendorHomePage);
+    } else {
+      if (response.statusCode == 401) {
+        Get.offAllNamed(AppRoutes.getStartedScreen);
+      }
+      print("Failed to get profile: ${response.statusText}");
+    }
+    update();
+  }
+
+
 }

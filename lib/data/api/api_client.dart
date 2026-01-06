@@ -21,7 +21,7 @@ class ApiClient extends GetConnect implements GetxService {
   late Map<String, String> _mainHeaders;
 
   ApiClient({required this.appBaseUrl, required this.sharedPreferences}) {
-    baseUrl = appBaseUrl;
+    httpClient.baseUrl = appBaseUrl;
     timeout = const Duration(seconds: 30);
     token = sharedPreferences.getString(AppConstants.authToken) ?? "";
 
@@ -56,30 +56,75 @@ class ApiClient extends GetConnect implements GetxService {
     }
   }
 
-  Future<Response> postData(String uri, dynamic body, {Map<String, String>? headers}) async {
+  Future<Response> postData(
+      String uri,
+      dynamic body, {
+        Map<String, String>? headers,
+      }) async {
     try {
-      Response response = await post(uri, body, headers: headers ?? _mainHeaders);
       if (kDebugMode) {
-        print('posting $appBaseUrl$uri $body ${headers ?? _mainHeaders}');
-        print("response body ${response.body}");
-
-        final responseSize = utf8.encode(response.body.toString()).length;
-        print('Response Size for $uri: $responseSize bytes (${(responseSize / 1024).toStringAsFixed(2)} KB)');
+        print('POST → $appBaseUrl$uri');
+        print('HEADERS → ${headers ?? _mainHeaders}');
+        print('BODY → ${_formatBody(body)}');
       }
-      ApiChecker.checkApi(Response(statusCode: 1, statusText: response.toString()));
+
+      Response response = await post(
+        uri,
+        body,
+        headers: headers ?? _mainHeaders,
+      );
+
+      if (kDebugMode) {
+        print('RESPONSE → ${response.body}');
+
+        final responseSize =
+            utf8.encode(response.body.toString()).length;
+        print(
+          'Response Size: $responseSize bytes '
+              '(${(responseSize / 1024).toStringAsFixed(2)} KB)',
+        );
+      }
+      if (kDebugMode) {
+        print('STATUS CODE → ${response.statusCode}');
+        print('STATUS TEXT → ${response.statusText}');
+        print('BODY → ${response.body}');
+        print('BODY STRING → ${response.bodyString}');
+      }
 
 
       return response;
-    } catch (e,s) {
+    } catch (e, s) {
       if (kDebugMode) {
-        print('from api post client');
-        print(s);
-        print(e.toString());
+        print('API POST ERROR');
+        print('STACK → $s');
+        print('ERROR → $e');
       }
 
       return Response(statusCode: 1, statusText: e.toString());
+
+
     }
   }
+
+  String _formatBody(dynamic body) {
+    try {
+      if (body == null) return 'null';
+
+      if (body is String) {
+        return body;
+      }
+
+      if (body is Map || body is List) {
+        const encoder = JsonEncoder.withIndent('  ');
+        return encoder.convert(body);
+      }
+
+      return body.toString();
+    } catch (e) {
+      return 'Unable to format body: $e';
+    }
+  }
+
 
   Future<Response> patchData(String uri, dynamic body, {Map<String, String>? headers}) async {
     try {

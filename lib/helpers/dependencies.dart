@@ -24,16 +24,24 @@ Future<void> init() async {
       sharedPreferences: Get.find(),
     ),
   );
-  Get.lazyPut(
-    () => ApiChecker(
-    ),
-  );
+  Get.lazyPut(() => ApiChecker());
 
   // repos
-  Get.lazyPut(() => AppRepo(apiClient: Get.find(), sharedPreferences: Get.find()));
-  Get.lazyPut(() => AuthRepo());
+  Get.lazyPut(() => AuthRepo(apiClient: Get.find()));
+  Get.lazyPut(() => GlobalLoaderController());
+  Get.lazyPut(
+    () => AppRepo(apiClient: Get.find(), sharedPreferences: Get.find()),
+  );
 
   //controllers
-  Get.lazyPut(() => AppController(appRepo: Get.find()));
-  Get.lazyPut(() => AuthController(authRepo: Get.find(), apiClient: Get.find()));
+  Get.lazyPut(
+    () => AuthController(authRepo: Get.find(), apiClient: Get.find()),
+  );
+  Get.lazyPut(
+    () => AppController(
+      appRepo: Get.find(),
+      apiClient: Get.find(),
+      apiChecker: Get.find(),
+    ),
+  );
 }
