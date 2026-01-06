@@ -166,7 +166,7 @@ class _ProfileScreeState extends State<ProfileScree> {
                   children: [
                     OptionCard('edit-profile', 'Edit Profile'),
                     Divider(color: AppColors.grey2),
-                    OptionCard('switch-icon', 'Switch to Vendor',onTap: (){
+                    OptionCard('switch-icon', 'Switch Account',onTap: (){
                       Get.toNamed(AppRoutes.becomeVendorScreen);
                     }),
                   ],

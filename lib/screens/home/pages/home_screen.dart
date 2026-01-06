@@ -137,33 +137,16 @@ class _HomePageState extends State<HomePage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                ServiceCard('autos', 'Auto Parts'),
-                ServiceCard('beauty', 'Beauty & Wellness'),
+                ServiceCard('real-estate', 'Real \nEstate'),
                 ServiceCard('cleaning', 'Cleaning Service'),
+                ServiceCard('recruitment', 'Home Maintenance'),
               ],
             ),
             SizedBox(height: Dimensions.height20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                ServiceCard('real-estate', 'Real Estate'),
-                ServiceCard('recruitment', 'Recruitment'),
-                Container(
-                  height: Dimensions.height10 * 11,
-                  width: Dimensions.width10 * 11,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: AppColors.color5),
-                    borderRadius: BorderRadius.circular(Dimensions.radius10),
-                  ),
-                  padding: EdgeInsets.symmetric(
-                    horizontal: Dimensions.width15,
-                    vertical: Dimensions.height15,
-                  ),
-                  alignment: Alignment.center,
-                  child: Text('View all',
-                    style: TextStyle(fontSize: Dimensions.font13,color: AppColors.color1),
-                  ),
-                ),
+
               ],
             ),
           ],
@@ -173,32 +156,40 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget ServiceCard(String image, String title) {
-    return Container(
-      height: Dimensions.height10 * 11,
-      width: Dimensions.width10 * 12,
-      decoration: BoxDecoration(
-        border: Border.all(color: AppColors.color5),
-        borderRadius: BorderRadius.circular(Dimensions.radius10),
-      ),
-      padding: EdgeInsets.symmetric(
-        horizontal: Dimensions.width15,
-        vertical: Dimensions.height15,
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Image.asset(
-            AppConstants.getPngAsset(image),
-            // height: Dimensions.height50,
-            // width: Dimensions.width50,
-            scale: 2.2,
-          ),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: Dimensions.font13),
-          ),
-        ],
+    return InkWell(
+      onTap: (){
+        Get.toNamed(AppRoutes.requestForm,arguments: {'serviceTitle': title});
+      },
+      child: Container(
+        height: Dimensions.height10 * 11,
+        width: Dimensions.width10 * 12,
+        decoration: BoxDecoration(
+          border: Border.all(color: AppColors.color5),
+          borderRadius: BorderRadius.circular(Dimensions.radius10),
+        ),
+        padding: EdgeInsets.symmetric(
+          horizontal: Dimensions.width15,
+          vertical: Dimensions.height15,
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Image.asset(
+              AppConstants.getPngAsset(image),
+              // height: Dimensions.height50,
+              // width: Dimensions.width50,
+              scale: 2.2,
+            ),
+            Spacer(),
+            Text(
+              title,
+              overflow: TextOverflow.ellipsis,
+              maxLines: 2,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: Dimensions.font13),
+            ),
+          ],
+        ),
       ),
     );
   }

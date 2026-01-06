@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:fyndr_ng/controllers/auth_controller.dart';
 import 'package:get/get.dart';
 
-import '../../routes/routes.dart';
-import '../../utils/app_constants.dart';
-import '../../utils/colors.dart';
-import '../../utils/dimensions.dart';
-import '../../widgets/custom_button.dart';
-import '../../widgets/custom_textfield.dart';
+import '../../../routes/routes.dart';
+import '../../../utils/app_constants.dart';
+import '../../../utils/colors.dart';
+import '../../../utils/dimensions.dart';
+import '../../../widgets/custom_button.dart';
+import '../../../widgets/custom_textfield.dart';
 
 class CreateAccountScreen extends StatefulWidget {
   const CreateAccountScreen({super.key});
@@ -16,6 +17,13 @@ class CreateAccountScreen extends StatefulWidget {
 }
 
 class _CreateAccountScreenState extends State<CreateAccountScreen> {
+
+  AuthController authController = Get.find<AuthController>();
+  TextEditingController nameController = TextEditingController();
+  TextEditingController phoneController = TextEditingController();
+  TextEditingController passController = TextEditingController();
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -62,6 +70,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                 maxLines: 1,
                 keyboardType: TextInputType.name,
                 hintText: 'Full name',
+                controller: nameController,
               ),
               SizedBox(height: Dimensions.height20),
               CustomTextField(
@@ -97,6 +106,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                 maxLines: 1,
                 keyboardType: TextInputType.number,
                 hintText: 'Phone number',
+                controller: phoneController,
               ),
               SizedBox(height: Dimensions.height20),
               CustomTextField(
@@ -114,6 +124,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                 suffixIcon: Icon(Icons.visibility, color: AppColors.grey4),
                 maxLines: 1,
                 hintText: 'Password',
+                controller: passController,
               ),
               SizedBox(height: Dimensions.height20),
               CustomButton(text: 'Create account', onPressed: () {

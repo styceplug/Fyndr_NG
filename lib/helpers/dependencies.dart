@@ -1,6 +1,8 @@
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:fyndr_ng/controllers/app_controller.dart';
+import 'package:fyndr_ng/controllers/auth_controller.dart';
 import 'package:fyndr_ng/data/repo/app_repo.dart';
+import 'package:fyndr_ng/data/repo/auth_repo.dart';
 import 'package:get/get.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
@@ -29,7 +31,9 @@ Future<void> init() async {
 
   // repos
   Get.lazyPut(() => AppRepo(apiClient: Get.find(), sharedPreferences: Get.find()));
+  Get.lazyPut(() => AuthRepo());
 
   //controllers
   Get.lazyPut(() => AppController(appRepo: Get.find()));
+  Get.lazyPut(() => AuthController(authRepo: Get.find(), apiClient: Get.find()));
 }

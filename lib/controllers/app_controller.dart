@@ -4,7 +4,9 @@ import 'package:fyndr_ng/screens/home/pages/genie_screen.dart';
 import 'package:fyndr_ng/screens/home/pages/home_screen.dart';
 import 'package:fyndr_ng/screens/home/pages/jobs_screen.dart';
 import 'package:fyndr_ng/screens/home/pages/profile_scree.dart';
+import 'package:fyndr_ng/screens/vendor/main/%20vendor_profile.dart';
 import 'package:fyndr_ng/screens/vendor/main/vendor_home.dart';
+import 'package:fyndr_ng/screens/vendor/main/vendor_jobs.dart';
 
 import 'package:get/get.dart';
 
@@ -36,8 +38,8 @@ class AppController extends GetxController {
     VendorHome(),
     BrowseScreen(),
     GenieScreen(),
-    JobsScreen(),
-    ProfileScree(),
+    VendorJobs(),
+    VendorProfileScreen(),
   ];
 
   @override

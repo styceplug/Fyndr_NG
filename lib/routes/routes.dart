@@ -1,12 +1,14 @@
 import 'dart:math';
 
-import 'package:fyndr_ng/screens/auth/create_account_screen.dart';
-import 'package:fyndr_ng/screens/auth/forgotten_pass_screen.dart';
+import 'package:fyndr_ng/screens/auth/user/create_account_screen.dart';
+import 'package:fyndr_ng/screens/auth/user/forgotten_pass_screen.dart';
 import 'package:fyndr_ng/screens/auth/login_screen.dart';
 import 'package:fyndr_ng/screens/auth/phone_verification_screen.dart';
 import 'package:fyndr_ng/screens/auth/verified_screen.dart';
 import 'package:fyndr_ng/screens/home/home_screen.dart';
 import 'package:fyndr_ng/screens/home/pages/genie_screen.dart';
+import 'package:fyndr_ng/screens/home/request_form.dart';
+import 'package:fyndr_ng/screens/home/review_request.dart';
 import 'package:fyndr_ng/screens/in_app/job_details_screen.dart';
 import 'package:fyndr_ng/screens/in_app/job_in_progress.dart';
 import 'package:fyndr_ng/screens/in_app/notification_screen.dart';
@@ -24,19 +26,19 @@ import 'package:fyndr_ng/screens/splash_screens/get_started.dart';
 import 'package:fyndr_ng/screens/splash_screens/splash_screen.dart';
 import 'package:fyndr_ng/screens/vendor/main/%20vendor_profile.dart';
 import 'package:fyndr_ng/screens/vendor/main/earnings_screen.dart';
+import 'package:fyndr_ng/screens/vendor/main/job_completed.dart';
 import 'package:fyndr_ng/screens/vendor/main/lead_details.dart';
 import 'package:fyndr_ng/screens/vendor/main/leads_screen.dart';
 import 'package:fyndr_ng/screens/vendor/main/vendo_home_page.dart';
 import 'package:fyndr_ng/screens/vendor/main/vendor_home.dart';
 import 'package:fyndr_ng/screens/vendor/main/vendor_jobs.dart';
 import 'package:fyndr_ng/screens/vendor/onboard/become_vendor.dart';
-import 'package:fyndr_ng/screens/vendor/onboard/business_registration.dart';
-import 'package:fyndr_ng/screens/vendor/onboard/congratulations.dart';
-import 'package:fyndr_ng/screens/vendor/onboard/get_verified.dart';
+import 'package:fyndr_ng/screens/auth/vendor/business_registration.dart';
+import 'package:fyndr_ng/screens/auth/vendor/congratulations.dart';
+import 'package:fyndr_ng/screens/auth/vendor/get_verified.dart';
 import 'package:fyndr_ng/screens/vendor/onboard/loading_screen.dart';
-import 'package:fyndr_ng/screens/vendor/onboard/switch_profile.dart';
-import 'package:fyndr_ng/screens/vendor/onboard/vendor_completed.dart';
-import 'package:fyndr_ng/screens/vendor/onboard/verification_in_progress.dart';
+import 'package:fyndr_ng/screens/splash_screens/switch_profile.dart';
+import 'package:fyndr_ng/screens/auth/vendor/verification_in_progress.dart';
 import 'package:get/get.dart';
 
 import '../screens/splash_screens/no_internet_screen.dart';
@@ -69,6 +71,8 @@ class AppRoutes {
   static const String ratingScreen = '/rating-screen';
   static const String serviceCompletedScreen = '/service-completed-screen';
   static const String thankYouScreen = '/thank-you-screen';
+  static const String requestForm = '/request-form';
+  static const String reviewRequest = '/review-request';
 
   //settings
   static const String editProfile = '/edit-profile';
@@ -88,6 +92,7 @@ class AppRoutes {
   static const String vendorVerificationInProgressScreen = '/vendor-verification-in-progress-screen';
   static const String becomeVendorScreen = '/become-vendor-screen';
   static const String vendorCompletedScreen = '/vendor-completed-screen';
+  static const String vendorJobCompleted = '/vendor-job-completed';
   static const String vendorRegistrationScreen = '/vendor-registration-screen';
   static const String vendorLoadingScreen = '/vendor-loading-screen';
   static const String switchScreen = '/switch-screen';
@@ -104,6 +109,13 @@ class AppRoutes {
       name: vendorHomeScreen,
       page: () {
         return VendorHome();
+      },
+      transition: Transition.fadeIn,
+    ),
+    GetPage(
+      name: vendorJobCompleted,
+      page: () {
+        return JobCompleted();
       },
       transition: Transition.fadeIn,
     ),
@@ -161,11 +173,7 @@ class AppRoutes {
       page: () => const BecomeVendor(),
       transition: Transition.fadeIn,
     ),
-    GetPage(
-      name: vendorCompletedScreen,
-      page: () => const VendorCompleted(),
-      transition: Transition.fadeIn,
-    ),
+
     GetPage(
       name: vendorRegistrationScreen,
       page: () => const BusinessRegistration(),
@@ -219,6 +227,20 @@ class AppRoutes {
       name: getStartedScreen,
       page: () {
         return const GetStartedScreen();
+      },
+      transition: Transition.fadeIn,
+    ),
+    GetPage(
+      name: requestForm,
+      page: () {
+        return const RequestForm();
+      },
+      transition: Transition.fadeIn,
+    ),
+    GetPage(
+      name: reviewRequest,
+      page: () {
+        return const ReviewRequestScreen();
       },
       transition: Transition.fadeIn,
     ),

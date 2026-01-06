@@ -4,7 +4,7 @@ import 'package:fyndr_ng/utils/colors.dart';
 import 'package:fyndr_ng/widgets/custom_button.dart';
 import 'package:get/get.dart';
 
-import '../../../utils/dimensions.dart';
+import '../../utils/dimensions.dart';
 
 class SwitchProfile extends StatefulWidget {
   const SwitchProfile({super.key});

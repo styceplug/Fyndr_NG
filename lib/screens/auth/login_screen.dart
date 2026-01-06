@@ -114,10 +114,10 @@ class _LoginScreenState extends State<LoginScreen> {
               Center(
                 child: InkWell(
                   onTap: (){
-                    Get.toNamed(AppRoutes.createAccountScreen);
+                    Get.toNamed(AppRoutes.getStartedScreen);
                   },
                   child: Text(
-                    'Sign up instead',
+                    'Back to Onboarding',
                     textAlign: TextAlign.center,
                     style: TextStyle(color: AppColors.color2),
                   ),

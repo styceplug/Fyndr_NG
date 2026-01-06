@@ -97,12 +97,18 @@ class _VendorHomeState extends State<VendorHome> {
                     ],
                   ),
                 ),
-                Switch(
-                  value: true,
-                  onChanged: (value) {},
-                  activeColor: AppColors.color2,
-                  activeTrackColor: AppColors.color3,
-                  inactiveThumbColor: AppColors.white,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Switch(
+                      value: true,
+                      onChanged: (value) {},
+                      activeColor: AppColors.color2,
+                      activeTrackColor: AppColors.color3,
+                      inactiveThumbColor: AppColors.white,
+                    ),
+                    Text('Pause Account',style: TextStyle(fontSize: Dimensions.font10),)
+                  ],
                 ),
               ],
             ),
@@ -111,95 +117,103 @@ class _VendorHomeState extends State<VendorHome> {
             SizedBox(height: Dimensions.height10),
             Text('Today,', style: TextStyle(color: AppColors.grey5)),
             SizedBox(height: Dimensions.height5),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  'N20,400.',
-                  style: TextStyle(
-                    color: AppColors.black,
-                    fontSize: Dimensions.font25,
-                    fontWeight: FontWeight.w500,
-                    height: 1.2,
-                  ),
-                ),
-                Text(
-                  '00',
-                  style: TextStyle(
-                    color: AppColors.black,
-                    fontSize: Dimensions.font20,
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: Dimensions.height5),
-            Container(
-              padding: EdgeInsets.symmetric(
-                horizontal: Dimensions.width20,
-                vertical: Dimensions.height20,
-              ),
-              decoration: BoxDecoration(
-                border: Border.all(color: AppColors.grey1),
-                borderRadius: BorderRadius.circular(Dimensions.radius20),
-                color: AppColors.grey1.withOpacity(0.5),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            InkWell(
+              onTap: (){Get.toNamed(AppRoutes.vendorEarningsScreen);},
+              child:
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Active Jobs',
-                        style: TextStyle(color: AppColors.grey3),
-                      ),
-                      Text(
-                        '3',
-                        style: TextStyle(
-                          color: AppColors.black,
-                          fontSize: Dimensions.font17,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
+                  Text(
+                    'N20,400.',
+                    style: TextStyle(
+                      color: AppColors.black,
+                      fontSize: Dimensions.font25,
+                      fontWeight: FontWeight.w500,
+                      height: 1.2,
+                    ),
                   ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Jobs Completed',
-                        style: TextStyle(color: AppColors.grey3),
-                      ),
-                      Text(
-                        '23',
-                        style: TextStyle(
-                          color: AppColors.black,
-                          fontSize: Dimensions.font17,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Total Earnings',
-                        style: TextStyle(color: AppColors.grey3),
-                      ),
-                      Text(
-                        'N186,500',
-                        style: TextStyle(
-                          color: AppColors.black,
-                          fontSize: Dimensions.font17,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
+                  Text(
+                    '00',
+                    style: TextStyle(
+                      color: AppColors.black,
+                      fontSize: Dimensions.font20,
+                      fontWeight: FontWeight.w400,
+                    ),
                   ),
                 ],
               ),
+            ),
+            Column(
+              children: [
+                SizedBox(height: Dimensions.height5),
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: Dimensions.width20,
+                    vertical: Dimensions.height20,
+                  ),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: AppColors.grey1),
+                    borderRadius: BorderRadius.circular(Dimensions.radius20),
+                    color: AppColors.grey1.withOpacity(0.5),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Active Jobs',
+                            style: TextStyle(color: AppColors.grey3),
+                          ),
+                          Text(
+                            '3',
+                            style: TextStyle(
+                              color: AppColors.black,
+                              fontSize: Dimensions.font17,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Jobs Completed',
+                            style: TextStyle(color: AppColors.grey3),
+                          ),
+                          Text(
+                            '23',
+                            style: TextStyle(
+                              color: AppColors.black,
+                              fontSize: Dimensions.font17,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Total Earnings',
+                            style: TextStyle(color: AppColors.grey3),
+                          ),
+                          Text(
+                            'N186,500',
+                            style: TextStyle(
+                              color: AppColors.black,
+                              fontSize: Dimensions.font17,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
             SizedBox(height: Dimensions.height20),
             Container(
@@ -258,7 +272,7 @@ class _VendorHomeState extends State<VendorHome> {
             Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                'TODAY\'S SCHEDULE',
+                'SCHEDULED JOBS',
                 style: TextStyle(
                   fontSize: Dimensions.font14,
                   fontWeight: FontWeight.w600,

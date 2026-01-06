@@ -11,7 +11,7 @@ class ApiChecker {
     if (response.statusCode == 401) {
       print('🚫 Unauthorized — redirecting to onboarding');
       CustomSnackBar.failure(message: 'Session expired. Please sign in again.');
-      // Get.offAllNamed(AppRoutes.onboardingScreen);
+      Get.offAllNamed(AppRoutes.splashScreen);
     } else if (response.statusCode == 403) {
       print('🔒 Forbidden request');
       CustomSnackBar.failure(message: 'You don’t have permission for this action.');

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fyndr_ng/utils/colors.dart';
 
 import '../utils/dimensions.dart';
 
@@ -46,7 +47,7 @@ class CustomTextField extends StatelessWidget {
     // Use theme-based colors
     final Color effectiveTextColor = textColor ?? Colors.black;
     final Color fillColor = this.fillColor ??
-        (isDark ? Colors.white10 : const Color(0xFFFFFFF));
+        (isDark ? Colors.white10 : AppColors.grey2.withOpacity(0.5));
     final Color borderColor = theme.dividerColor.withOpacity(0.2);
     final Color focusColor = theme.colorScheme.primary.withOpacity(0.6);
     final Color enabledBorderColor = theme.colorScheme.secondary.withOpacity(0.2);

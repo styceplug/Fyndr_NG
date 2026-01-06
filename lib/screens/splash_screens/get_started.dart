@@ -82,7 +82,7 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
                       onTap: () {
                         setState(() => selectedOption = "find");
                         print("Selected: Find services");
-                        Get.toNamed(AppRoutes.loginScreen);
+                        Get.toNamed(AppRoutes.createAccountScreen);
                       },
                       child: Container(
                         width: Dimensions.screenWidth,
@@ -136,7 +136,7 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
                       onTap: () {
                         setState(() => selectedOption = "offer");
                         print("Selected: Offer services");
-                        Get.toNamed(AppRoutes.loginScreen);
+                        Get.toNamed(AppRoutes.vendorRegistrationScreen);
                       },
                       child: Container(
                         width: Dimensions.screenWidth,

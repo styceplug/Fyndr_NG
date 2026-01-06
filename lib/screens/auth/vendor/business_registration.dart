@@ -155,12 +155,30 @@ class _BusinessRegistrationState extends State<BusinessRegistration> {
                 fillColor: AppColors.grey3.withOpacity(0.3),
               ),
               SizedBox(height: Dimensions.height20),
-              CustomButton(text: 'Continue to verification', onPressed: (){
-                Get.toNamed(AppRoutes.vendorGetVerifiedScreen);
-              }),
+              CustomButton(
+                text: 'Continue to verification',
+                onPressed: () {
+                  Get.toNamed(AppRoutes.vendorGetVerifiedScreen);
+                },
+              ),
+              SizedBox(height: Dimensions.height20),
+              InkWell(
+                onTap: (){Get.toNamed(AppRoutes.loginScreen);},
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text('Already have an account?'),
+                    Text(
+                      ' Log in',
+                      style: TextStyle(
+                        color: AppColors.color2,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               SizedBox(height: Dimensions.height100),
-
-
             ],
           ),
         ),

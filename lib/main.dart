@@ -16,8 +16,6 @@ import 'widgets/app_loading_overlay.dart';
 @pragma('vm:entry-point')
 
 
-
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -50,7 +48,7 @@ class MyApp extends StatelessWidget {
         title: 'Fyndr NG',
 
         getPages: AppRoutes.routes,
-        initialRoute: AppRoutes.switchScreen,
+        initialRoute: AppRoutes.splashScreen,
         builder: (context, child) {
           final loaderController =
           Get.find<GlobalLoaderController>();
