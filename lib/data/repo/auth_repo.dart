@@ -44,4 +44,25 @@ class AuthRepo extends GetConnect {
   Future<Response> getUserProfile() async {
     return await apiClient.getData(AppConstants.GET_USER_PROFILE);
   }
+
+  Future<Response> updateProfile({
+    required String name,
+    required String email,
+    required String state,
+    required String lga,
+  }) async {
+    final body = {
+      "name": name,
+      "email": email,
+      "location": {
+        "state": state,
+        "lga": lga,
+        // "type": "Point",
+        // "coordinates": [3.3792, 6.5244]
+      }
+    };
+    return await apiClient.putData(AppConstants.PUT_UPDATE_PROFILE, body);
+  }
+
+
 }

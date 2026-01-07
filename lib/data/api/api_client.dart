@@ -21,6 +21,7 @@ class ApiClient extends GetConnect implements GetxService {
   late Map<String, String> _mainHeaders;
 
   ApiClient({required this.appBaseUrl, required this.sharedPreferences}) {
+    baseUrl = appBaseUrl;
     httpClient.baseUrl = appBaseUrl;
     timeout = const Duration(seconds: 30);
     token = sharedPreferences.getString(AppConstants.authToken) ?? "";

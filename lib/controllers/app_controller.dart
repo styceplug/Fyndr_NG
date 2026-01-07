@@ -123,5 +123,8 @@ class AppController extends GetxController {
     appRepo.sharedPreferences.remove(AppConstants.authToken);
     apiClient.token = '';
     apiClient.updateHeader('');
+    Get.offAllNamed(AppRoutes.getStartedScreen);
   }
+
+
 }

@@ -27,13 +27,28 @@ class UserModel {
       email: json['email'],
       currentRole: json['currentRole'],
       isActive: json['isActive'],
-      location: json['location'] != null
-          ? UserLocation.fromJson(json['location'])
-          : null,
-      preferences: json['preferences'] != null
-          ? UserPreferences.fromJson(json['preferences'])
-          : null,
+      location:
+          json['location'] != null
+              ? UserLocation.fromJson(json['location'])
+              : null,
+      preferences:
+          json['preferences'] != null
+              ? UserPreferences.fromJson(json['preferences'])
+              : null,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'number': number,
+      'email': email,
+      'currentRole': currentRole,
+      'isActive': isActive,
+      'location': location?.toJson(),
+      'preferences': preferences?.toJson(),
+    };
   }
 }
 
@@ -49,8 +64,15 @@ class UserLocation {
       state: json['state'],
       lga: json['lga'],
 
-      coordinates: (json['coordinates'] as List?)?.map((e) => (e as num).toDouble()).toList(),
+      coordinates:
+          (json['coordinates'] as List?)
+              ?.map((e) => (e as num).toDouble())
+              .toList(),
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {'state': state, 'lga': lga, 'coordinates': coordinates};
   }
 }
 
@@ -61,10 +83,15 @@ class UserPreferences {
 
   factory UserPreferences.fromJson(Map<String, dynamic> json) {
     return UserPreferences(
-      notifications: json['notifications'] != null
-          ? Notifications.fromJson(json['notifications'])
-          : null,
+      notifications:
+          json['notifications'] != null
+              ? Notifications.fromJson(json['notifications'])
+              : null,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {'notifications': notifications?.toJson()};
   }
 }
 
@@ -88,5 +115,9 @@ class Notifications {
       whatsapp: json['whatsapp'] ?? false,
       inApp: json['inApp'] ?? false,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {'email': email, 'text': text, 'whatsapp': whatsapp, 'inApp': inApp};
   }
 }

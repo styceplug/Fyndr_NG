@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fyndr_ng/controllers/auth_controller.dart';
 import 'package:fyndr_ng/routes/routes.dart';
 import 'package:fyndr_ng/utils/app_constants.dart';
 import 'package:fyndr_ng/utils/colors.dart';
@@ -14,6 +15,10 @@ class VerifiedScreen extends StatefulWidget {
 }
 
 class _VerifiedScreenState extends State<VerifiedScreen> {
+
+  AuthController authController = Get.find<AuthController>();
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -128,8 +133,7 @@ class _VerifiedScreenState extends State<VerifiedScreen> {
             ),
             SizedBox(height: Dimensions.height20),
             CustomButton(text: 'Continue', onPressed: () {
-              Get.toNamed(AppRoutes.homeScreen);
-              print('tapped');
+              authController.getUserProfile();
             }),
           ],
         ),

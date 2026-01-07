@@ -19,6 +19,39 @@ class AuthController extends GetxController {
 
   UserModel? get userModel => _userModel;
 
+
+
+
+  Future<void> updateProfile(String name, String email, String state, String lga) async {
+    loader.showLoader();
+    update();
+
+    Response response = await authRepo.updateProfile(
+      name: name,
+      email: email,
+      state: state,
+      lga: lga,
+    );
+
+    if (response.statusCode == 200) {
+      var responseData = response.body['data'];
+      _userModel = UserModel.fromJson(responseData);
+
+      // Refresh the UI
+      CustomSnackBar.success(message: "Profile updated successfully");
+      Get.back();
+    } else {
+      String message = response.body['error'] ?? "Failed to update profile";
+      if (response.statusCode == 409) {
+        message = "This email is already in use.";
+      }
+      CustomSnackBar.failure(message: message);
+    }
+
+    loader.hideLoader();
+    update();
+  }
+
   Future<void> login(String number, String password) async {
     loader.showLoader();
     update();
@@ -103,7 +136,8 @@ class AuthController extends GetxController {
 
       print("Verification Success: User ${_userModel!.name} verified.");
 
-      getUserProfile();
+      Get.offAllNamed(AppRoutes.verifiedScreen);
+
     } else {
       String errorMsg = response.body['error'] ?? "Verification failed";
       print("Error: $errorMsg");

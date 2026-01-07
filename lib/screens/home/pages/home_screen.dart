@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fyndr_ng/controllers/auth_controller.dart';
 import 'package:fyndr_ng/utils/app_constants.dart';
 import 'package:fyndr_ng/utils/colors.dart';
 import 'package:fyndr_ng/utils/dimensions.dart';
@@ -12,6 +13,10 @@ class HomePage extends StatefulWidget {
   @override
   State<HomePage> createState() => _HomePageState();
 }
+
+AuthController authController = Get.find<AuthController>();
+
+final user = authController.userModel;
 
 class _HomePageState extends State<HomePage> {
   @override
@@ -36,24 +41,29 @@ class _HomePageState extends State<HomePage> {
                   width: Dimensions.width10*9,
                   fit: BoxFit.cover,
                 ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Good Day',
-                      style: TextStyle(fontSize: Dimensions.font17),
-                    ),
-                    Text(
-                      'John Doe',
-                      style: TextStyle(
-                        fontSize: Dimensions.font22,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.color1,
+                Expanded(
+                  flex: 1,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Good Day',
+                        style: TextStyle(fontSize: Dimensions.font17),
                       ),
-                    ),
-                  ],
+                      Text(
+                        user?.name ?? '',
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                        style: TextStyle(
+                          fontSize: Dimensions.font22,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.color1,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                Spacer(),
+                SizedBox(width: Dimensions.width20),
                 InkWell(
                   onTap: (){
                     Get.toNamed(AppRoutes.notificationScreen);
@@ -80,6 +90,9 @@ class _HomePageState extends State<HomePage> {
               ],
             ),
             SizedBox(height: Dimensions.height10),
+
+            ///FIX THIS
+            if(user?.email == '' || user?.name == '' || user?.location == null)
             Container(
               padding: EdgeInsets.symmetric(
                 vertical: Dimensions.height10,

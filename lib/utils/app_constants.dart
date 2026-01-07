@@ -16,6 +16,9 @@ class AppConstants {
   static const String POST_REGISTER_CUSTOMER = '/api/v1/user/register/customer';
   static const String POST_REGISTER_VENDOR = '/api/v1/user/register/vendor';
   static const String GET_USER_PROFILE = '/api/v1/user/me';
+  static const String PUT_UPDATE_PROFILE = '/api/v1/user/me';
+
+
 
     static String getPngAsset(String image) {
     return 'assets/images/$image.png';

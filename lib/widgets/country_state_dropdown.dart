@@ -2,347 +2,237 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'dart:convert';
+import 'package:get/get.dart';
 
 import '../utils/colors.dart';
 import '../utils/dimensions.dart';
+import 'custom_button.dart';
 
 
-class CountryService {
-  static final CountryService _instance = CountryService._internal();
-  factory CountryService() => _instance;
-  CountryService._internal();
+class LocationService {
+  // Singleton pattern (Optional, but good for caching)
+  static final LocationService _instance = LocationService._internal();
+  factory LocationService() => _instance;
+  LocationService._internal();
 
-  List<CountryData>? _cachedCountries;
-  Future<List<CountryData>>? _loadingFuture;
+  List<NigerianState>? _cachedStates;
 
-  // Load countries with caching
-  Future<List<CountryData>> loadCountries() async {
-    // Return cached data if available
-    if (_cachedCountries != null) {
-      return _cachedCountries!;
+  Future<List<NigerianState>> loadStates() async {
+    if (_cachedStates != null) return _cachedStates!;
+
+    try {
+      final jsonStr = await rootBundle.loadString('assets/nigeria_states_lgas.json');
+      final dynamic decoded = json.decode(jsonStr); // Use dynamic first
+
+
+      print(decoded.runtimeType);
+      print(decoded);
+
+      List<dynamic> listData;
+
+      // Check if it's a Map (Object) or List (Array)
+      if (decoded is Map<String, dynamic>) {
+        // If it's a Map, try to find the list inside a common key like 'data', 'states', or just values
+        // Adjust 'states' below to whatever key wraps your list in the JSON file
+        listData = decoded['states'] ?? decoded['data'] ?? [];
+      } else {
+        // If it's already a List, just use it
+        listData = decoded;
+      }
+
+      _cachedStates = listData.map((e) => NigerianState.fromJson(e)).toList();
+      return _cachedStates!;
+
+    } catch (e) {
+      print("❌ Error loading states: $e");
+      return [];
     }
-
-    // If already loading, return the existing future
-    if (_loadingFuture != null) {
-      return _loadingFuture!;
-    }
-
-    // Start loading
-    _loadingFuture = _loadCountriesFromAsset();
-    _cachedCountries = await _loadingFuture!;
-    _loadingFuture = null;
-
-    return _cachedCountries!;
-  }
-
-  Future<List<CountryData>> _loadCountriesFromAsset() async {
-    final jsonStr = await rootBundle.loadString('assets/countries_state.json');
-    final List<dynamic> data = json.decode(jsonStr);
-    return data.map((e) => CountryData.fromJson(e)).toList();
-  }
-
-  // Get countries synchronously (returns null if not loaded)
-  List<CountryData>? getCachedCountries() => _cachedCountries;
-
-  // Check if data is loaded
-  bool get isLoaded => _cachedCountries != null;
-
-  // Preload - call this in your app initialization
-  Future<void> preload() async {
-    await loadCountries();
-  }
-
-  // Clear cache if needed (e.g., for testing or updates)
-  void clearCache() {
-    _cachedCountries = null;
   }
 }
 
-class CountryData {
-  final String name;
-  final List<StateData> states;
 
-  CountryData({required this.name, required this.states});
+class LocationPickerModal extends StatefulWidget {
+  final String? enableState;
+  final String? enableLga;
+  final Function(String state, String lga) onConfirm;
 
-  factory CountryData.fromJson(Map<String, dynamic> json) {
-    return CountryData(
-      name: json['name'] as String,
-      states: (json['states'] as List<dynamic>)
-          .map((e) => StateData.fromJson(e as Map<String, dynamic>))
-          .toList(),
-    );
-  }
-}
-
-class StateData {
-  final String name;
-
-  StateData({required this.name});
-
-  factory StateData.fromJson(Map<String, dynamic> json) {
-    return StateData(name: json['name'] as String);
-  }
-}
-
-class CountryState extends StatefulWidget {
-  final String? selectedCountry;
-  final String? selectedState;
-  final Function(String?) onCountryChanged;
-  final Function(String?) onStateChanged;
-
-  const CountryState({
-    super.key,
-    required this.selectedCountry,
-    required this.selectedState,
-    required this.onCountryChanged,
-    required this.onStateChanged,
-  });
-
-  @override
-  State<CountryState> createState() => _CountryStateState();
-}
-
-class _CountryStateState extends State<CountryState> {
-  final _countryService = CountryService();
-  late final Future<List<CountryData>> _countriesFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    _countriesFuture = _countryService.loadCountries();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<List<CountryData>>(
-      future: _countriesFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(
-            child: SizedBox(
-              height: 20,
-              width: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-          );
-        }
-
-        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Text("No countries available");
-        }
-
-        final countries = snapshot.data!;
-        final countryNames = countries.map((c) => c.name).toList();
-
-        final selectedCountryObj = widget.selectedCountry != null
-            ? countries.firstWhere(
-              (c) => c.name == widget.selectedCountry,
-          orElse: () => countries.first,
-        )
-            : countries.first;
-
-        final stateNames = selectedCountryObj.states.map((s) => s.name).toList();
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // COUNTRY
-            DropdownButtonFormField<String>(
-              value: widget.selectedCountry,
-              decoration: _inputDecoration(),
-              borderRadius: BorderRadius.circular(Dimensions.radius15),
-              style: TextStyle(
-                color: AppColors.black,
-                fontFamily: 'Poppins',
-
-              ),
-              items: countryNames.map((country) {
-                return DropdownMenuItem(value: country, child: Text(country));
-              }).toList(),
-              onChanged: (value) {
-                widget.onCountryChanged(value);
-                widget.onStateChanged(null);
-              },
-              hint: Text(
-                "Choose a country",
-                style: TextStyle(
-                  color: AppColors.black.withOpacity(0.5),
-                  fontSize: Dimensions.font16
-                ),
-              ),
-            ),
-
-            SizedBox(height: 20),
-
-            // STATE
-            DropdownButtonFormField<String>(
-              value: widget.selectedState,
-              borderRadius: BorderRadius.circular(Dimensions.radius15),
-              style: TextStyle(
-                color: Theme.of(context).hintColor,
-                fontFamily: 'Poppins',
-                  fontSize: Dimensions.font15
-
-              ),
-              decoration: _inputDecoration(),
-              items: stateNames.map((state) {
-                return DropdownMenuItem(value: state, child: Text(state));
-              }).toList(),
-              onChanged: widget.onStateChanged,
-              hint: Text(
-                "Choose a state",
-                style: TextStyle(
-                    color: AppColors.black.withOpacity(0.5),
-                    fontFamily: 'Poppins',
-                    fontSize: Dimensions.font16
-
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  InputDecoration _inputDecoration() {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final BorderRadius borderRadius = BorderRadius.circular(Dimensions.radius15);
-    final Color textColor = theme.textTheme.bodyLarge?.color ?? Colors.black;
-    final Color fillColor = theme.inputDecorationTheme.fillColor ??
-        (isDark ? Colors.white10 : const Color(0xFFDBD0C8).withOpacity(0.1));
-    final Color borderColor = theme.dividerColor;
-    final Color focusColor = theme.colorScheme.primary.withOpacity(0.6);
-    final Color enabledBorderColor = theme.colorScheme.secondary;
-
-    return InputDecoration(
-      filled: true,
-      fillColor: fillColor,
-      hintStyle: TextStyle(
-        color: textColor.withOpacity(0.5),
-        fontFamily: 'Poppins',
-      ),
-      border: OutlineInputBorder(
-        borderRadius: borderRadius,
-        borderSide: BorderSide(color: borderColor),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: borderRadius,
-        borderSide: BorderSide(color: enabledBorderColor),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: borderRadius,
-        borderSide: BorderSide(color: focusColor),
-      ),
-    );
-  }
-}
-
-class CountryDropdown extends StatefulWidget {
-  final String? selectedCountry;
-  final ValueChanged<String?> onCountryChanged;
-
-  const CountryDropdown({
+  const LocationPickerModal({
     Key? key,
-    this.selectedCountry,
-    required this.onCountryChanged,
+    this.enableState,
+    this.enableLga,
+    required this.onConfirm,
   }) : super(key: key);
 
   @override
-  State<CountryDropdown> createState() => _CountryDropdownState();
+  State<LocationPickerModal> createState() => _LocationPickerModalState();
 }
 
-class _CountryDropdownState extends State<CountryDropdown> {
-  final _countryService = CountryService();
-  late Future<List<String>> _countriesFuture;
+class _LocationPickerModalState extends State<LocationPickerModal> {
+  final _locationService = LocationService();
+  late Future<List<NigerianState>> _dataFuture;
+
+  String? selectedState;
+  String? selectedLga;
+  List<String> availableLgas = [];
 
   @override
   void initState() {
     super.initState();
-    _countriesFuture = _loadCountryNames();
-  }
-
-  Future<List<String>> _loadCountryNames() async {
-    final countries = await _countryService.loadCountries();
-    return countries.map((c) => c.name).toList();
+    _dataFuture = _locationService.loadStates();
+    selectedState = widget.enableState;
+    selectedLga = widget.enableLga;
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<String>>(
-      future: _countriesFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(
-            child: SizedBox(
-              height: 20,
-              width: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
+    return Container(
+      padding: EdgeInsets.all(Dimensions.width20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(Dimensions.radius20)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Handle Bar
+          Center(
+            child: Container(
+              width: 50,
+              height: 5,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
-          );
-        }
-
-        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Text("No countries available");
-        }
-
-        final countries = snapshot.data!;
-
-        return DropdownButtonFormField<String>(
-          value: widget.selectedCountry,
-          decoration: _inputDecoration(context),
-          style: TextStyle(
-            color: Theme.of(context).hintColor,
-            fontFamily: 'Poppins',
           ),
-          items: countries.map((country) {
-            return DropdownMenuItem(value: country, child: Text(country));
-          }).toList(),
-          onChanged: widget.onCountryChanged,
-          hint: Text(
-            "Choose a country",
+          SizedBox(height: Dimensions.height20),
+
+          Text(
+            "Select Location",
             style: TextStyle(
-              color: Theme.of(context).hintColor,
-              fontFamily: 'Poppins',
+              fontSize: Dimensions.font20,
+              fontWeight: FontWeight.w700,
+              color: AppColors.color1,
             ),
           ),
-        );
-      },
+          SizedBox(height: Dimensions.height20),
+
+          FutureBuilder<List<NigerianState>>(
+            future: _dataFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+                return Center(
+                  child: Text(
+                    "Unable to load locations.\nCheck assets/nigeria_states_lgas.json",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.red),
+                  ),
+                );
+              }
+
+              final statesList = snapshot.data!;
+
+              // Logic to populate LGAs if a State is pre-selected (e.g. from Edit Profile)
+              if (selectedState != null && availableLgas.isEmpty) {
+                try {
+                  final stateObj = statesList.firstWhere((e) => e.stateName == selectedState);
+                  availableLgas = stateObj.lgas;
+                  // If the pre-selected LGA isn't in this state's list, clear it
+                  if (!availableLgas.contains(selectedLga)) {
+                    selectedLga = null;
+                  }
+                } catch (e) {
+                  // State name might not match exactly
+                }
+              }
+
+              return Column(
+                children: [
+                  // --- STATE DROPDOWN ---
+                  DropdownButtonFormField<String>(
+                    value: selectedState,
+                    isExpanded: true, // Prevents overflow
+                    decoration: _inputDecoration("State"),
+                    items: statesList.map((s) {
+                      return DropdownMenuItem(value: s.stateName, child: Text(s.stateName));
+                    }).toList(),
+                    onChanged: (val) {
+                      if (val == null) return;
+                      setState(() {
+                        selectedState = val;
+                        selectedLga = null; // Reset LGA
+                        // Update available LGAs based on selection
+                        availableLgas = statesList.firstWhere((e) => e.stateName == val).lgas;
+                      });
+                    },
+                  ),
+                  SizedBox(height: Dimensions.height20),
+
+                  // --- LGA DROPDOWN ---
+                  DropdownButtonFormField<String>(
+                    value: selectedLga,
+                    isExpanded: true,
+                    decoration: _inputDecoration("LGA"),
+                    items: availableLgas.map((lgaName) {
+                      return DropdownMenuItem(value: lgaName, child: Text(lgaName));
+                    }).toList(),
+                    onChanged: (val) {
+                      setState(() {
+                        selectedLga = val;
+                      });
+                    },
+                    hint: Text(selectedState == null ? "Select State first" : "Select LGA"),
+                  ),
+                ],
+              );
+            },
+          ),
+
+          SizedBox(height: Dimensions.height40),
+
+          // Confirm Button
+          CustomButton(
+            text: "Confirm Location",
+            onPressed: () {
+              if (selectedState != null && selectedLga != null) {
+                widget.onConfirm(selectedState!, selectedLga!);
+                Get.back(); // Close Modal
+              }
+            },
+            isDisabled: selectedState == null || selectedLga == null,
+          ),
+          SizedBox(height: Dimensions.height20),
+        ],
+      ),
     );
   }
 
-  InputDecoration _inputDecoration(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    final Color textColor = theme.textTheme.bodyLarge?.color ?? Colors.black;
-    final Color fillColor = theme.inputDecorationTheme.fillColor ??
-        (isDark ? Colors.white10 : const Color(0xFFDBD0C8).withOpacity(0.1));
-    final Color borderColor = theme.dividerColor;
-    final Color focusColor = theme.colorScheme.primary.withOpacity(0.6);
-    final Color enabledBorderColor = theme.colorScheme.secondary;
-
+  InputDecoration _inputDecoration(String label) {
     return InputDecoration(
-      filled: true,
-      fillColor: fillColor,
-      hintStyle: TextStyle(
-        color: textColor.withOpacity(0.5),
-        fontFamily: 'Poppins',
-      ),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: BorderSide(color: borderColor),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: BorderSide(color: enabledBorderColor),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: BorderSide(color: focusColor),
-      ),
+      labelText: label,
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(Dimensions.radius15)),
+      contentPadding: EdgeInsets.symmetric(horizontal: Dimensions.width20, vertical: Dimensions.height15),
+    );
+  }
+}
+
+class NigerianState {
+  final String stateName;
+  final List<String> lgas;
+
+  NigerianState({required this.stateName, required this.lgas});
+
+  factory NigerianState.fromJson(Map<String, dynamic> json) {
+    return NigerianState(
+      // The JSON key is "state"
+      stateName: json['state'] ?? '',
+      // The JSON key is "lgas"
+      lgas: List<String>.from(json['lgas'] ?? []),
     );
   }
 }

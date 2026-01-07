@@ -12,16 +12,19 @@ import '../../utils/colors.dart';
 import '../../widgets/custom_textfield.dart';
 import '../../widgets/snackbars.dart';
 
+
 class PhoneVerificationScreen extends StatefulWidget {
-  const PhoneVerificationScreen({super.key});
+  const PhoneVerificationScreen({Key? key}) : super(key: key);
 
   @override
-  State<PhoneVerificationScreen> createState() =>
-      _PhoneVerificationScreenState();
+  State<PhoneVerificationScreen> createState() => _PhoneVerificationScreenState();
 }
 
 class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
   final AuthController authController = Get.find<AuthController>();
+
+  // 1. Create a variable to store the phone number safely
+  late String phoneNumber;
 
   final otp1Controller = TextEditingController();
   final otp2Controller = TextEditingController();
@@ -34,7 +37,6 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
   final focus4 = FocusNode();
 
   bool isOtpComplete = false;
-
   Timer? _timer;
   int _secondsRemaining = 60;
   bool canResend = false;
@@ -42,6 +44,20 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
   @override
   void initState() {
     super.initState();
+
+    // 2. Initialize the phone number securely
+    // We use a safe check: if arguments are null, default to empty string
+    if(Get.arguments != null && Get.arguments['number'] != null){
+      phoneNumber = Get.arguments['number'];
+    } else {
+      phoneNumber = "";
+      // Optional: Auto-redirect back if no number found (prevents stuck screens)
+      Future.delayed(Duration.zero, () {
+        Get.back();
+        CustomSnackBar.failure(message: "Error: No phone number found");
+      });
+    }
+
     _startTimer();
 
     otp1Controller.addListener(_validateOtp);
@@ -66,11 +82,11 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
     super.dispose();
   }
 
-  // ───────────────────────── TIMER ─────────────────────────
-
   void _startTimer() {
-    canResend = false;
-    _secondsRemaining = 60;
+    setState(() {
+      canResend = false;
+      _secondsRemaining = 60;
+    });
 
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -87,8 +103,6 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
     });
   }
 
-  // ───────────────────────── OTP VALIDATION ─────────────────────────
-
   void _validateOtp() {
     bool valid =
         otp1Controller.text.length == 1 &&
@@ -101,8 +115,6 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
     }
   }
 
-  // ───────────────────────── AUTO PASTE OTP ─────────────────────────
-
   Future<void> _checkClipboardForOtp() async {
     final data = await Clipboard.getData(Clipboard.kTextPlain);
     final text = data?.text ?? '';
@@ -112,12 +124,9 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
       otp2Controller.text = text[1];
       otp3Controller.text = text[2];
       otp4Controller.text = text[3];
-
       FocusScope.of(context).unfocus();
     }
   }
-
-  // ───────────────────────── VERIFY OTP ─────────────────────────
 
   void verifyOtp() {
     if (!isOtpComplete) {
@@ -125,24 +134,21 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
       return;
     }
 
-    final otp =
-        '${otp1Controller.text}${otp2Controller.text}${otp3Controller.text}${otp4Controller.text}';
+    final otp = '${otp1Controller.text}${otp2Controller.text}${otp3Controller.text}${otp4Controller.text}';
 
-    authController.verifyOtp(Get.arguments['number'], otp);
+    // 3. Use the local variable 'phoneNumber'
+    authController.verifyOtp(phoneNumber, otp);
   }
-
-  // ───────────────────────── RESEND OTP ─────────────────────────
 
   void resendOtp() {
     if (!canResend) return;
 
-    authController.resendOtp(Get.arguments['number']);
+    // 3. Use the local variable 'phoneNumber'
+    authController.resendOtp(phoneNumber);
     _startTimer();
 
     CustomSnackBar.success(message: 'OTP sent again');
   }
-
-  // ───────────────────────── OTP FIELD ─────────────────────────
 
   Widget _otpField({
     required TextEditingController controller,
@@ -171,82 +177,75 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
     );
   }
 
-  // ───────────────────────── UI ─────────────────────────
-
   @override
   Widget build(BuildContext context) {
-    final number = Get.arguments['number'];
-
+    // 4. No more Get.arguments calls here!
     return Scaffold(
       body: Padding(
         padding: EdgeInsets.symmetric(
           horizontal: Dimensions.width20,
           vertical: Dimensions.height20,
         ),
-        child: Column(
-          children: [
-            SizedBox(height: Dimensions.height100),
-
-            Text(
-              'Let’s verify your phone number',
-              style: TextStyle(
-                fontSize: Dimensions.font10 * 3.2,
-                fontWeight: FontWeight.w700,
-                color: AppColors.color1,
-              ),
-            ),
-
-            SizedBox(height: Dimensions.height10),
-
-            Text(
-              'Enter the 4-digit code sent to $number',
-              style: TextStyle(
-                fontSize: Dimensions.font18,
-                color: AppColors.color1,
-              ),
-            ),
-
-            SizedBox(height: Dimensions.height40),
-
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                Expanded(child: _otpField(controller: otp1Controller, focusNode: focus1, nextFocus: focus2)),
-                SizedBox(width: Dimensions.width20),
-                Expanded(child: _otpField(controller: otp2Controller, focusNode: focus2, nextFocus: focus3, previousFocus: focus1)),
-                SizedBox(width: Dimensions.width20),
-                Expanded(child: _otpField(controller: otp3Controller, focusNode: focus3, nextFocus: focus4, previousFocus: focus2)),
-                SizedBox(width: Dimensions.width20),
-                Expanded(child: _otpField(controller: otp4Controller, focusNode: focus4, previousFocus: focus3)),
-              ],
-            ),
-
-            SizedBox(height: Dimensions.height40),
-
-            CustomButton(
-              text: 'Verify',
-              onPressed: verifyOtp,
-              isDisabled: !isOtpComplete,
-            ),
-
-            SizedBox(height: Dimensions.height20),
-
-            canResend
-                ? GestureDetector(
-              onTap: resendOtp,
-              child: Text(
-                'Resend code',
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              SizedBox(height: Dimensions.height100),
+              Text(
+                'Let’s verify your phone number',
+                textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: AppColors.color2,
-                  fontWeight: FontWeight.bold,
+                  fontSize: Dimensions.font26,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.color1,
                 ),
               ),
-            )
-                : Text(
-              'Resend in $_secondsRemaining s',
-              style: TextStyle(color: AppColors.grey4),
-            ),
-          ],
+              SizedBox(height: Dimensions.height10),
+              Text(
+                'Enter the 4-digit code sent to $phoneNumber',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: Dimensions.font18,
+                  color: AppColors.color1,
+                ),
+              ),
+              SizedBox(height: Dimensions.height40),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Expanded(child: _otpField(controller: otp1Controller, focusNode: focus1, nextFocus: focus2)),
+                  SizedBox(width: Dimensions.width10),
+                  Expanded(child: _otpField(controller: otp2Controller, focusNode: focus2, nextFocus: focus3, previousFocus: focus1)),
+                  SizedBox(width: Dimensions.width10),
+                  Expanded(child: _otpField(controller: otp3Controller, focusNode: focus3, nextFocus: focus4, previousFocus: focus2)),
+                  SizedBox(width: Dimensions.width10),
+                  Expanded(child: _otpField(controller: otp4Controller, focusNode: focus4, previousFocus: focus3)),
+                ],
+              ),
+              SizedBox(height: Dimensions.height40),
+              CustomButton(
+                text: 'Verify',
+                onPressed: verifyOtp,
+                isDisabled: !isOtpComplete,
+              ),
+              SizedBox(height: Dimensions.height20),
+              canResend
+                  ? GestureDetector(
+                onTap: resendOtp,
+                child: Text(
+                  'Resend code',
+                  style: TextStyle(
+                      color: AppColors.color2,
+                      fontWeight: FontWeight.bold,
+                      fontSize: Dimensions.font16
+                  ),
+                ),
+              )
+                  : Text(
+                'Resend in $_secondsRemaining s',
+                style: TextStyle(color: AppColors.grey4),
+              ),
+            ],
+          ),
         ),
       ),
     );

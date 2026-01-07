@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:fyndr_ng/controllers/app_controller.dart';
+import 'package:fyndr_ng/controllers/auth_controller.dart';
 import 'package:fyndr_ng/routes/routes.dart';
+import 'package:fyndr_ng/screens/home/pages/home_screen.dart';
 import 'package:fyndr_ng/utils/app_constants.dart';
 import 'package:fyndr_ng/utils/colors.dart';
 import 'package:get/get.dart';
@@ -15,8 +18,13 @@ class ProfileScree extends StatefulWidget {
 }
 
 class _ProfileScreeState extends State<ProfileScree> {
+  AppController appController = Get.find<AppController>();
+  AuthController authController = Get.find<AuthController>();
+
   @override
   Widget build(BuildContext context) {
+    final user = authController.userModel;
+
     return Scaffold(
       body: Container(
         padding: EdgeInsets.fromLTRB(
@@ -39,7 +47,9 @@ class _ProfileScreeState extends State<ProfileScree> {
                     ),
                   ),
                   InkWell(
-                    onTap: (){Get.toNamed(AppRoutes.notificationScreen);},
+                    onTap: () {
+                      Get.toNamed(AppRoutes.notificationScreen);
+                    },
                     child: Container(
                       padding: EdgeInsets.symmetric(
                         horizontal: Dimensions.width10,
@@ -70,7 +80,12 @@ class _ProfileScreeState extends State<ProfileScree> {
                 ),
               ),
               SizedBox(height: Dimensions.height5),
-              Text('John Doe', style: TextStyle(fontSize: Dimensions.font20)),
+              Text(
+                user?.name ?? '',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: Dimensions.font20),
+              ),
               SizedBox(height: Dimensions.height5),
               IntrinsicWidth(
                 child: Container(
@@ -164,11 +179,15 @@ class _ProfileScreeState extends State<ProfileScree> {
                 ),
                 child: Column(
                   children: [
-                    OptionCard('edit-profile', 'Edit Profile'),
+                    OptionCard('edit-profile', 'Edit Profile',onTap: (){Get.toNamed(AppRoutes.editProfile);}),
                     Divider(color: AppColors.grey2),
-                    OptionCard('switch-icon', 'Switch Account',onTap: (){
-                      Get.toNamed(AppRoutes.becomeVendorScreen);
-                    }),
+                    OptionCard(
+                      'switch-icon',
+                      'Switch Account',
+                      onTap: () {
+                        Get.toNamed(AppRoutes.becomeVendorScreen);
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -202,7 +221,13 @@ class _ProfileScreeState extends State<ProfileScree> {
                     Divider(color: AppColors.grey2),
                     OptionCard('payment-icon', 'Payment Method'),
                     Divider(color: AppColors.grey2),
-                    OptionCard('log-out', 'Logout'),
+                    OptionCard(
+                      'log-out',
+                      'Logout',
+                      onTap: () {
+                        appController.clearSharedData();
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -230,9 +255,13 @@ class _ProfileScreeState extends State<ProfileScree> {
                 ),
                 child: Column(
                   children: [
-                    OptionCard('help-icon', 'Help Center',onTap: (){
-                      Get.toNamed(AppRoutes.helpCenter);
-                    }),
+                    OptionCard(
+                      'help-icon',
+                      'Help Center',
+                      onTap: () {
+                        Get.toNamed(AppRoutes.helpCenter);
+                      },
+                    ),
                     Divider(color: AppColors.grey2),
                     OptionCard('terms', 'Terms and condition'),
                   ],
@@ -280,15 +309,18 @@ class _ProfileScreeState extends State<ProfileScree> {
 
   Widget OptionCard(String image, String title, {VoidCallback? onTap}) {
     return Container(
-      margin: EdgeInsets.only(bottom: Dimensions.height5,top: Dimensions.height5),
+      margin: EdgeInsets.only(
+        bottom: Dimensions.height5,
+        top: Dimensions.height5,
+      ),
       child: InkWell(
         onTap: onTap,
         child: Row(
           children: [
             Image.asset(
               AppConstants.getPngAsset(image),
-              height: Dimensions.height10 * 2.5,
-              width: Dimensions.width10 * 2.5,
+              height: Dimensions.height10 * 2.2,
+              width: Dimensions.width10 * 2.2,
             ),
             SizedBox(width: Dimensions.width10),
             Text(title),
