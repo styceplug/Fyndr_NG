@@ -1,8 +1,10 @@
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:fyndr_ng/controllers/app_controller.dart';
 import 'package:fyndr_ng/controllers/auth_controller.dart';
+import 'package:fyndr_ng/controllers/job_controller.dart';
 import 'package:fyndr_ng/data/repo/app_repo.dart';
 import 'package:fyndr_ng/data/repo/auth_repo.dart';
+import 'package:fyndr_ng/data/repo/job_repo.dart';
 import 'package:get/get.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
@@ -29,6 +31,7 @@ Future<void> init() async {
   // repos
   Get.lazyPut(() => AuthRepo(apiClient: Get.find()));
   Get.lazyPut(() => GlobalLoaderController());
+  Get.lazyPut(() => JobRepo(apiClient: Get.find(), sharedPreferences: Get.find()), fenix: true);
   Get.lazyPut(
     () => AppRepo(apiClient: Get.find(), sharedPreferences: Get.find()),
   );
@@ -36,6 +39,9 @@ Future<void> init() async {
   //controllers
   Get.lazyPut(
     () => AuthController(authRepo: Get.find(), apiClient: Get.find()),
+  );
+  Get.lazyPut(
+    () => JobController(jobRepo: Get.find(), apiClient: Get.find()), fenix: true
   );
   Get.lazyPut(
     () => AppController(

@@ -1,3 +1,4 @@
+import 'package:fyndr_ng/controllers/app_controller.dart';
 import 'package:fyndr_ng/data/api/api_client.dart';
 import 'package:fyndr_ng/helpers/global_loader_controller.dart';
 import 'package:fyndr_ng/routes/routes.dart';
@@ -14,13 +15,65 @@ class AuthController extends GetxController {
   AuthController({required this.authRepo, required this.apiClient});
 
   GlobalLoaderController loader = Get.find<GlobalLoaderController>();
-
+  late AppController appController = Get.find<AppController>();
   UserModel? _userModel;
 
   UserModel? get userModel => _userModel;
 
 
 
+
+  Future<void> attemptRoleSwitch() async {
+    loader.showLoader();
+    update();
+
+    try {
+      Response response = await authRepo.switchUserRole();
+
+      if (response.statusCode == 200) {
+
+        String newRole = response.body['data']['currentRole'];
+
+        if (_userModel != null) {
+          _userModel!.currentRole = newRole;
+        }
+
+        // 3. Dynamic Navigation based on the NEW role
+        if (newRole == "vendor") {
+          print("✅ Switched to Vendor Mode");
+          CustomSnackBar.success(message: "Welcome back to your Vendor Dashboard");
+          Get.offAllNamed(AppRoutes.vendorHomeScreen);
+
+        } else {
+          print("✅ Switched to Customer Mode");
+          CustomSnackBar.success(message: "Switched to Customer Profile");
+          Get.offAllNamed(AppRoutes.homeScreen); // Customer Home
+        }
+
+      } else if (response.statusCode == 400) {
+
+
+        print("⚠️ Cannot switch: Vendor profile incomplete.");
+        CustomSnackBar.processing(
+            message: "Setup Required: Please complete your vendor registration first."
+        );
+        Get.offAllNamed(AppRoutes.getStartedScreen);
+
+      } else {
+        // --- OTHER ERRORS ---
+        CustomSnackBar.failure(message: response.statusText ?? "Failed to switch role");
+        Get.back();
+      }
+
+    } catch (e) {
+      print("❌ Switch Role Error: $e");
+      CustomSnackBar.failure(message: "An error occurred");
+      Get.back();
+    } finally {
+     loader.hideLoader();
+      update();
+    }
+  }
 
   Future<void> updateProfile(String name, String email, String state, String lga) async {
     loader.showLoader();
@@ -39,7 +92,9 @@ class AuthController extends GetxController {
 
       // Refresh the UI
       CustomSnackBar.success(message: "Profile updated successfully");
-      Get.back();
+      getUserProfile();
+      appController.changeCurrentAppPage(0);
+      // Get.back();
     } else {
       String message = response.body['error'] ?? "Failed to update profile";
       if (response.statusCode == 409) {

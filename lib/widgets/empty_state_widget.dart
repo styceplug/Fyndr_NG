@@ -26,7 +26,7 @@ class EmptyState extends StatelessWidget {
             width: Dimensions.width100 ,
             decoration: BoxDecoration(
               image: DecorationImage(
-                image: AssetImage(AppConstants.getPngAsset(imageAsset!)),
+                image: AssetImage(AppConstants.getGifAsset(imageAsset!)),
               ),
             ),
           ),

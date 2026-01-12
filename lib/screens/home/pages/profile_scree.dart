@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:fyndr_ng/controllers/app_controller.dart';
 import 'package:fyndr_ng/controllers/auth_controller.dart';
+import 'package:fyndr_ng/helpers/push_notification.dart';
 import 'package:fyndr_ng/routes/routes.dart';
 import 'package:fyndr_ng/screens/home/pages/home_screen.dart';
 import 'package:fyndr_ng/utils/app_constants.dart';
 import 'package:fyndr_ng/utils/colors.dart';
+import 'package:fyndr_ng/widgets/snackbars.dart';
 import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
 
@@ -20,10 +22,13 @@ class ProfileScree extends StatefulWidget {
 class _ProfileScreeState extends State<ProfileScree> {
   AppController appController = Get.find<AppController>();
   AuthController authController = Get.find<AuthController>();
+  NotificationService notificationService = Get.put(NotificationService());
+
 
   @override
   Widget build(BuildContext context) {
     final user = authController.userModel;
+    final memberSince = user?.getAccountAge(user.createdAt);
 
     return Scaffold(
       body: Container(
@@ -106,7 +111,7 @@ class _ProfileScreeState extends State<ProfileScree> {
                       ),
                       SizedBox(width: Dimensions.width10),
                       Text(
-                        'Lekki, Lagos',
+                        '${user?.location?.state}, ${user?.location?.lga}',
                         style: TextStyle(
                           fontSize: Dimensions.font12 * 0.9,
                           color: Colors.white,
@@ -128,7 +133,7 @@ class _ProfileScreeState extends State<ProfileScree> {
                   Icon(Iconsax.star1, color: AppColors.color4),
                   SizedBox(width: Dimensions.width5),
                   Text(
-                    '5.0',
+                    '0.0',
                     style: TextStyle(
                       fontWeight: FontWeight.w500,
                       fontSize: Dimensions.font16,
@@ -149,9 +154,9 @@ class _ProfileScreeState extends State<ProfileScree> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    DataCard('12', 'Total Requests'),
-                    DataCard('8', 'Completed'),
-                    DataCard('2 yrs', 'Member'),
+                    DataCard('0', 'Total Requests'),
+                    DataCard('0', 'Completed'),
+                    DataCard(memberSince!, 'Member'),
                   ],
                 ),
               ),
@@ -215,11 +220,16 @@ class _ProfileScreeState extends State<ProfileScree> {
                 ),
                 child: Column(
                   children: [
-                    OptionCard('bell-icon', 'Notifications'),
+                    OptionCard('bell-icon', 'Notifications',onTap: (){
+                      notificationService.requestPermissions();
+                    }),
                     Divider(color: AppColors.grey2),
-                    OptionCard('pin-icon', 'Location Services'),
-                    Divider(color: AppColors.grey2),
-                    OptionCard('payment-icon', 'Payment Method'),
+                    OptionCard('pin-icon', 'Location Services',onTap: (){
+                      CustomSnackBar.processing(message: 'Location Service Set-up');
+                    }),
+                    /// SETUP LATER
+                    // Divider(color: AppColors.grey2),
+                    // OptionCard('payment-icon', 'Payment Method'),
                     Divider(color: AppColors.grey2),
                     OptionCard(
                       'log-out',

@@ -7,6 +7,7 @@ class UserModel {
   bool? isActive;
   UserLocation? location;
   UserPreferences? preferences;
+  String? createdAt;
 
   UserModel({
     this.id,
@@ -17,6 +18,7 @@ class UserModel {
     this.isActive,
     this.location,
     this.preferences,
+    this.createdAt,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -35,6 +37,7 @@ class UserModel {
           json['preferences'] != null
               ? UserPreferences.fromJson(json['preferences'])
               : null,
+      createdAt: json['createdAt'],
     );
   }
 
@@ -48,7 +51,36 @@ class UserModel {
       'isActive': isActive,
       'location': location?.toJson(),
       'preferences': preferences?.toJson(),
+      'createdAt': createdAt,
     };
+  }
+
+  bool get isProfileComplete {
+    bool hasName = name != null && name!.isNotEmpty;
+    bool hasEmail = email != null && email!.isNotEmpty;
+    bool hasLocation = location != null &&
+        location!.state != null &&
+        location!.state!.isNotEmpty;
+
+    return hasName && hasEmail && hasLocation;
+  }
+
+  String getAccountAge(String? dateString) {
+    if (dateString == null) return "0 days";
+
+    DateTime createdDate = DateTime.parse(dateString);
+    DateTime now = DateTime.now();
+    Duration diff = now.difference(createdDate);
+
+    if (diff.inDays > 365) {
+      int years = (diff.inDays / 365).floor();
+      return "$years ${years == 1 ? 'yr' : 'yrs'}";
+    } else if (diff.inDays > 30) {
+      int months = (diff.inDays / 30).floor();
+      return "$months ${months == 1 ? 'mo' : 'mos'}";
+    } else {
+      return "${diff.inDays} ${diff.inDays == 1 ? 'day' : 'days'}";
+    }
   }
 }
 

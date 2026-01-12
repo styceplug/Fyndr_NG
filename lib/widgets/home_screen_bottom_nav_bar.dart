@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:fyndr_ng/routes/routes.dart';
 import 'package:fyndr_ng/utils/app_constants.dart';
 import 'package:fyndr_ng/utils/colors.dart';
+import 'package:fyndr_ng/widgets/snackbars.dart';
 import 'package:get/get.dart';
 
 import '../controllers/app_controller.dart';
@@ -48,13 +49,13 @@ class HomeScreenBottomNavBar extends StatelessWidget {
                       onClick: () => appController.changeCurrentAppPage(0),
                     ),
                     BottomBarItem(
-                      name: 'Browse',
+                      name: 'Declutter',
                       image: 'browse-icon',
                       isActive: appController.currentAppPage.value == 1,
                       onClick: () => appController.changeCurrentAppPage(1),
                     ),
 
-                    SizedBox(width: Dimensions.width10 * 5),
+                    SizedBox(width: Dimensions.width10 * 7),
 
                     BottomBarItem(
                       name: 'My jobs',
@@ -79,7 +80,7 @@ class HomeScreenBottomNavBar extends StatelessWidget {
                 color: Colors.transparent,
                 child: InkWell(
                   onTap: () {
-                    Get.toNamed(AppRoutes.genieAiScreen);
+                    CustomSnackBar.processing(message: 'Genie AI, Coming Soon');
                   },
                   customBorder: const CircleBorder(),
                   child: Container(
@@ -156,7 +157,7 @@ class VendorBottomNavBar extends StatelessWidget {
                       onClick: () => appController.changeCurrentAppPage(0),
                     ),
                     BottomBarItem(
-                      name: 'Browse',
+                      name: 'Market',
                       image: 'browse-icon',
                       isActive: appController.currentAppPage.value == 1,
                       onClick: () => appController.changeCurrentAppPage(1),
@@ -187,7 +188,7 @@ class VendorBottomNavBar extends StatelessWidget {
                 color: Colors.transparent,
                 child: InkWell(
                   onTap: () {
-                    Get.toNamed(AppRoutes.genieAiScreen);
+                    CustomSnackBar.processing(message: 'Coming Soon');
                   },
                   customBorder: const CircleBorder(),
                   child: Container(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fyndr_ng/utils/app_constants.dart';
 import 'package:fyndr_ng/widgets/custom_textfield.dart';
+import 'package:fyndr_ng/widgets/empty_state_widget.dart';
 
 import '../../../utils/colors.dart';
 import '../../../utils/dimensions.dart';
@@ -27,56 +28,61 @@ class _BrowseScreenState extends State<BrowseScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Browse Services',
+              'Declutter',
               style: TextStyle(
                 fontSize: Dimensions.font20,
                 fontWeight: FontWeight.w600,
               ),
             ),
             SizedBox(height: Dimensions.height20),
+            Row(
+              children: [
+                Text(
+                  'Browse',
+                  style: TextStyle(
+                    fontSize: Dimensions.font18,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.color2,
+                  ),
+                ),
+                SizedBox(width: Dimensions.width20),
+                Text(
+                  'Sell item',
+                  style: TextStyle(
+                    fontSize: Dimensions.font18,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.black,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: Dimensions.height20),
             CustomTextField(
               prefixIcon: Padding(
-                padding: EdgeInsets.only(left: Dimensions.width15,right: Dimensions.width10),
+                padding: EdgeInsets.only(
+                  left: Dimensions.width15,
+                  right: Dimensions.width10,
+                ),
                 child: Image.asset(
                   AppConstants.getPngAsset('search-icon'),
-                  scale: 1.8,
+                  scale: 2,
                 ),
               ),
               hintText: 'Start Searching',
             ),
             SizedBox(height: Dimensions.height20),
-            Text(
-              'POPULAR SERVICES',
-              style: TextStyle(
-                fontSize: Dimensions.font15,
-                fontWeight: FontWeight.w600,
-                color: AppColors.color1,
+            Expanded(
+              child: EmptyState(
+                message: 'No Products for sale right now!',
+                imageAsset: 'no-sales'
               ),
-            ),
-            SizedBox(height: Dimensions.height20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                ServiceCard('autos', 'Auto Parts'),
-                ServiceCard('beauty', 'Beauty & Wellness'),
-                ServiceCard('cleaning', 'Cleaning Service'),
-              ],
-            ),
-            SizedBox(height: Dimensions.height20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                ServiceCard('real-estate', 'Real Estate'),
-                ServiceCard('recruitment', 'Recruitment'),
-                ServiceCard('painting-icon', 'Painting'),
-
-              ],
             ),
           ],
         ),
       ),
     );
   }
+
   Widget ServiceCard(String image, String title) {
     return Container(
       height: Dimensions.height10 * 11,
@@ -107,5 +113,4 @@ class _BrowseScreenState extends State<BrowseScreen> {
       ),
     );
   }
-
 }

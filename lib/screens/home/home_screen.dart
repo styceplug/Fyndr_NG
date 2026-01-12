@@ -86,7 +86,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     left: 0,
                     right: 0,
                     bottom: 0,
-                    child: VendorBottomNavBar(),
+                    child: HomeScreenBottomNavBar(),
                   ),
                 ],
               ),

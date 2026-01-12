@@ -9,6 +9,10 @@ class AuthRepo extends GetConnect {
   AuthRepo({required this.apiClient});
 
 
+  Future<Response> switchUserRole() async {
+    return await apiClient.putData(AppConstants.SWITCH_ROLE_URI, {});
+  }
+
   Future<Response> login(String number, String password) async {
     final body = {
       "number": number,
@@ -57,8 +61,8 @@ class AuthRepo extends GetConnect {
       "location": {
         "state": state,
         "lga": lga,
-        // "type": "Point",
-        // "coordinates": [3.3792, 6.5244]
+        "type": "Point",
+        "coordinates": [0.00, 0.00]
       }
     };
     return await apiClient.putData(AppConstants.PUT_UPDATE_PROFILE, body);

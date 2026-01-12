@@ -7,6 +7,7 @@ import '../../utils/dimensions.dart';
 import '../../widgets/country_state_dropdown.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_textfield.dart';
+import '../../widgets/face_liveness_screen.dart';
 import '../../widgets/snackbars.dart';
 
 
@@ -77,6 +78,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   void _updateProfile() {
+    // 1. Validate Inputs first
     String name = nameController.text.trim();
     String email = emailController.text.trim();
 
@@ -90,7 +92,23 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       return;
     }
 
-    authController.updateProfile(name, email, selectedState!, selectedLga!);
+    // 2. Navigate to Face Check
+    // We pass the API call logic as the "onSuccess" callback
+    Get.to(() => FaceVerificationScreen(
+      onVerificationSuccess: () {
+        // Close the Camera Screen
+        Get.back();
+
+        // NOW call the API
+        // showing a loader while updating
+        Get.showOverlay(
+          asyncFunction: () async {
+            await authController.updateProfile(name, email, selectedState!, selectedLga!);
+          },
+          loadingWidget: Center(child: CircularProgressIndicator()),
+        );
+      },
+    ));
   }
 
   @override

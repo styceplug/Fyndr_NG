@@ -1,7 +1,11 @@
+import 'dart:io';
+
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:fyndr_ng/controllers/auth_controller.dart';
 import 'package:fyndr_ng/data/api/api_checker.dart';
 import 'package:fyndr_ng/data/api/api_client.dart';
+import 'package:fyndr_ng/helpers/global_loader_controller.dart';
 import 'package:fyndr_ng/screens/home/pages/browse_screen.dart';
 import 'package:fyndr_ng/screens/home/pages/genie_screen.dart';
 import 'package:fyndr_ng/screens/home/pages/home_screen.dart';
@@ -11,8 +15,11 @@ import 'package:fyndr_ng/screens/vendor/main/%20vendor_profile.dart';
 import 'package:fyndr_ng/screens/vendor/main/vendor_home.dart';
 import 'package:fyndr_ng/screens/vendor/main/vendor_jobs.dart';
 import 'package:fyndr_ng/utils/app_constants.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 
 import 'package:get/get.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 
 import '../data/repo/app_repo.dart';
@@ -31,6 +38,7 @@ class AppController extends GetxController {
   AuthController authController = Get.find<AuthController>();
   ApiClient apiClient;
   ApiChecker apiChecker;
+
 
 
 
@@ -70,14 +78,30 @@ class AppController extends GetxController {
 
     if (token != null && token.isNotEmpty) {
       print("Token found. Verifying session...");
-
       authController.apiClient.updateHeader(token);
-
       await authController.getUserProfile();
+      String? firebaseToken = await FirebaseMessaging.instance.getToken();
+      if (firebaseToken != null) {
+        await saveDeviceToken(firebaseToken);
+      }
 
     } else {
       print("No token found -> Get Started");
       Get.offAllNamed(AppRoutes.getStartedScreen);
+    }
+  }
+
+  Future<void> saveDeviceToken(String token) async {
+    String platform = Platform.isAndroid ? 'android' : 'ios';
+
+    print("🔔 Updating Device Token: $platform");
+
+    Response response = await appRepo.updateDeviceToken(token, platform);
+
+    if (response.statusCode == 200) {
+      print("✅ Device Token Updated Successfully");
+    } else {
+      print("⚠️ Failed to update token: ${response.body}");
     }
   }
 
@@ -120,11 +144,10 @@ class AppController extends GetxController {
   }
 
   void clearSharedData() {
+    changeCurrentAppPage(0);
     appRepo.sharedPreferences.remove(AppConstants.authToken);
     apiClient.token = '';
     apiClient.updateHeader('');
     Get.offAllNamed(AppRoutes.getStartedScreen);
   }
-
-
 }

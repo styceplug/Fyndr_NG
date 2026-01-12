@@ -2,6 +2,15 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+<key>NSLocationWhenInUseUsageDescription</key>
+<string>This app needs access to location when open.</string>
+<key>NSLocationAlwaysUsageDescription</key>
+<string>This app needs access to location when in the background.</string>
+<key>NSPhotoLibraryUsageDescription</key>
+<string>We need access to your photos to attach them to your service request.</string>
+<key>NSCameraUsageDescription</key>
+<string>We need access to your camera to take photos of the issue.</string>
+
 <key>NSPhotoLibraryUsageDescription</key>
     <string>This app needs access to your photo library to allow you to upload profile photos and verification documents.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>

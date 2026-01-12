@@ -1,239 +1,329 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:fyndr_ng/utils/app_constants.dart';
-import 'package:fyndr_ng/utils/colors.dart';
-import 'package:fyndr_ng/utils/dimensions.dart';
-import 'package:fyndr_ng/widgets/custom_appbar.dart';
-import 'package:fyndr_ng/widgets/job_card.dart';
+import 'package:get/get.dart';
+import 'package:intl/intl.dart';
+
+import '../../controllers/job_controller.dart';
+import '../../data/api/api_client.dart';
+import '../../model/job_model.dart';
+import '../../utils/colors.dart';
+import '../../utils/dimensions.dart';
+import '../../widgets/custom_appbar.dart';
+import '../../widgets/job_card.dart';
 
 class JobDetailsScreen extends StatefulWidget {
-  const JobDetailsScreen({super.key});
+  const JobDetailsScreen({Key? key}) : super(key: key);
 
   @override
   State<JobDetailsScreen> createState() => _JobDetailsScreenState();
 }
 
+
 class _JobDetailsScreenState extends State<JobDetailsScreen> {
+  String? jobId;
+  int _currentImageIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+
+    print("🛠️ JobDetailsScreen Init. Arguments: ${Get.arguments}");
+
+    JobModel? passedJob;
+
+    // 1. Parse Arguments
+    if (Get.arguments is JobModel) {
+      passedJob = Get.arguments as JobModel;
+      jobId = passedJob.id;
+    } else if (Get.arguments is String) {
+      jobId = Get.arguments;
+    }
+
+    // 2. Logic to run AFTER the screen builds
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final controller = Get.find<JobController>();
+
+      // A. Set Initial Data (Optimistic UI)
+      if (passedJob != null) {
+        print("✅ Setting Initial Job Data: ${passedJob.id}");
+        controller.setInitialJob(passedJob);
+      }
+
+      // B. Fetch Fresh Data (Quotes, etc.)
+      if (jobId != null) {
+        controller.getJobDetailsAndQuotes(jobId!);
+      } else {
+        print("❌ Error: Job ID is NULL.");
+      }
+    });
+  }
+
+
+  String formatMoney(int? amount) {
+    if (amount == null) return "0";
+    final formatter = NumberFormat("#,##0", "en_US");
+    return formatter.format(amount);
+  }
+
+  String formatDate(String? dateString) {
+    if (dateString == null) return "N/A";
+    try {
+      DateTime date = DateTime.parse(dateString);
+      return DateFormat("dd MMM yyyy - hh:mm a").format(date);
+    } catch (e) {
+      return dateString;
+    }
+  }
+
+  String timeAgo(String? dateString) {
+    if (dateString == null) return "Just now";
+    try {
+      DateTime created = DateTime.parse(dateString);
+      Duration diff = DateTime.now().difference(created);
+      if (diff.inDays > 0) return "${diff.inDays}d";
+      if (diff.inHours > 0) return "${diff.inHours}h";
+      return "${diff.inMinutes}m";
+    } catch (e) {
+      return "";
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppbar(title: 'Job Details', leadingIcon: BackButton()),
-      body: Container(
-        padding: EdgeInsets.symmetric(
-          horizontal: Dimensions.width20,
-          vertical: Dimensions.height20,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              height: Dimensions.height20 * 10,
-              decoration: BoxDecoration(
-                color: AppColors.grey2,
-                borderRadius: BorderRadius.circular(Dimensions.radius20),
-              ),
-              child: Align(
-                alignment: AlignmentGeometry.bottomCenter,
-                child: Padding(
-                  padding: EdgeInsets.only(bottom: Dimensions.height10),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.circle,
-                        size: Dimensions.iconSize16 * 0.7,
-                        color: AppColors.color2,
-                      ),
-                      SizedBox(width: Dimensions.width10 * 0.7),
-                      Icon(
-                        Icons.circle,
-                        size: Dimensions.iconSize16 * 0.7,
-                        color: AppColors.grey5,
-                      ),
-                      SizedBox(width: Dimensions.width10 * 0.7),
-                      Icon(
-                        Icons.circle,
-                        size: Dimensions.iconSize16 * 0.7,
-                        color: AppColors.grey5,
-                      ),
-                      SizedBox(width: Dimensions.width10 * 0.7),
-                      Icon(
-                        Icons.circle,
-                        size: Dimensions.iconSize16 * 0.7,
-                        color: AppColors.grey5,
-                      ),
-                    ],
+      body: GetBuilder<JobController>(builder: (controller) {
+
+        if (controller.singleJob == null) {
+          return Center(child: Text("Could not load job details."));
+        }
+
+        JobModel job = controller.singleJob!;
+        List<QuoteModel> quotes = controller.quotesList;
+
+        return Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: Dimensions.width20,
+            vertical: Dimensions.height20,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // --- IMAGE CAROUSEL ---
+                _buildImageSection(job),
+
+                SizedBox(height: Dimensions.height20),
+
+                // --- TITLE ---
+                Text(
+                  (job.category ?? 'Service').toUpperCase(),
+                  style: TextStyle(
+                    fontSize: Dimensions.font20,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-              ),
-            ),
-            SizedBox(height: Dimensions.height20),
-            Text(
-              'Kitchen Sink Repair',
-              style: TextStyle(
-                fontSize: Dimensions.font20,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            SizedBox(height: Dimensions.height5),
-            IntrinsicWidth(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppColors.color3,
-                  borderRadius: BorderRadius.circular(Dimensions.radius20),
+
+                SizedBox(height: Dimensions.height5),
+
+                // --- QUOTES BADGE ---
+                IntrinsicWidth(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.color3,
+                      borderRadius: BorderRadius.circular(Dimensions.radius20),
+                    ),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: Dimensions.width10,
+                      vertical: Dimensions.height5,
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.bookmark, size: Dimensions.iconSize16 * 0.8, color: Colors.white),
+                        SizedBox(width: Dimensions.width5),
+                        Text(
+                          '${quotes.length} quotes received',
+                          style: TextStyle(
+                            fontSize: Dimensions.font10,
+                            color: AppColors.white,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-                padding: EdgeInsets.symmetric(
-                  horizontal: Dimensions.width10,
-                  vertical: Dimensions.height5,
-                ),
-                child: Row(
+
+                SizedBox(height: Dimensions.height20),
+
+                // --- DETAILS ROW 1 ---
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Icon(
-                      Icons.bookmark,
-                      size: Dimensions.iconSize16 * 0.8,
-                      color: Colors.white,
-                    ),
-                    SizedBox(width: Dimensions.width5),
-                    Text(
-                      '3 quotes received',
-                      style: TextStyle(
-                        fontSize: Dimensions.font10,
-                        color: AppColors.white,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
+                    _buildDetailItem('Service type', job.category ?? "General"),
+                    _buildDetailItem('Date', formatDate(job.date)),
                   ],
                 ),
-              ),
-            ),
-            SizedBox(height: Dimensions.height20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+
+                SizedBox(height: Dimensions.height20),
+
+                // --- DETAILS ROW 2 ---
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'Service type',
-                      style: TextStyle(
-                        color: AppColors.grey5,
-                        fontSize: Dimensions.font14,
-                      ),
-                    ),
-                    Text(
-                      'Plumbing Service',
-                      style: TextStyle(
-                        fontSize: Dimensions.font16,
-                        fontWeight: FontWeight.w400,
-                        color: AppColors.black,
-                      ),
-                    ),
+                    _buildDetailItem('Location', "${job.location?.lga ?? ''}, ${job.location?.state ?? ''}"),
+                    _buildDetailItem('Budget', "N${formatMoney(job.budget?.min)} - N${formatMoney(job.budget?.max)}"),
                   ],
                 ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Date',
-                      style: TextStyle(
-                        color: AppColors.grey5,
-                        fontSize: Dimensions.font14,
-                      ),
-                    ),
-                    Text(
-                      '13 Nov 2025 - 09:30am',
-                      style: TextStyle(
-                        fontSize: Dimensions.font16,
-                        fontWeight: FontWeight.w400,
-                        color: AppColors.black,
-                      ),
-                    ),
-                  ],
+
+                SizedBox(height: Dimensions.height20),
+
+                // --- DESCRIPTION ---
+                Text(
+                  'Problem description',
+                  style: TextStyle(color: AppColors.grey5, fontSize: Dimensions.font14),
                 ),
+                SizedBox(height: Dimensions.height5),
+                Text(
+                  job.description ?? "No description provided.",
+                  style: TextStyle(fontSize: Dimensions.font16, fontWeight: FontWeight.w400, color: AppColors.black),
+                ),
+
+                SizedBox(height: Dimensions.height20),
+                Divider(color: AppColors.grey3),
+                SizedBox(height: Dimensions.height20),
+
+                // --- QUOTES LIST SECTION ---
+                Text(
+                  'QUOTES RECEIVED',
+                  style: TextStyle(
+                    fontSize: Dimensions.font15,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.color1,
+                  ),
+                ),
+                SizedBox(height: Dimensions.height20),
+
+                if (quotes.isEmpty)
+                  Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(20.0),
+                      child: Text(
+                        "Waiting for merchants to bid...",
+                        style: TextStyle(color: AppColors.grey3, fontStyle: FontStyle.italic),
+                      ),
+                    ),
+                  )
+                else
+                // Render the list of quotes
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: NeverScrollableScrollPhysics(),
+                    itemCount: quotes.length,
+                    itemBuilder: (context, index) {
+                      QuoteModel quote = quotes[index];
+                      return QuotesCard(
+                        imageAsset: 'head-icon', // Placeholder or merchant avatar
+                        title: quote.merchantName ?? "Merchant",
+                        price: formatMoney(quote.amount),
+                        location: 'Verified Merchant',
+                        distance: '', // API quote doesn't have merchant location yet
+                        timeAgo: timeAgo(quote.createdAt),
+                      );
+                    },
+                  ),
               ],
             ),
-            SizedBox(height: Dimensions.height20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Location',
-                      style: TextStyle(
-                        color: AppColors.grey5,
-                        fontSize: Dimensions.font14,
-                      ),
-                    ),
-                    Text(
-                      'Banana Island',
-                      style: TextStyle(
-                        fontSize: Dimensions.font16,
-                        fontWeight: FontWeight.w400,
-                        color: AppColors.black,
-                      ),
-                    ),
-                  ],
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Budget',
-                      style: TextStyle(
-                        color: AppColors.grey5,
-                        fontSize: Dimensions.font14,
-                      ),
-                    ),
-                    Text(
-                      'N100,000 - N150,000',
-                      style: TextStyle(
-                        fontSize: Dimensions.font16,
-                        fontWeight: FontWeight.w400,
-                        color: AppColors.black,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            SizedBox(height: Dimensions.height20),
-            Text(
-              'Problem description',
-              style: TextStyle(
-                color: AppColors.grey5,
-                fontSize: Dimensions.font14,
-              ),
-            ),
-            Text(
-              'Water is leaking from under the kitchen sink. It started after some dirt piled up and would not go down the drain. I have changed ...read more',
-              style: TextStyle(
-                fontSize: Dimensions.font16,
-                fontWeight: FontWeight.w400,
-                color: AppColors.black,
-              ),
-            ),
-            SizedBox(height: Dimensions.height20),
-            Text(
-              'QUOTES RECEIVED',
-              style: TextStyle(
-                fontSize: Dimensions.font15,
-                fontWeight: FontWeight.w600,
-                color: AppColors.color1,
-              ),
-            ),
-            SizedBox(height: Dimensions.height20),
-            QuotesCard(
-              imageAsset: 'head-icon',
-              title: 'ABC Co Plumber',
-              price: '50,000',
-              location: 'Egbeda, Lagos',
-              distance: '30KM',
-              timeAgo: '6',
-            ),
-          ],
-        ),
+          ),
+        );
+      }),
+    );
+  }
+
+  // --- HELPERS ---
+  Widget _buildDetailItem(String title, String value) {
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: TextStyle(color: AppColors.grey5, fontSize: Dimensions.font14)),
+          SizedBox(height: 2),
+          Text(
+              value,
+              style: TextStyle(fontSize: Dimensions.font16, fontWeight: FontWeight.w400, color: AppColors.black),
+              overflow: TextOverflow.ellipsis
+          ),
+        ],
       ),
+    );
+  }
+
+  Widget _buildImageSection(JobModel job) {
+    bool hasImages = job.photos != null && job.photos!.isNotEmpty;
+
+    return Column(
+      children: [
+        Container(
+          height: Dimensions.height20 * 10,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: AppColors.grey2,
+            borderRadius: BorderRadius.circular(Dimensions.radius20),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(Dimensions.radius20),
+            child: hasImages
+                ? PageView.builder(
+              itemCount: job.photos!.length,
+              onPageChanged: (index) {
+                setState(() {
+                  _currentImageIndex = index;
+                });
+              },
+              // Inside _buildImageSection
+              itemBuilder: (context, index) {
+                String imgString = job.photos![index];
+
+                // 1. Handle Base64 (Optimization for local preview, if used)
+                if (imgString.startsWith('data:image')) {
+                  String cleanBase64 = imgString.split(',').last;
+                  return Image.memory(base64Decode(cleanBase64), fit: BoxFit.cover);
+                }
+                // 2. Handle Full URL
+                else if (imgString.startsWith('http')) {
+                  return Image.network(imgString, fit: BoxFit.cover);
+                }
+                // 3. Handle Relative Path (The Fix for your new API response)
+                else {
+                  // Prepend your Base URL
+                  String fullUrl = "${Get.find<ApiClient>().appBaseUrl}$imgString";
+                  return Image.network(fullUrl, fit: BoxFit.cover);
+                }
+              },
+            )
+                : Center(child: Image.asset(AppConstants.getGifAsset('frame'))),
+          ),
+        ),
+        if (hasImages && job.photos!.length > 1)
+          Padding(
+            padding: EdgeInsets.only(top: Dimensions.height10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(job.photos!.length, (index) {
+                return Container(
+                  margin: EdgeInsets.symmetric(horizontal: 3),
+                  height: 8,
+                  width: 8,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _currentImageIndex == index ? AppColors.color2 : AppColors.grey5,
+                  ),
+                );
+              }),
+            ),
+          ),
+      ],
     );
   }
 }

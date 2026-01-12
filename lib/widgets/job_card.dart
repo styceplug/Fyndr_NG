@@ -40,6 +40,7 @@ class JobCard extends StatelessWidget {
           vertical: Dimensions.height20,
           horizontal: Dimensions.width10,
         ),
+        margin: EdgeInsets.only(bottom: Dimensions.height15),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(Dimensions.radius20),
           border: Border.all(color: AppColors.grey2),
@@ -50,41 +51,45 @@ class JobCard extends StatelessWidget {
               children: [
                 Image.asset(
                   AppConstants.getPngAsset(imageAsset),
-                  height: Dimensions.height10 * 6,
-                  width: Dimensions.width10 * 6,
+                  height: Dimensions.height10 * 5,
+                  width: Dimensions.width10 * 5,
                 ),
                 SizedBox(width: Dimensions.width20),
                 Expanded(
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            title,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: AppColors.color1,
-                              fontWeight: FontWeight.w500,
-                              fontSize: Dimensions.font16,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${title} Service',
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                              style: TextStyle(
+                                color: AppColors.color1,
+                                fontWeight: FontWeight.w500,
+                                fontSize: Dimensions.font15,
+                              ),
                             ),
-                          ),
-                          Text(
-                            '${location}  ${distance}',
-                            style: TextStyle(
-                              color: AppColors.grey3,
-                              fontSize: Dimensions.font14,
+                            Text(
+                              '${location}  ${distance}',
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: AppColors.grey3,
+                                fontSize: Dimensions.font14,
+                              ),
                             ),
-                          ),
-                          Text(
-                            '${date}   ${dayTime}',
-                            style: TextStyle(
-                              color: AppColors.grey3,
-                              fontSize: Dimensions.font14,
+                            Text(
+                              '${date}   ${dayTime}',
+                              style: TextStyle(
+                                color: AppColors.grey3,
+                                fontSize: Dimensions.font14,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                       CustomButton(
                         text: '${quote} QUOTES',
@@ -101,7 +106,7 @@ class JobCard extends StatelessWidget {
                           color: Colors.white,
                         ),
                       ),
-                      Spacer(),
+                      SizedBox(width: Dimensions.width20),
                       Padding(
                         padding: EdgeInsets.only(top: Dimensions.height5 / 2),
                         child: Icon(
