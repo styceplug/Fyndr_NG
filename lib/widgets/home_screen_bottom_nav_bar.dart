@@ -20,7 +20,7 @@ class HomeScreenBottomNavBar extends StatelessWidget {
 
     return Obx(
           () => SizedBox(
-        height: Dimensions.height10 * 10,
+        height: Dimensions.height10 * 8.7,
         child: Stack(
           alignment: Alignment.bottomCenter,
           clipBehavior: Clip.none,
@@ -128,7 +128,7 @@ class VendorBottomNavBar extends StatelessWidget {
 
     return Obx(
           () => SizedBox(
-        height: Dimensions.height10 * 10,
+        height: Dimensions.height10 * 9,
         child: Stack(
           alignment: Alignment.bottomCenter,
           clipBehavior: Clip.none,

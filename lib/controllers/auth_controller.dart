@@ -241,5 +241,9 @@ class AuthController extends GetxController {
     update();
   }
 
+  bool isLoggedIn() {
+    return authRepo.isLoggedIn();
+  }
+
 
 }

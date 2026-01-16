@@ -8,6 +8,7 @@ class UserModel {
   UserLocation? location;
   UserPreferences? preferences;
   String? createdAt;
+  bool? hasVendorProfile;
 
   UserModel({
     this.id,
@@ -19,6 +20,7 @@ class UserModel {
     this.location,
     this.preferences,
     this.createdAt,
+    this.hasVendorProfile,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -38,6 +40,7 @@ class UserModel {
               ? UserPreferences.fromJson(json['preferences'])
               : null,
       createdAt: json['createdAt'],
+      hasVendorProfile: json['hasVendorProfile'] ?? false,
     );
   }
 
@@ -52,6 +55,7 @@ class UserModel {
       'location': location?.toJson(),
       'preferences': preferences?.toJson(),
       'createdAt': createdAt,
+      'hasVendorProfile': hasVendorProfile,
     };
   }
 

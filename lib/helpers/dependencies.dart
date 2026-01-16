@@ -2,6 +2,7 @@ import 'package:flutter/src/widgets/framework.dart';
 import 'package:fyndr_ng/controllers/app_controller.dart';
 import 'package:fyndr_ng/controllers/auth_controller.dart';
 import 'package:fyndr_ng/controllers/job_controller.dart';
+import 'package:fyndr_ng/controllers/vendor_controller.dart';
 import 'package:fyndr_ng/data/repo/app_repo.dart';
 import 'package:fyndr_ng/data/repo/auth_repo.dart';
 import 'package:fyndr_ng/data/repo/job_repo.dart';
@@ -29,9 +30,12 @@ Future<void> init() async {
   Get.lazyPut(() => ApiChecker());
 
   // repos
-  Get.lazyPut(() => AuthRepo(apiClient: Get.find()));
+  Get.lazyPut(() => AuthRepo(apiClient: Get.find(), sharedPreferences: Get.find()));
   Get.lazyPut(() => GlobalLoaderController());
-  Get.lazyPut(() => JobRepo(apiClient: Get.find(), sharedPreferences: Get.find()), fenix: true);
+  Get.lazyPut(
+    () => JobRepo(apiClient: Get.find(), sharedPreferences: Get.find()),
+    fenix: true,
+  );
   Get.lazyPut(
     () => AppRepo(apiClient: Get.find(), sharedPreferences: Get.find()),
   );
@@ -41,7 +45,8 @@ Future<void> init() async {
     () => AuthController(authRepo: Get.find(), apiClient: Get.find()),
   );
   Get.lazyPut(
-    () => JobController(jobRepo: Get.find(), apiClient: Get.find()), fenix: true
+    () => JobController(jobRepo: Get.find(), apiClient: Get.find()),
+    fenix: true,
   );
   Get.lazyPut(
     () => AppController(
@@ -50,4 +55,5 @@ Future<void> init() async {
       apiChecker: Get.find(),
     ),
   );
+  Get.lazyPut(() => VendorController());
 }

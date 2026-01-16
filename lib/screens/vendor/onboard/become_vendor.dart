@@ -266,7 +266,9 @@ class _BecomeVendorState extends State<BecomeVendor> {
               SizedBox(height: Dimensions.height20),
               CustomButton(
                 text: 'Maybe Later',
-                onPressed: () {},
+                onPressed: () {
+                  Get.back();
+                },
                 backgroundColor: AppColors.white,
                 borderColor: AppColors.color1,
               ),

@@ -20,7 +20,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
       body: Container(
         padding: EdgeInsets.fromLTRB(
           Dimensions.width20,
-          Dimensions.height10 * 8,
+          Dimensions.height50,
           Dimensions.width20,
           Dimensions.bottomNavIconHeight + Dimensions.height50,
         ),

@@ -11,6 +11,11 @@ class AppConstants {
 
 
 
+  static const String REGISTER_NEW_BUSINESS = '/api/v1/user/register/new-vendor';
+  static const String REGISTER_EXISTING_BUSINESS = '/api/v1/user/register/vendor';
+
+
+
   static const String PUT_DEVICE_TOKEN = '/api/v1/user/device-tokens';
   static const String POST_LOGIN = '/api/v1/auth/login';
   static const String POST_VERIFY_OTP = '/api/v1/auth/otp/verify';

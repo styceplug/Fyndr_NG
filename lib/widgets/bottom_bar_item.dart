@@ -43,8 +43,8 @@ class _BottomBarItemState extends State<BottomBarItem> {
             // icon
             Image.asset(
               AppConstants.getPngAsset(widget.image),
-              width: Dimensions.iconSize20,
-              height: Dimensions.iconSize20,
+              width: Dimensions.iconSize20*0.9,
+              height: Dimensions.iconSize20*0.9,
               color:
                   widget.isActive
                       ? AppColors.color2
@@ -62,7 +62,7 @@ class _BottomBarItemState extends State<BottomBarItem> {
                         ? AppColors.color2
                         : AppColors.grey4.withOpacity(0.5),
                 fontWeight: FontWeight.w400,
-                fontSize: Dimensions.font14,
+                fontSize: Dimensions.font13,
                 fontFamily: 'Poppins',
               ),
             ),

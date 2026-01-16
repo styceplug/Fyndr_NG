@@ -34,7 +34,7 @@ class _ProfileScreeState extends State<ProfileScree> {
       body: Container(
         padding: EdgeInsets.fromLTRB(
           Dimensions.width20,
-          Dimensions.height10 * 8,
+          Dimensions.height50,
           Dimensions.width20,
           Dimensions.bottomNavIconHeight + Dimensions.height50,
         ),
@@ -190,7 +190,15 @@ class _ProfileScreeState extends State<ProfileScree> {
                       'switch-icon',
                       'Switch Account',
                       onTap: () {
-                        Get.toNamed(AppRoutes.becomeVendorScreen);
+                        bool hasVendorProfile = user?.hasVendorProfile ?? false;
+                        print(hasVendorProfile);
+                        if (hasVendorProfile) {
+                          Get.toNamed(AppRoutes.switchScreen);
+                        } else {
+                          Get.toNamed(AppRoutes.becomeVendorScreen,arguments: {
+                            'isExistingUser': true
+                          });
+                        }
                       },
                     ),
                   ],

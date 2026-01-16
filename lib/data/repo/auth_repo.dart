@@ -1,13 +1,29 @@
 import 'package:fyndr_ng/data/api/api_client.dart';
 import 'package:fyndr_ng/utils/app_constants.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthRepo extends GetConnect {
 
   final ApiClient apiClient;
+  final SharedPreferences sharedPreferences;
 
-  AuthRepo({required this.apiClient});
+  AuthRepo({required this.apiClient, required this.sharedPreferences});
 
+
+  Future<Response> registerVendor(String uri, Map<String, String> data, List<MultipartBody> fileList) async {
+    FormData formData = FormData(data);
+
+    for (MultipartBody item in fileList) {
+      formData.files.add(MapEntry(
+        item.key,
+        MultipartFile(item.file.path, filename: item.file.path.split('/').last),
+      ));
+    }
+
+
+    return await apiClient.postData(uri, formData);
+  }
 
   Future<Response> switchUserRole() async {
     return await apiClient.putData(AppConstants.SWITCH_ROLE_URI, {});
@@ -67,6 +83,12 @@ class AuthRepo extends GetConnect {
     };
     return await apiClient.putData(AppConstants.PUT_UPDATE_PROFILE, body);
   }
+
+
+  bool isLoggedIn() {
+    return sharedPreferences.containsKey(AppConstants.authToken);
+  }
+
 
 
 }

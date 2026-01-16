@@ -136,7 +136,9 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
                       onTap: () {
                         setState(() => selectedOption = "offer");
                         print("Selected: Offer services");
-                        Get.toNamed(AppRoutes.vendorRegistrationScreen);
+                        Get.toNamed(AppRoutes.vendorRegistrationScreen,arguments: {
+                          'isExistingUser': false
+                        });
                       },
                       child: Container(
                         width: Dimensions.screenWidth,
