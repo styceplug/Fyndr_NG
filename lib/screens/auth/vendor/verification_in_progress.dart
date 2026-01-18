@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:fyndr_ng/controllers/auth_controller.dart';
+import 'package:fyndr_ng/helpers/global_loader_controller.dart';
 import 'package:fyndr_ng/widgets/custom_appbar.dart';
 import 'package:fyndr_ng/widgets/custom_button.dart';
 import 'package:get/get.dart';
@@ -17,6 +19,11 @@ class VerificationInProgress extends StatefulWidget {
 }
 
 class _VerificationInProgressState extends State<VerificationInProgress> {
+
+
+  GlobalLoaderController loaderController = Get.find<GlobalLoaderController>();
+  AuthController authController = Get.find<AuthController>();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -35,7 +42,6 @@ class _VerificationInProgressState extends State<VerificationInProgress> {
               height: Dimensions.height12 * 10,
             ),
             SizedBox(height: Dimensions.height10),
-
             Text(
               'Verification in progress',
               style: TextStyle(
@@ -201,7 +207,11 @@ class _VerificationInProgressState extends State<VerificationInProgress> {
               ),
             ),
             SizedBox(height: Dimensions.height20),
-            CustomButton(text: 'Check Status', onPressed: (){
+            CustomButton(text: 'Check Status', onPressed: ()async{
+              loaderController.showLoader();
+              await authController.getUserProfile();
+              loaderController.hideLoader();
+              if(authController.userModel != null)
               Get.toNamed(AppRoutes.vendorCongratulationsScreen);
             }),
             SizedBox(height: Dimensions.height20),

@@ -319,7 +319,7 @@ class _HomePageState extends State<HomePage> {
         Get.toNamed(AppRoutes.requestForm, arguments: {'serviceTitle': title});
       },
       child: Container(
-        height: Dimensions.height10 * 11,
+        height: Dimensions.height10 * 11.5,
         width: Dimensions.width10 * 12,
         decoration: BoxDecoration(
           border: Border.all(color: AppColors.color5),

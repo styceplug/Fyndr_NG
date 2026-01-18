@@ -11,17 +11,24 @@ class AuthRepo extends GetConnect {
   AuthRepo({required this.apiClient, required this.sharedPreferences});
 
 
-  Future<Response> registerVendor(String uri, Map<String, String> data, List<MultipartBody> fileList) async {
-    FormData formData = FormData(data);
+  Future<Response> registerVendor(String uri, Map<String, String> body, List<MultipartBody> fileList) async {
+    // 1. Create FormData using the text fields
+    // GetX's FormData constructor automatically handles the text fields
+    FormData formData = FormData(body);
 
+    // 2. Loop through the file list and add them to the FormData
     for (MultipartBody item in fileList) {
-      formData.files.add(MapEntry(
-        item.key,
-        MultipartFile(item.file.path, filename: item.file.path.split('/').last),
-      ));
+      if (item.file.existsSync()) {
+        // 'files' is a list of MapEntry in GetX FormData
+        formData.files.add(MapEntry(
+          item.key,
+          MultipartFile(item.file.path, filename: item.file.path.split('/').last),
+        ));
+      }
     }
 
-
+    // 3. Send using postData (which accepts dynamic body)
+    // The ApiClient will detect FormData and set Content-Type: multipart/form-data automatically
     return await apiClient.postData(uri, formData);
   }
 

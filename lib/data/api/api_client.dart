@@ -11,8 +11,6 @@ import '../../utils/app_constants.dart';
 import '../../widgets/snackbars.dart';
 import 'api_checker.dart';
 
-
-
 class ApiClient extends GetConnect implements GetxService {
   late String token;
   final String appBaseUrl;
@@ -64,35 +62,36 @@ class ApiClient extends GetConnect implements GetxService {
         Map<String, String>? headers,
       }) async {
     try {
+      // 1. Determine correct headers
+      Map<String, String> requestHeaders = headers ?? _mainHeaders ?? {};
+
+      // 2. CRITICAL FIX: If sending FormData (files), remove 'Content-Type'.
+      // The underlying client will automatically add 'multipart/form-data; boundary=...'
+      if (body is FormData) {
+        // Create a copy to avoid modifying the global _mainHeaders variable
+        requestHeaders = Map.from(requestHeaders);
+        requestHeaders.remove('Content-Type');
+      }
+
       if (kDebugMode) {
         print('POST → $appBaseUrl$uri');
-        print('HEADERS → ${headers ?? _mainHeaders}');
+        print('HEADERS → $requestHeaders');
         print('BODY → ${_formatBody(body)}');
       }
 
       Response response = await post(
         uri,
         body,
-        headers: headers ?? _mainHeaders,
+        headers: requestHeaders, // Use the fixed headers
       );
 
       if (kDebugMode) {
         print('RESPONSE → ${response.body}');
-
-        final responseSize =
-            utf8.encode(response.body.toString()).length;
-        print(
-          'Response Size: $responseSize bytes '
-              '(${(responseSize / 1024).toStringAsFixed(2)} KB)',
-        );
-      }
-      if (kDebugMode) {
+        final responseSize = utf8.encode(response.body.toString()).length;
+        print('Response Size: $responseSize bytes (${(responseSize / 1024).toStringAsFixed(2)} KB)');
         print('STATUS CODE → ${response.statusCode}');
         print('STATUS TEXT → ${response.statusText}');
-        print('BODY → ${response.body}');
-        print('BODY STRING → ${response.bodyString}');
       }
-
 
       return response;
     } catch (e, s) {
@@ -101,10 +100,7 @@ class ApiClient extends GetConnect implements GetxService {
         print('STACK → $s');
         print('ERROR → $e');
       }
-
       return Response(statusCode: 1, statusText: e.toString());
-
-
     }
   }
 
@@ -203,8 +199,6 @@ class ApiClient extends GetConnect implements GetxService {
       return Response(statusCode: 1, statusText: e.toString());
     }
   }
-
-
 
   Future<Response> deleteData(String uri, {Map<String, String>? headers}) async {
     try {

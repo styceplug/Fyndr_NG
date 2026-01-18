@@ -52,10 +52,8 @@ class VendorController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    // LOGGING INIT STATE
     print("🎬 VendorController Initialized");
 
-    // Check arguments
     if (Get.arguments != null) {
       print("📦 Arguments received: ${Get.arguments}");
       if (Get.arguments['isExistingUser'] == true) {
@@ -63,7 +61,6 @@ class VendorController extends GetxController {
       }
     }
 
-    // Check AuthController directly as a backup/verification
     try {
       bool authSaysLogged = Get.find<AuthController>().isLoggedIn();
       print("🔐 AuthController says isLoggedIn: $authSaysLogged");
@@ -73,8 +70,12 @@ class VendorController extends GetxController {
 
     print("👤 Final isExistingUser status: $isExistingUser");
   }
+  String countryCode = "+234";
 
-  // --- DEBUGGED PICK DOCUMENT ---
+  void setCountryCode(String code) {
+    countryCode = code;
+  }
+
   Future<void> pickDocument(String type) async {
     print("📸 pickDocument called for: $type");
 
@@ -114,9 +115,7 @@ class VendorController extends GetxController {
   Future<void> submitVendorRegistration() async {
     print("🚀 Submit Vendor Registration Triggered");
 
-    // 1. Validate Files
     if (businessDoc == null || ownerIdDoc == null || locationDoc == null) {
-      print("⚠️ Validation Failed: Missing documents");
       CustomSnackBar.failure(message: "Missing Documents: Please upload all required documents.");
       return;
     }
@@ -124,43 +123,40 @@ class VendorController extends GetxController {
     _isSubmitting = true;
     update();
 
-    // 2. Prepare Text Body
-    print("📝 Preparing Text Body...");
-
+    // 1. Prepare Text Data (All values must be String)
     Map<String, String> body = {
-      'businessName': businessNameController.text,
-      'businessRegNumber': businessRegController.text,
-      'businessType': businessTypeController.text,
-      'businessYearEstablished': yearEstablishedController.text,
+      'businessName': businessNameController.text.trim(),
+      'businessRegNumber': businessRegController.text.trim(),
+      'businessType': businessTypeController.text.trim(),
+      'businessYearEstablished': yearEstablishedController.text.trim(),
+      // Send location as JSON String
       'businessLocation': '{"street":"${streetController.text}","state":"${cityStateController.text}","lga":"${lgaController.text}"}',
-      'servicesOffered': selectedServices.toString(),
+      // Send services as JSON array String e.g. ["plumbing", "real-estate"]
+      'servicesOffered': _formatServicesList(selectedServices),
     };
 
-    // Add Owner info only if NEW User
+    // 2. Add Owner Info ONLY if New User
     if (!isExistingUser) {
-      print("➕ Adding Owner Info (New User Mode)");
+      // Combine dial code with phone number here if needed
+      // String fullNumber = countryCode + ownerPhoneController.text.trim();
       body.addAll({
-        'name': ownerNameController.text,
-        'number': ownerPhoneController.text,
-        'email': ownerEmailController.text,
-        'password': ownerPasswordController.text,
+        'name': ownerNameController.text.trim(),
+        'number': ownerPhoneController.text.trim(), // or fullNumber
+        'email': ownerEmailController.text.trim(),
+        'password': ownerPasswordController.text.trim(),
       });
-    } else {
-      print("ℹ️ Skipping Owner Info (Existing User Mode)");
     }
-
-    // Print the final body to check for nulls
-    print("📦 FINAL BODY: $body");
 
     try {
       String endpoint = isExistingUser
           ? AppConstants.REGISTER_EXISTING_BUSINESS
           : AppConstants.REGISTER_NEW_BUSINESS;
 
-      print("🔗 Calling Endpoint: $endpoint");
-      print("📂 Uploading ${3} files...");
+      print("🔗 Endpoint: $endpoint");
+      print("📦 Text Fields: $body");
 
-      await Get.find<AuthRepo>().registerVendor(
+      // 3. Call Repo
+      Response response = await Get.find<AuthRepo>().registerVendor(
           endpoint,
           body,
           [
@@ -170,16 +166,28 @@ class VendorController extends GetxController {
           ]
       );
 
-      print("✅ API Call Successful");
-      Get.offAllNamed(AppRoutes.vendorVerificationInProgressScreen);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print("✅ Success: ${response.body}");
+        Get.offAllNamed(AppRoutes.vendorVerificationInProgressScreen);
+      } else {
+        print("❌ Error: ${response.statusCode} - ${response.body}");
+        // Extract error message safely
+        String errorMsg = response.body['message'] ?? response.body['error'] ?? "Registration failed";
+        CustomSnackBar.failure(message: errorMsg);
+      }
 
     } catch (e) {
-      print("🔥 CRASH during API Call: $e");
-      CustomSnackBar.failure(message: "Error : Registration failed. Try again.");
+      print("🔥 Exception: $e");
+      CustomSnackBar.failure(message: "Connection error. Please try again.");
     } finally {
       _isSubmitting = false;
       update();
     }
+  }
+
+  String _formatServicesList(List<String> services) {
+    if (services.isEmpty) return "[]";
+    return '["${services.join('","')}"]';
   }
 
   void toggleService(String serviceKey) {

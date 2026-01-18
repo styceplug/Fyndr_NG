@@ -159,6 +159,7 @@ class _BusinessRegistrationState extends State<BusinessRegistration> {
                               onChanged: (country) {
                                 setState(() {
                                   _dialCode = country.dialCode!;
+                                  ctrl.setCountryCode(country.dialCode!);
                                 });
                               },
                               initialSelection: 'NG',
@@ -340,6 +341,8 @@ class _BusinessRegistrationState extends State<BusinessRegistration> {
             selectedState = newState;
             selectedLga = newLga;
             locationDisplayController.text = "$newState, $newLga";
+            controller.cityStateController.text = newState;
+            controller.lgaController.text = newLga;
           });
         },
       ),
@@ -357,7 +360,7 @@ class _BusinessRegistrationState extends State<BusinessRegistration> {
       },
       borderRadius: BorderRadius.circular(Dimensions.radius10),
       child: Container(
-        height: Dimensions.height10 * 11,
+        height: Dimensions.height10 * 12,
         width: Dimensions.width10 * 12,
         decoration: BoxDecoration(
           color: isSelected ? AppColors.color1.withOpacity(0.1) : Colors.transparent,
@@ -372,8 +375,7 @@ class _BusinessRegistrationState extends State<BusinessRegistration> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Ensure you have 'real-estate.png', 'plumbing.png', 'home-maintenance.png'
-            // registered in AppConstants
+
             Image.asset(
                 AppConstants.getPngAsset(serviceKey),
                 height: 40,
