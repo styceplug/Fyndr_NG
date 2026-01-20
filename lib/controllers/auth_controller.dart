@@ -111,28 +111,59 @@ class AuthController extends GetxController {
     loader.showLoader();
     update();
 
-    Response response = await authRepo.login(number, password);
+    try {
+      final response = await authRepo.login(number, password);
 
-    if (response.statusCode == 200) {
-      var responseData = response.body['data'];
-      _userModel = UserModel.fromJson(responseData['user']);
-      String token = responseData['token'];
+      // ✅ SUCCESS
+      if (response.statusCode == 200) {
+        final data = response.body['data'];
+        final userJson = data['user'];
+        final token = data['token'];
 
-      print("Login Success: User ${_userModel!.name} logged in.");
-      print(token);
-      apiClient.updateHeader(token);
-      getUserProfile();
-    } else if (response.statusCode == 423) {
-      print("Error: ${response.body['error']}");
+        _userModel = UserModel.fromJson(userJson);
+        apiClient.updateHeader(token);
 
-      Get.toNamed(AppRoutes.phoneVerificationScreen);
-    } else {
-      print("Error: ${response.body['error']}");
-      CustomSnackBar.failure(message: response.body['error'].toString());
+        // Save token if you do persistent login, then:
+        await getUserProfile();
+
+        // Role-based route
+        _routeByRole(_userModel?.currentRole);
+        return;
+      }
+
+      // ✅ OTP REQUIRED (inactive user, OTP sent)
+      final code = response.body['code'];
+      final error = response.body['error']?.toString() ?? "Login failed";
+
+      if (code == "INACTIVE_USER") {
+
+        Get.toNamed(
+          AppRoutes.phoneVerificationScreen,
+          arguments: {
+            "number": number,
+          },
+        );
+        return;
+      }
+
+
+      CustomSnackBar.failure(message: error);
+    } catch (e) {
+      CustomSnackBar.failure(message: "Connection error. Please try again.");
+    } finally {
+      loader.hideLoader();
+      update();
     }
+  }
 
-    loader.hideLoader();
-    update();
+  void _routeByRole(String? role) {
+    final r = (role ?? "customer").toLowerCase();
+
+    if (r == "vendor") {
+      Get.offAllNamed(AppRoutes.vendorHomeScreen);
+    } else {
+      Get.offAllNamed(AppRoutes.homeScreen);
+    }
   }
 
   Future<void> registerCustomer(

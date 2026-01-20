@@ -4,6 +4,7 @@ import 'package:fyndr_ng/widgets/snackbars.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'dart:convert';
 
 import '../data/api/api_client.dart';
 import '../data/repo/auth_repo.dart';
@@ -29,6 +30,19 @@ class VendorController extends GetxController {
   final cityStateController = TextEditingController();
   final lgaController = TextEditingController();
   Map<String, dynamic>? rawLocationData;
+  String? selectedSubCategory;
+
+  final List<String> maintenanceSubCategories = [
+    'Plumbing',
+    'Painting',
+    'Carpentry',
+    'Electrical'
+  ];
+
+  void setSubCategory(String? value) {
+    selectedSubCategory = value;
+    update();
+  }
 
 
   // --- FILE STORAGE ---
@@ -97,6 +111,7 @@ class VendorController extends GetxController {
         double sizeInMb = sizeInBytes / (1024 * 1024);
         print("📁 File size: ${sizeInMb.toStringAsFixed(2)} MB");
 
+
         if (type == 'business') businessDoc = file;
         else if (type == 'owner') ownerIdDoc = file;
         else if (type == 'location') locationDoc = file;
@@ -112,58 +127,81 @@ class VendorController extends GetxController {
     }
   }
 
+
   Future<void> submitVendorRegistration() async {
     print("🚀 Submit Vendor Registration Triggered");
 
+    // 0) Validate docs
     if (businessDoc == null || ownerIdDoc == null || locationDoc == null) {
       CustomSnackBar.failure(message: "Missing Documents: Please upload all required documents.");
       return;
     }
 
+
+
+    // 2) Normalize phone number (E.164)
+    String rawPhone = ownerPhoneController.text.trim().replaceAll(' ', '');
+    if (rawPhone.startsWith('0')) rawPhone = rawPhone.substring(1);
+
+    // countryCode should look like +234
+    String fullNumber = "$countryCode$rawPhone";
+    if (!fullNumber.startsWith('+')) fullNumber = "+$fullNumber";
+
+    // 3) Normalize services
+    final normalizedServices = selectedServices.map((s) {
+      if (s == "maintenance") return "home-maintenance";
+      return s;
+    }).toSet().toList();
+
+    // 4) Build location JSON (GeoJSON-ish)
+    final locationJson = {
+      "street": streetController.text.trim(),
+      "state": cityStateController.text.trim(),
+      "lga": lgaController.text.trim(),
+      "type": "Point",
+      "coordinates": [0, 0], // IMPORTANT: [longitude, latitude]
+    };
+
     _isSubmitting = true;
     update();
 
-    // 1. Prepare Text Data (All values must be String)
-    Map<String, String> body = {
+    // 5) Prepare body
+    final Map<String, String> body = {
       'businessName': businessNameController.text.trim(),
       'businessRegNumber': businessRegController.text.trim(),
       'businessType': businessTypeController.text.trim(),
       'businessYearEstablished': yearEstablishedController.text.trim(),
-      // Send location as JSON String
-      'businessLocation': '{"street":"${streetController.text}","state":"${cityStateController.text}","lga":"${lgaController.text}"}',
-      // Send services as JSON array String e.g. ["plumbing", "real-estate"]
-      'servicesOffered': _formatServicesList(selectedServices),
+      'businessLocation': jsonEncode(locationJson),
+      'servicesOffered': _formatServicesList(normalizedServices),
+      'subCategory': (selectedSubCategory ?? '').toLowerCase(), // optional
     };
 
-    // 2. Add Owner Info ONLY if New User
+    // 6) Owner info only if new user
     if (!isExistingUser) {
-      // Combine dial code with phone number here if needed
-      // String fullNumber = countryCode + ownerPhoneController.text.trim();
       body.addAll({
         'name': ownerNameController.text.trim(),
-        'number': ownerPhoneController.text.trim(), // or fullNumber
+        'number': fullNumber,
         'email': ownerEmailController.text.trim(),
         'password': ownerPasswordController.text.trim(),
       });
     }
 
     try {
-      String endpoint = isExistingUser
+      final endpoint = isExistingUser
           ? AppConstants.REGISTER_EXISTING_BUSINESS
           : AppConstants.REGISTER_NEW_BUSINESS;
 
       print("🔗 Endpoint: $endpoint");
       print("📦 Text Fields: $body");
 
-      // 3. Call Repo
-      Response response = await Get.find<AuthRepo>().registerVendor(
-          endpoint,
-          body,
-          [
-            MultipartBody('businessDocument', businessDoc!),
-            MultipartBody('ownerIdentification', ownerIdDoc!),
-            MultipartBody('locationDocument', locationDoc!),
-          ]
+      final response = await Get.find<AuthRepo>().registerVendor(
+        endpoint,
+        body,
+        [
+          MultipartBody('businessDocument', businessDoc!),
+          MultipartBody('ownerIdentification', ownerIdDoc!),
+          MultipartBody('locationDocument', locationDoc!),
+        ],
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -171,11 +209,11 @@ class VendorController extends GetxController {
         Get.offAllNamed(AppRoutes.vendorVerificationInProgressScreen);
       } else {
         print("❌ Error: ${response.statusCode} - ${response.body}");
-        // Extract error message safely
-        String errorMsg = response.body['message'] ?? response.body['error'] ?? "Registration failed";
+        final errorMsg = response.body['message'] ??
+            response.body['error'] ??
+            "Registration failed";
         CustomSnackBar.failure(message: errorMsg);
       }
-
     } catch (e) {
       print("🔥 Exception: $e");
       CustomSnackBar.failure(message: "Connection error. Please try again.");
@@ -193,10 +231,14 @@ class VendorController extends GetxController {
   void toggleService(String serviceKey) {
     if (selectedServices.contains(serviceKey)) {
       selectedServices.remove(serviceKey);
+
+      if (serviceKey == 'home-maintenance') {
+        selectedSubCategory = null;
+      }
     } else {
       selectedServices.add(serviceKey);
     }
-    update(); // Refresh UI to show green borders
+    update();
   }
 
   bool validateForm() {
@@ -223,6 +265,10 @@ class VendorController extends GetxController {
         CustomSnackBar.failure(message: "Error: Please fill all owner details");
         return false;
       }
+    }
+    if (selectedServices.contains('home-maintenance') && selectedSubCategory == null) {
+      CustomSnackBar.failure(message: "Error: Please select a maintenance specialty");
+      return false;
     }
 
     return true;

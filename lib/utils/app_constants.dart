@@ -34,6 +34,9 @@ class AppConstants {
   static const String SWITCH_ROLE_URI = '/api/v1/user/role/switch';
 
 
+  static const String GET_MERCHANT_LEADS = '/api/v1/job/merchant';
+
+
 
   static String getPngAsset(String image) {
     return 'assets/images/$image.png';

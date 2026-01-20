@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
 
+import '../../../controllers/auth_controller.dart';
+import '../../../model/user_model.dart';
 import '../../../routes/routes.dart';
 import '../../../utils/app_constants.dart';
 import '../../../utils/colors.dart';
@@ -15,6 +17,8 @@ class VendorProfileScreen extends StatefulWidget {
 }
 
 class _VendorProfileScreenState extends State<VendorProfileScreen> {
+  AuthController authController = Get.find<AuthController>();
+  UserModel? get user => authController.userModel;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -70,7 +74,7 @@ class _VendorProfileScreenState extends State<VendorProfileScreen> {
                 ),
               ),
               SizedBox(height: Dimensions.height5),
-              Text('John Doe', style: TextStyle(fontSize: Dimensions.font20)),
+              Text(user?.name ?? '', style: TextStyle(fontSize: Dimensions.font20)),
               SizedBox(height: Dimensions.height5),
               IntrinsicWidth(
                 child: Container(
@@ -91,7 +95,7 @@ class _VendorProfileScreenState extends State<VendorProfileScreen> {
                       ),
                       SizedBox(width: Dimensions.width10),
                       Text(
-                        'Lekki, Lagos',
+                        '${user?.businessDetails?.businessLocation?.state}, ${user?.businessDetails?.businessLocation?.lga}',
                         style: TextStyle(
                           fontSize: Dimensions.font12 * 0.9,
                           color: Colors.white,
@@ -134,9 +138,9 @@ class _VendorProfileScreenState extends State<VendorProfileScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    DataCard('156', 'Jobs Done'),
-                    DataCard('98%', 'On-time'),
-                    DataCard('2 yrs', 'Member'),
+                    DataCard('0', 'Jobs Done'),
+                    DataCard('0', 'On-time'),
+                    DataCard(user?.getAccountAge(user?.createdAt) ?? '', 'Member'),
                   ],
                 ),
               ),

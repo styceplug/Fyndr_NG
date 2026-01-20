@@ -11,6 +11,10 @@ class JobRepo {
   JobRepo({required this.apiClient, required this.sharedPreferences});
 
 
+  Future<Response> getMerchantLeads(int page, {int limit = 25}) async {
+    return await apiClient.getData('${AppConstants.GET_MERCHANT_LEADS}?page=$page&limit=$limit');
+  }
+
   Future<Response> getJobDetails(String jobId) async {
     return await apiClient.getData(AppConstants.GET_JOB_DETAILS(jobId));
   }

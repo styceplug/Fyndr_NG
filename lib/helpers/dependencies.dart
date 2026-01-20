@@ -2,6 +2,7 @@ import 'package:flutter/src/widgets/framework.dart';
 import 'package:fyndr_ng/controllers/app_controller.dart';
 import 'package:fyndr_ng/controllers/auth_controller.dart';
 import 'package:fyndr_ng/controllers/job_controller.dart';
+import 'package:fyndr_ng/controllers/leads_controller.dart';
 import 'package:fyndr_ng/controllers/vendor_controller.dart';
 import 'package:fyndr_ng/data/repo/app_repo.dart';
 import 'package:fyndr_ng/data/repo/auth_repo.dart';
@@ -56,4 +57,5 @@ Future<void> init() async {
     ),
   );
   Get.lazyPut(() => VendorController());
+  Get.lazyPut(() => LeadController(jobRepo: Get.find()));
 }

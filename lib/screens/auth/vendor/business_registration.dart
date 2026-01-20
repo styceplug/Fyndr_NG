@@ -320,10 +320,61 @@ class _BusinessRegistrationState extends State<BusinessRegistration> {
                       SizedBox(width: 10),
                       _buildServiceCard(ctrl, 'cleaning', 'Cleaning Service'),
                       SizedBox(width: 10),
-                      _buildServiceCard(ctrl, 'maintenance', 'Home Maintenance'),
+                      _buildServiceCard(ctrl, 'home-maintenance', 'Home Maintenance'),
                     ],
                   ),
                 ),
+
+                if (ctrl.selectedServices.contains('home-maintenance')) ...[
+                  SizedBox(height: Dimensions.height20),
+                  Align(
+                    alignment: AlignmentGeometry.centerLeft,
+                    child: Text(
+                      'Select Maintenance Specialty',
+                      style: TextStyle(
+                        fontSize: Dimensions.font18,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.black,
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: Dimensions.height10),
+
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: Dimensions.width15),
+                    decoration: BoxDecoration(
+                      color: AppColors.grey3.withOpacity(0.3), // Matches your CustomTextField
+                      borderRadius: BorderRadius.circular(Dimensions.radius10), // Matches your dimensions
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: ctrl.selectedSubCategory,
+                        hint: Text(
+                          "Select specialty",
+                          style: TextStyle(color: AppColors.grey4, fontSize: Dimensions.font14),
+                        ),
+                        isExpanded: true,
+                        icon: Icon(Icons.keyboard_arrow_down, color: AppColors.grey4),
+                        dropdownColor: Colors.white, // Or your app background color
+                        items: ctrl.maintenanceSubCategories.map((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(
+                              value,
+                              style: TextStyle(
+                                fontSize: Dimensions.font14,
+                                color: AppColors.black,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (newValue) {
+                          ctrl.setSubCategory(newValue);
+                        },
+                      ),
+                    ),
+                  ),
+                ],
 
                 // --- BUSINESS LOCATION ---
                 SizedBox(height: Dimensions.height20),

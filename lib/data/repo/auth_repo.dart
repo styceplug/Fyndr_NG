@@ -2,6 +2,8 @@ import 'package:fyndr_ng/data/api/api_client.dart';
 import 'package:fyndr_ng/utils/app_constants.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:mime/mime.dart';
+import 'package:path/path.dart' as p;
 
 class AuthRepo extends GetConnect {
 
@@ -11,26 +13,38 @@ class AuthRepo extends GetConnect {
   AuthRepo({required this.apiClient, required this.sharedPreferences});
 
 
-  Future<Response> registerVendor(String uri, Map<String, String> body, List<MultipartBody> fileList) async {
-    // 1. Create FormData using the text fields
-    // GetX's FormData constructor automatically handles the text fields
-    FormData formData = FormData(body);
 
-    // 2. Loop through the file list and add them to the FormData
-    for (MultipartBody item in fileList) {
-      if (item.file.existsSync()) {
-        // 'files' is a list of MapEntry in GetX FormData
-        formData.files.add(MapEntry(
+  Future<Response> registerVendor(
+      String uri,
+      Map<String, String> body,
+      List<MultipartBody> fileList,
+      ) async {
+    final formData = FormData(body);
+
+    for (final item in fileList) {
+      if (!item.file.existsSync()) continue;
+
+      final filePath = item.file.path;
+      final fileName = p.basename(filePath);
+
+      // Detect MIME type
+      final mimeType = lookupMimeType(filePath) ?? 'image/jpeg';
+
+      formData.files.add(
+        MapEntry(
           item.key,
-          MultipartFile(item.file.path, filename: item.file.path.split('/').last),
-        ));
-      }
+          MultipartFile(
+            filePath,
+            filename: fileName,
+            contentType: mimeType, // ✅ STRING (this fixes 415)
+          ),
+        ),
+      );
     }
 
-    // 3. Send using postData (which accepts dynamic body)
-    // The ApiClient will detect FormData and set Content-Type: multipart/form-data automatically
     return await apiClient.postData(uri, formData);
   }
+
 
   Future<Response> switchUserRole() async {
     return await apiClient.putData(AppConstants.SWITCH_ROLE_URI, {});

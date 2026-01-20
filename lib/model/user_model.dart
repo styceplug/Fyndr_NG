@@ -5,10 +5,22 @@ class UserModel {
   String? email;
   String? currentRole;
   bool? isActive;
+
+  // --- NEW STATUS FLAGS ---
+  bool? isEmailValidated;
+  bool? isProfileVerified;
+  bool? isBusinessVerified;
+  bool? isAvailable;
+  bool? isFyndrRecommended;
+
   UserLocation? location;
   UserPreferences? preferences;
   String? createdAt;
   bool? hasVendorProfile;
+
+  // --- NEW NESTED OBJECTS ---
+  BusinessDetails? businessDetails;
+  BusinessDocs? businessDocs;
 
   UserModel({
     this.id,
@@ -17,10 +29,17 @@ class UserModel {
     this.email,
     this.currentRole,
     this.isActive,
+    this.isEmailValidated,
+    this.isProfileVerified,
+    this.isBusinessVerified,
+    this.isAvailable,
+    this.isFyndrRecommended,
     this.location,
     this.preferences,
     this.createdAt,
     this.hasVendorProfile,
+    this.businessDetails,
+    this.businessDocs,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -31,16 +50,32 @@ class UserModel {
       email: json['email'],
       currentRole: json['currentRole'],
       isActive: json['isActive'],
-      location:
-          json['location'] != null
-              ? UserLocation.fromJson(json['location'])
-              : null,
-      preferences:
-          json['preferences'] != null
-              ? UserPreferences.fromJson(json['preferences'])
-              : null,
+
+      // Parse new flags (using default false just in case)
+      isEmailValidated: json['isEmailValidated'] ?? false,
+      isProfileVerified: json['isProfileVerified'] ?? false,
+      isBusinessVerified: json['isBusinessVerified'] ?? false,
+      isAvailable: json['isAvailable'] ?? false,
+      isFyndrRecommended: json['isFyndrRecommended'] ?? false,
+
+      location: json['location'] != null
+          ? UserLocation.fromJson(json['location'])
+          : null,
+
+      preferences: json['preferences'] != null
+          ? UserPreferences.fromJson(json['preferences'])
+          : null,
+
       createdAt: json['createdAt'],
       hasVendorProfile: json['hasVendorProfile'] ?? false,
+
+      // Parse new objects
+      businessDetails: json['businessDetails'] != null
+          ? BusinessDetails.fromJson(json['businessDetails'])
+          : null,
+      businessDocs: json['businessDocs'] != null
+          ? BusinessDocs.fromJson(json['businessDocs'])
+          : null,
     );
   }
 
@@ -52,10 +87,17 @@ class UserModel {
       'email': email,
       'currentRole': currentRole,
       'isActive': isActive,
+      'isEmailValidated': isEmailValidated,
+      'isProfileVerified': isProfileVerified,
+      'isBusinessVerified': isBusinessVerified,
+      'isAvailable': isAvailable,
+      'isFyndrRecommended': isFyndrRecommended,
       'location': location?.toJson(),
       'preferences': preferences?.toJson(),
       'createdAt': createdAt,
       'hasVendorProfile': hasVendorProfile,
+      'businessDetails': businessDetails?.toJson(),
+      'businessDocs': businessDocs?.toJson(),
     };
   }
 
@@ -68,6 +110,8 @@ class UserModel {
 
     return hasName && hasEmail && hasLocation;
   }
+
+
 
   String getAccountAge(String? dateString) {
     if (dateString == null) return "0 days";
@@ -86,6 +130,87 @@ class UserModel {
       return "${diff.inDays} ${diff.inDays == 1 ? 'day' : 'days'}";
     }
   }
+
+}
+
+class BusinessDetails {
+  UserLocation? businessLocation;
+  String? businessName;
+  String? businessRegNumber;
+  String? businessWhatsappContact;
+  String? businessType;
+  String? businessYearEstablished;
+  List<String>? servicesOffered;
+  String? subCategory;
+
+  BusinessDetails({
+    this.businessLocation,
+    this.businessName,
+    this.businessRegNumber,
+    this.businessWhatsappContact,
+    this.businessType,
+    this.businessYearEstablished,
+    this.servicesOffered,
+    this.subCategory,
+  });
+
+  factory BusinessDetails.fromJson(Map<String, dynamic> json) {
+    return BusinessDetails(
+      businessLocation: json['businessLocation'] != null
+          ? UserLocation.fromJson(json['businessLocation'])
+          : null,
+      businessName: json['businessName'],
+      businessRegNumber: json['businessRegNumber'],
+      businessWhatsappContact: json['businessWhatsappContact'],
+      businessType: json['businessType'],
+      businessYearEstablished: json['businessYearEstablished'],
+      servicesOffered: json['servicesOffered'] != null
+          ? List<String>.from(json['servicesOffered'])
+          : [],
+      subCategory: json['subCategory'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'businessLocation': businessLocation?.toJson(),
+      'businessName': businessName,
+      'businessRegNumber': businessRegNumber,
+      'businessWhatsappContact': businessWhatsappContact,
+      'businessType': businessType,
+      'businessYearEstablished': businessYearEstablished,
+      'servicesOffered': servicesOffered,
+      'subCategory': subCategory,
+    };
+  }
+}
+
+class BusinessDocs {
+  String? businessDocument;
+  String? businessOwnerId;
+  String? businessLocationDocument;
+
+  BusinessDocs({
+    this.businessDocument,
+    this.businessOwnerId,
+    this.businessLocationDocument,
+  });
+
+  factory BusinessDocs.fromJson(Map<String, dynamic> json) {
+    return BusinessDocs(
+      businessDocument: json['businessDocument'],
+      businessOwnerId: json['businessOwnerId'],
+      businessLocationDocument: json['businessLocationDocument'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'businessDocument': businessDocument,
+      'businessOwnerId': businessOwnerId,
+      'businessLocationDocument': businessLocationDocument,
+    };
+  }
 }
 
 class UserLocation {
@@ -99,11 +224,9 @@ class UserLocation {
     return UserLocation(
       state: json['state'],
       lga: json['lga'],
-
-      coordinates:
-          (json['coordinates'] as List?)
-              ?.map((e) => (e as num).toDouble())
-              .toList(),
+      coordinates: (json['coordinates'] as List?)
+          ?.map((e) => (e as num).toDouble())
+          .toList(),
     );
   }
 
@@ -119,10 +242,9 @@ class UserPreferences {
 
   factory UserPreferences.fromJson(Map<String, dynamic> json) {
     return UserPreferences(
-      notifications:
-          json['notifications'] != null
-              ? Notifications.fromJson(json['notifications'])
-              : null,
+      notifications: json['notifications'] != null
+          ? Notifications.fromJson(json['notifications'])
+          : null,
     );
   }
 
