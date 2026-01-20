@@ -24,18 +24,67 @@ class _BusinessRegistrationState extends State<BusinessRegistration> {
   String? selectedState;
   String? selectedLga;
   String _dialCode = "+234";
+  bool isPassHidden = true;
+  bool hasMinLength = false;
+  bool hasUppercase = false;
+  bool hasNumber = false;
+  String? passErrorText;
+  String passwordStrengthText = "";
+  static final RegExp _specialCharRegex = RegExp(r'[!@#$%^&*(),.?":{}|<>]');
 
   late TextEditingController locationDisplayController;
+
+
+  void _onPasswordChanged() {
+    final value = controller.ownerPasswordController.text;
+
+    setState(() {
+      hasMinLength = value.length >= 8;
+      hasUppercase = value.contains(RegExp(r'[A-Z]'));
+      hasNumber = value.contains(RegExp(r'[0-9]'));
+
+      if (passErrorText != null) passErrorText = null;
+    });
+
+    _calculatePasswordStrength(value);
+  }
+
+  String? _validatePasswordLogic(String value) {
+    if (value.isEmpty) return "Password is required";
+    if (!hasMinLength) return "Minimum of 8 characters required";
+    if (!hasUppercase) return "Must contain at least one capital letter";
+    if (!hasNumber) return "Must contain at least one number";
+    return null;
+  }
+
+  void _calculatePasswordStrength(String value) {
+    // Only calculate strength if basic requirements are met
+    if (_validatePasswordLogic(value) != null) {
+      if (passwordStrengthText.isNotEmpty) setState(() => passwordStrengthText = "");
+      return;
+    }
+
+    int score = 0;
+    if (value.length >= 12) score++;
+    if (value.contains(_specialCharRegex)) score++;
+
+    final newStrength = (score == 0) ? "Moderate password" : "Strong password";
+    if (passwordStrengthText != newStrength) {
+      setState(() => passwordStrengthText = newStrength);
+    }
+  }
 
 
   @override
   void initState() {
     super.initState();
     locationDisplayController = TextEditingController();
+    controller.ownerPasswordController.addListener(_onPasswordChanged);
   }
 
   @override
   void dispose() {
+    controller.ownerPasswordController.removeListener(_onPasswordChanged);
     locationDisplayController.dispose();
     super.dispose();
   }
@@ -214,12 +263,37 @@ class _BusinessRegistrationState extends State<BusinessRegistration> {
                   ),
                   SizedBox(height: Dimensions.height20),
                   CustomTextField(
-                    controller: ctrl.ownerPasswordController,
-                    hintText: 'Password',
                     maxLines: 1,
-                    obscureText: true,
-                    fillColor: AppColors.grey3.withOpacity(0.3),
+                    controller: ctrl.ownerPasswordController,
+                    obscureText: isPassHidden,
+                    hintText: 'Password',
+                    prefixIcon: _buildIconPrefix('lock-icon'),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        isPassHidden ? Icons.visibility_off : Icons.visibility,
+                        color: AppColors.grey4,
+                      ),
+                      onPressed: () => setState(() => isPassHidden = !isPassHidden),
+                    ),
                   ),
+
+                  // --- PASSWORD FEEDBACK SECTION ---
+                  if (ctrl.ownerPasswordController.text.isNotEmpty) ...[
+                    Padding(
+                      padding: EdgeInsets.only(top: 10, left: Dimensions.width15),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _PasswordCheckItem(label: "At least 8 characters", isValid: hasMinLength),
+                          _PasswordCheckItem(label: "One capital letter (A-Z)", isValid: hasUppercase),
+                          _PasswordCheckItem(label: "One number (0-9)", isValid: hasNumber),
+                        ],
+                      ),
+                    ),
+
+                    if (passErrorText != null) _buildErrorText(passErrorText!),
+
+                  ],
                 ],
 
                 // --- SERVICES OFFERED ---
@@ -399,4 +473,63 @@ class _BusinessRegistrationState extends State<BusinessRegistration> {
     );
   }
 
+
+  Widget _buildIconPrefix(String assetName) {
+    return Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: Dimensions.width15,
+        vertical: Dimensions.height10,
+      ),
+      child: Image.asset(
+        AppConstants.getPngAsset(assetName),
+        height: Dimensions.height20,
+      ),
+    );
+  }
+
+  Widget _buildErrorText(String error) {
+    return Padding(
+      padding: EdgeInsets.only(top: 6, left: Dimensions.width15),
+      child: Text(
+        error,
+        style: TextStyle(color: Colors.red, fontSize: Dimensions.font12),
+      ),
+    );
+  }
+
+}
+
+class _PasswordCheckItem extends StatelessWidget {
+  final String label;
+  final bool isValid;
+
+  const _PasswordCheckItem({
+    Key? key,
+    required this.label,
+    required this.isValid,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        children: [
+          Icon(
+            isValid ? Icons.check_circle : Icons.radio_button_unchecked,
+            size: 16,
+            color: isValid ? Colors.green : Colors.grey,
+          ),
+          SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: Dimensions.font12,
+              color: isValid ? Colors.green : Colors.grey,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
