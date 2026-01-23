@@ -272,7 +272,7 @@ class _HomePageState extends State<HomePage> {
                     children: [
                       ServiceCard('real-estate', 'Real Estate'),
                       ServiceCard('cleaning', 'Cleaning Service'),
-                      ServiceCard('maintenance', 'Home Maintenance'),
+                      ServiceCard('home-maintenance', 'Home Maintenance'),
                     ],
                   ),
                 ],

@@ -57,5 +57,5 @@ Future<void> init() async {
     ),
   );
   Get.lazyPut(() => VendorController());
-  Get.lazyPut(() => LeadController(jobRepo: Get.find()));
+  Get.lazyPut(() => LeadController(jobRepo: Get.find()),fenix: true);
 }

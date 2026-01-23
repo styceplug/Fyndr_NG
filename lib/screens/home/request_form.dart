@@ -9,6 +9,7 @@ import 'package:fyndr_ng/utils/dimensions.dart';
 import 'package:fyndr_ng/widgets/custom_appbar.dart';
 import 'package:fyndr_ng/widgets/custom_button.dart';
 import 'package:fyndr_ng/widgets/custom_textfield.dart';
+import 'package:fyndr_ng/widgets/snackbars.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
@@ -67,6 +68,15 @@ class _RequestFormState extends State<RequestForm> {
     'DESCRIPTION'
   ];
   final GlobalLoaderController loader = GlobalLoaderController();
+  String? _selectedSubCategory;
+  final List<String> _subCategories = [
+    'Plumbing',
+    'Painting',
+    'Carpentry',
+    'Electrical'
+  ];
+  final ImagePicker _picker = ImagePicker();
+  List<XFile> _selectedImages = [];
 
 
 
@@ -106,7 +116,6 @@ class _RequestFormState extends State<RequestForm> {
     super.dispose();
   }
 
-  // --- NAVIGATION LOGIC ---
   void _nextStep() {
     setState(() {
       if (_currentStep < _stages.length - 1) {
@@ -127,7 +136,6 @@ class _RequestFormState extends State<RequestForm> {
     });
   }
 
-  // --- LOCATION LOGIC ---
   Future<void> getCurrentLocation() async {
     print("📍 START: getCurrentLocation called");
     loader.showLoader();
@@ -139,53 +147,81 @@ class _RequestFormState extends State<RequestForm> {
         if (permission == LocationPermission.denied) return;
       }
 
+      // 1. THIS GETS THE EXACT COORDINATES
       Position position = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high);
 
-      // Store Raw Coordinates
+      // Store Raw Coordinates in your variables
       _latitude = position.latitude;
       _longitude = position.longitude;
 
-      // Geocoding
+      // 👇 ADD THIS LINE TO SEE THE NUMBERS IN CONSOLE
+      print("🌎 GPS Coordinates: Lat: $_latitude, Lng: $_longitude");
+
+      // 2. Geocoding (Trying to find a name for those coordinates)
       try {
         List<Placemark> placemarks = await placemarkFromCoordinates(
             position.latitude, position.longitude);
+
         if (placemarks.isNotEmpty) {
           Placemark place = placemarks[0];
+          print("🔍 Raw Placemark: ${place.toJson()}");
 
-          // Store Raw Address Data
-          _detectedStreet = place.street ?? place.name;
-          _detectedCity =
-              place.subAdministrativeArea ?? place.locality; // Often LGA
+          // Logic to build the best possible address string
+          String streetPart = "";
+          if (place.thoroughfare != null && place.thoroughfare!.isNotEmpty) {
+            streetPart = "${place.subThoroughfare ?? ''} ${place.thoroughfare}".trim();
+          } else {
+            // Fallback if map data has no street name
+            streetPart = place.name ?? "Unnamed Street";
+          }
+
+          String cityPart = [
+            place.subLocality,
+            place.locality ?? place.subAdministrativeArea
+          ].where((e) => e != null && e.isNotEmpty).toSet().join(", ");
+
+          _detectedStreet = streetPart;
+          _detectedCity = cityPart;
           _detectedState = place.administrativeArea;
 
-          // Update Controller for UI
-          String address = "${_detectedStreet}, ${_detectedCity}, ${_detectedState}";
-          jobController.locationController.text = address;
+          // Construct Final String
+          String fullAddress = [
+            _detectedStreet,
+            _detectedCity,
+            _detectedState
+          ].where((e) => e != null && e.isNotEmpty).join(", ");
+
+          // Update UI
+          jobController.locationController.text = fullAddress;
+          print("✅ DETECTED ADDRESS: $fullAddress");
         }
       } catch (e) {
-        jobController.locationController.text =
-        "${position.latitude}, ${position.longitude}";
+        // If address lookup fails, we still have coordinates!
+        print("⚠️ Address lookup failed, using coordinates");
+        jobController.locationController.text = "${_latitude}, ${_longitude}";
       }
     } catch (e) {
-      print("❌ ERROR in getCurrentLocation: $e");
+      print("❌ ERROR: $e");
     } finally {
       loader.hideLoader();
     }
   }
 
-  // --- SUBMIT LOGIC ---
   void _submitForm() {
     String finalHouseNum = "";
     String finalStreet = "";
     String finalCity = "";
     String finalState = "";
 
-    // Default to stored coordinates (works for both GPS and Real Estate Picker)
+    if (_serviceTitle == 'Home Maintenance' && _selectedSubCategory == null) {
+      CustomSnackBar.failure(message:"Please select a specific service type (e.g. Plumbing)");
+      return;
+    }
+
     double finalLat = _latitude ?? 0.0;
     double finalLng = _longitude ?? 0.0;
 
-    // 1. Determine Data Source (Manual vs GPS)
     if (_serviceTitle == 'Real Estate') {
       // Use the text fields we populated
       finalHouseNum = _houseNumController.text;
@@ -194,7 +230,6 @@ class _RequestFormState extends State<RequestForm> {
       finalState = _stateController.text;
 
     } else {
-      // Use detected data
       finalStreet = _detectedStreet ?? jobController.locationController.text;
       finalCity = _detectedCity ?? "";
       finalState = _detectedState ?? "";
@@ -238,17 +273,12 @@ class _RequestFormState extends State<RequestForm> {
       minBudget: _minBudgetController.text,
       maxBudget: _maxBudgetController.text,
       images: _selectedImages,
+
+      subcategory: _serviceTitle == 'Home Maintenance' ? _selectedSubCategory : null,
     );
 
     Get.toNamed(AppRoutes.reviewRequest, arguments: requestData);
   }
-
-
-  final ImagePicker _picker = ImagePicker();
-  List<XFile> _selectedImages = [];
-
-  // Function to Pick Images
-  // Inside _RequestFormState class
 
   Future<void> _pickImages() async {
     final List<XFile>? images = await _picker.pickMultiImage(
@@ -264,7 +294,6 @@ class _RequestFormState extends State<RequestForm> {
     }
   }
 
-  // Function to Remove an Image
   void _removeImage(int index) {
     setState(() {
       _selectedImages.removeAt(index);
@@ -443,7 +472,6 @@ class _RequestFormState extends State<RequestForm> {
       ),
     );
   }
-
 
   Widget _buildDateTimeStep() {
     return Column(
@@ -725,23 +753,35 @@ class _RequestFormState extends State<RequestForm> {
             style: TextStyle(fontSize: Dimensions.font13, color: AppColors.color1, fontWeight: FontWeight.w500),
           ),
           SizedBox(height: Dimensions.height10),
+
           Container(
             width: Dimensions.screenWidth,
-            padding: EdgeInsets.symmetric(horizontal: Dimensions.width20,vertical: Dimensions.height15*0.8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Select Service'),
-                Icon(Icons.arrow_drop_down,color: AppColors.black,)
-              ],
-            ),
+            padding: EdgeInsets.symmetric(horizontal: Dimensions.width20),
             decoration: BoxDecoration(
               border: Border.all(color: AppColors.grey4),
-              borderRadius: BorderRadius.circular(Dimensions.radius15)
+              borderRadius: BorderRadius.circular(Dimensions.radius15),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: _selectedSubCategory,
+                hint: Text("Select Service", style: TextStyle(color: AppColors.grey4)),
+                icon: Icon(Icons.arrow_drop_down, color: AppColors.black),
+                isExpanded: true,
+                items: _subCategories.map((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+                onChanged: (newValue) {
+                  setState(() {
+                    _selectedSubCategory = newValue;
+                  });
+                },
+              ),
             ),
           ),
           SizedBox(height: Dimensions.height20),
-
         ],
 
 
@@ -833,7 +873,6 @@ class _RequestFormState extends State<RequestForm> {
     );
   }
 
-  // --- DATE PICKER ---
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -868,7 +907,6 @@ class _RequestFormState extends State<RequestForm> {
     }
   }
 
-  // --- TIME PICKER ---
   Future<void> _selectTime(BuildContext context) async {
     final TimeOfDay? picked = await showTimePicker(
       context: context,

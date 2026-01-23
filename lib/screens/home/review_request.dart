@@ -44,6 +44,7 @@ class _ReviewRequestScreenState extends State<ReviewRequestScreen> {
 
     Map<String, dynamic> apiBody = {
       "category": categorySlug,
+      "subcategory": data!.subcategory?.toLowerCase() ?? 'null',
       "location": {
         "state": data!.state ?? "Unknown",
         "lga": data!.city ?? "Unknown",
@@ -103,6 +104,10 @@ class _ReviewRequestScreenState extends State<ReviewRequestScreen> {
             children: [
               ReviewCard('Service type', data!.serviceType),
               SizedBox(height: Dimensions.height15),
+              if (data!.subcategory != null) ...[
+                ReviewCard('Sub Category', data!.subcategory!),
+                SizedBox(height: Dimensions.height15),
+              ],
               ReviewCard('Location', data!.displayLocation),
               SizedBox(height: Dimensions.height15),
               ReviewCard('Date & Time', data!.displayDate),

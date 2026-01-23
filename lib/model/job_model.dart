@@ -141,6 +141,8 @@ class ServiceRequestData {
 
   final List<XFile>? images;
 
+  final String? subcategory;
+
   ServiceRequestData({
     required this.serviceType,
     required this.displayLocation,
@@ -160,5 +162,6 @@ class ServiceRequestData {
     required this.minBudget,
     required this.maxBudget,
     this.images,
+    this.subcategory,
   });
 }
