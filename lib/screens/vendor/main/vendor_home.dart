@@ -21,12 +21,30 @@ class _VendorHomeState extends State<VendorHome> {
   AuthController authController = Get.find<AuthController>();
   UserModel? get user => authController.userModel;
 
+
   @override
   Widget build(BuildContext context) {
 
 
+    String? avatarUrl = authController.userModel?.avatar;
+    if (avatarUrl != null && avatarUrl.isNotEmpty && !avatarUrl.startsWith('http')) {
+      avatarUrl = '${AppConstants.BASE_URL}$avatarUrl';
+    }
+
+    String? displayUrl;
+    if (avatarUrl != null && avatarUrl.isNotEmpty) {
+      if (avatarUrl.startsWith('http')) {
+        displayUrl = avatarUrl;
+      } else {
+        displayUrl = '${AppConstants.BASE_URL}$avatarUrl';
+      }
+    }
+
+
 
     return Scaffold(
+
+
       body: Container(
         height: Dimensions.screenHeight,
         width: Dimensions.screenWidth,
@@ -72,18 +90,31 @@ class _VendorHomeState extends State<VendorHome> {
             SizedBox(height: Dimensions.height20),
             Row(
               children: [
-                Container(
-                  height: Dimensions.height10 * 6,
-                  width: Dimensions.width10 * 6,
-                  decoration: BoxDecoration(
-                    color: AppColors.color3,
-                    shape: BoxShape.circle,
-                    image: DecorationImage(
-                      fit: BoxFit.fill,
-                      image: AssetImage(AppConstants.getPngAsset('head-icon')),
-                    ),
-                  ),
+            Container(
+            height: Dimensions.height10 * 6,
+              width: Dimensions.width10 * 6,
+              decoration: BoxDecoration(
+                color: AppColors.color3,
+                shape: BoxShape.circle,
+                image: displayUrl != null
+                    ? DecorationImage(
+                  fit: BoxFit.cover, // 'cover' usually looks better for avatars than 'fill'
+                  image: NetworkImage(displayUrl),
+                )
+                    : null, // No image decoration if null
+              ),
+              // 3. Fallback Child if no image
+              child: displayUrl == null
+                  ? Center(
+                child: Image.asset(
+                  AppConstants.getPngAsset('head-icon'),
+                  height: Dimensions.height30, // Adjust size to fit inside circle
+                  width: Dimensions.width30,
+                  fit: BoxFit.contain,
                 ),
+              )
+                  : null,
+            ),
                 SizedBox(width: Dimensions.width20),
                 Expanded(
                   child: Column(

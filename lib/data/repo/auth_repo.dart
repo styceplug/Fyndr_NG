@@ -1,9 +1,12 @@
+import 'dart:io';
 import 'package:fyndr_ng/data/api/api_client.dart';
 import 'package:fyndr_ng/utils/app_constants.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mime/mime.dart';
 import 'package:path/path.dart' as p;
+import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 
 class AuthRepo extends GetConnect {
 
@@ -43,6 +46,27 @@ class AuthRepo extends GetConnect {
     }
 
     return await apiClient.postData(uri, formData);
+  }
+
+
+  Future<Response> updateAvatar(File imageFile) async {
+    String url = '${apiClient.appBaseUrl}/api/v1/user/avatar';
+
+    var request = http.MultipartRequest('PUT', Uri.parse(url));
+
+    request.headers.addAll({
+      'Authorization': 'Bearer ${apiClient.token}',
+      'Content-Type': 'multipart/form-data',
+    });
+
+    // 👇 FIX: Add contentType
+    request.files.add(await http.MultipartFile.fromPath(
+      'avatar',
+      imageFile.path,
+      contentType: MediaType('image', 'jpeg'),
+    ));
+
+    return await apiClient.postMultipartData('/api/v1/user/avatar', request);
   }
 
 

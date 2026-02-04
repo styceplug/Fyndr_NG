@@ -7,6 +7,9 @@
     <key>NSLocationAlwaysUsageDescription</key>
     <string>This app needs access to location to provide better service matching.</string>
 
+    <key>NSMicrophoneUsageDescription</key>
+    <string>We need microphone access to record voice messages</string>
+
     <key>NSPhotoLibraryUsageDescription</key>
     <string>We need access to your photo library to allow you to upload profile photos, service requests, and verification documents.</string>
 

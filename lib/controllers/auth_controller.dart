@@ -1,9 +1,13 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:fyndr_ng/controllers/app_controller.dart';
 import 'package:fyndr_ng/data/api/api_client.dart';
 import 'package:fyndr_ng/helpers/global_loader_controller.dart';
 import 'package:fyndr_ng/routes/routes.dart';
 import 'package:fyndr_ng/widgets/snackbars.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../data/repo/auth_repo.dart';
 import '../model/user_model.dart';
@@ -17,7 +21,7 @@ class AuthController extends GetxController {
   GlobalLoaderController loader = Get.find<GlobalLoaderController>();
   late AppController appController = Get.find<AppController>();
   UserModel? _userModel;
-
+  final ImagePicker _picker = ImagePicker();
   UserModel? get userModel => _userModel;
 
 
@@ -71,6 +75,57 @@ class AuthController extends GetxController {
       Get.back();
     } finally {
      loader.hideLoader();
+      update();
+    }
+  }
+
+
+
+  Future<void> pickAndUploadAvatar() async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 70,
+      );
+
+      if (image == null) return;
+
+      loader.showLoader();
+      update();
+
+      Response response = await authRepo.updateAvatar(File(image.path));
+
+      // 👇 FIX: Decode body safely before using it
+      var body = response.body;
+      if (body is String) {
+        try {
+          body = jsonDecode(body);
+        } catch (e) {
+          body = {};
+        }
+      }
+
+      if (response.statusCode == 200) {
+        // Now safe to access ['data']
+        String newAvatarUrl = body['data']['avatar'];
+
+        if (userModel != null) {
+          userModel!.avatar = newAvatarUrl;
+          _userModel = UserModel.fromJson(body['data']);
+
+        }
+
+        CustomSnackBar.success(message: "Profile picture updated!");
+      } else {
+        // Now safe to access ['message'] or ['error']
+        String errorMsg = body['message'] ?? body['error'] ?? "Failed to upload avatar";
+        CustomSnackBar.failure(message: errorMsg);
+      }
+    } catch (e) {
+      print("Avatar Upload Error: $e");
+      CustomSnackBar.failure(message: "Something went wrong");
+    } finally {
+      loader.hideLoader();
       update();
     }
   }
@@ -160,7 +215,7 @@ class AuthController extends GetxController {
     final r = (role ?? "customer").toLowerCase();
 
     if (r == "vendor") {
-      Get.offAllNamed(AppRoutes.vendorHomeScreen);
+      Get.offAllNamed(AppRoutes.vendorHomePage);
     } else {
       Get.offAllNamed(AppRoutes.homeScreen);
     }

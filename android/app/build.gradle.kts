@@ -40,16 +40,43 @@ android {
 
     signingConfigs {
         create("release") {
-            keyAlias = keystoreProperties["keyAlias"] as String
-            keyPassword = keystoreProperties["keyPassword"] as String
-            storeFile = file(keystoreProperties["storeFile"] as String)
-            storePassword = keystoreProperties["storePassword"] as String
+            if (keystorePropertiesFile.exists()) {
+                val storeFilePath = keystoreProperties["storeFile"] as String?
+                val storePasswordVal = keystoreProperties["storePassword"] as String?
+                val keyAliasVal = keystoreProperties["keyAlias"] as String?
+                val keyPasswordVal = keystoreProperties["keyPassword"] as String?
+
+                if (
+                    !storeFilePath.isNullOrBlank() &&
+                    !storePasswordVal.isNullOrBlank() &&
+                    !keyAliasVal.isNullOrBlank() &&
+                    !keyPasswordVal.isNullOrBlank()
+                ) {
+                    storeFile = file(storeFilePath)
+                    storePassword = storePasswordVal
+                    keyAlias = keyAliasVal
+                    keyPassword = keyPasswordVal
+                } else {
+                    println("⚠️ key.properties exists but is missing required signing fields. Release signing will be skipped.")
+                }
+            } else {
+                println("ℹ️ key.properties not found. Release signing will be skipped.")
+            }
         }
+
+
     }
 
     buildTypes {
+        getByName("debug") {
+            // debug uses default debug keystore automatically
+        }
+
         getByName("release") {
-            signingConfig = signingConfigs.getByName("release")
+            // Only apply signing if storeFile was actually set
+            if (signingConfigs.getByName("release").storeFile != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             isMinifyEnabled = true
             isShrinkResources = true
         }

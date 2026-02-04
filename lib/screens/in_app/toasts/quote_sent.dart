@@ -1,21 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:fyndr_ng/utils/app_constants.dart';
 import 'package:get/get.dart';
-import 'package:iconsax/iconsax.dart';
 
 import '../../../routes/routes.dart';
+import '../../../utils/app_constants.dart';
 import '../../../utils/colors.dart';
 import '../../../utils/dimensions.dart';
 import '../../../widgets/custom_button.dart';
 
-class JobCompleted extends StatefulWidget {
-  const JobCompleted({super.key});
+class QuoteSentScreen extends StatefulWidget {
+  const QuoteSentScreen({super.key});
 
   @override
-  State<JobCompleted> createState() => _JobCompletedState();
+  State<QuoteSentScreen> createState() => _QuoteSentScreenState();
 }
 
-class _JobCompletedState extends State<JobCompleted> {
+class _QuoteSentScreenState extends State<QuoteSentScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -37,7 +36,7 @@ class _JobCompletedState extends State<JobCompleted> {
             ),
             SizedBox(height: Dimensions.height10),
             Text(
-              'Job Marked as Completed',
+              'Quote Sent Successfully',
               style: TextStyle(
                 fontSize: Dimensions.font23,
                 fontWeight: FontWeight.w700,
@@ -60,42 +59,42 @@ class _JobCompletedState extends State<JobCompleted> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Why add to portfolio',
+                    'What happens next?',
                     style: TextStyle(
                       color: AppColors.info,
                       fontWeight: FontWeight.w400,
                       fontSize: Dimensions.font14,
                     ),
                   ),
-
+                  SizedBox(height: 8), // Added for spacing
                   Text(
-                    '• Show potential customers your work\n• Attach to future quotes\n• Build credibility & trust\n• Win more jobs (3x higher success)',
+                    '• Customer reviews your quote & portfolio\n• They contact you to discuss details\n• You negotiate & finalize terms\n• Complete the job successfully\n• Get paid & rated',
                     style: TextStyle(
                       color: AppColors.info,
                       fontWeight: FontWeight.w400,
                       fontSize: Dimensions.font13,
+                      height: 1.5, // Improves readability for multi-line text
                     ),
                   ),
                 ],
               ),
             ),
             SizedBox(height: Dimensions.height20),
-            CustomButton(text: 'Add to Portfolio', onPressed: () {
-              Get.toNamed(AppRoutes.vendorHomePage);
-            }),
-            SizedBox(height: Dimensions.height20),
             CustomButton(
-              text: 'Skip for me',
+              text: 'Go Home',
               onPressed: () {
-                Get.toNamed(AppRoutes.vendorHomePage);
+
+                FocusManager.instance.primaryFocus?.unfocus();
+
+                Get.offAllNamed(AppRoutes.vendorHomePage);
               },
-              backgroundColor: AppColors.white,
-              borderColor: AppColors.error,
             ),
+
             Spacer(),
           ],
         ),
       ),
     );
+
   }
 }

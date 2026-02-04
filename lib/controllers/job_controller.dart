@@ -29,16 +29,159 @@ class JobController extends GetxController {
   List<JobModel> _jobList = [];
   bool _isLoaded = false;
   bool get isLoaded => _isLoaded;
-
+  List<QuoteModel> _quotes = [];
+  List<QuoteModel> get quotes => _quotes;
   bool jobLoading = false;
-
   JobModel? _singleJob;
   List<QuoteModel> _quotesList = [];
-  // bool _isDetailsLoading = false;
-
   JobModel? get singleJob => _singleJob;
   List<QuoteModel> get quotesList => _quotesList;
-  // bool get isDetailsLoading => _isDetailsLoading;
+  QuoteModel? _quote;
+  QuoteModel? get quote => _quote;
+  List<JobModel> merchantActiveJobs = [];
+  List<JobModel> merchantCompletedJobs = [];
+  List<JobModel> merchantCancelledJobs = [];
+
+
+  Future<void> completeJob(String jobId) async {
+    CustomSnackBar.processing(message: "Updating job status...");
+    //setup later
+  }
+
+  Future<void> getMerchantJobs() async {
+    loader.showLoader();
+    update();
+
+    try {
+      Response response = await jobRepo.getMerchantAcceptedJobs();
+
+      if (response.statusCode == 200) {
+        List<dynamic> rawData = response.body['data'];
+
+        // Clear previous lists
+        merchantActiveJobs.clear();
+        merchantCompletedJobs.clear();
+        merchantCancelledJobs.clear();
+
+        for (var item in rawData) {
+          JobModel job = JobModel.fromJson(item);
+
+          // Categorize based on status flags
+          if (job.status?.isCancelled == true) {
+            merchantCancelledJobs.add(job);
+          } else if (job.status?.isCompleted == true) {
+            merchantCompletedJobs.add(job);
+          } else {
+            merchantActiveJobs.add(job);
+          }
+        }
+      } else {
+        print("Error fetching merchant jobs: ${response.body}");
+      }
+    } catch (e) {
+      print("Exception fetching merchant jobs: $e");
+    } finally {
+      loader.hideLoader();
+      update();
+    }
+  }
+
+  Future<void> counterQuoteAction(String quoteId, int amount, String reason) async {
+    loader.showLoader();
+
+    Map<String, dynamic> body = {
+      "amount": amount,
+      "reason": reason,
+      "comment": ""
+    };
+
+    Response response = await jobRepo.counterQuote(quoteId, body);
+
+    loader.hideLoader();
+    if (response.statusCode == 200) {
+      CustomSnackBar.success(message: "Counter offer sent!");
+      Get.back();
+      Get.toNamed(AppRoutes.counterOfferScreen,
+      arguments: {
+        'quoteId' : quoteId
+      });
+    } else {
+      CustomSnackBar.failure(message: response.body['message'] ?? "Failed to send counter offer");
+    }
+  }
+
+  Future<void> declineQuoteAction(String quoteId, String reason, String comment) async {
+    loader.showLoader();
+
+    Map<String, dynamic> body = {
+      "reason": reason,
+      "comment": comment
+    };
+
+    Response response = await jobRepo.rejectQuote(quoteId, body);
+
+    loader.hideLoader();
+    if (response.statusCode == 200) {
+      CustomSnackBar.success(message: "Quote declined");
+      Get.back();
+    } else {
+      CustomSnackBar.failure(message: response.body['message'] ?? "Failed to decline quote");
+    }
+  }
+
+  Future<void> acceptQuoteAction(String quoteId) async {
+    loader.showLoader();
+    update();
+
+    Response response = await jobRepo.acceptQuote(quoteId);
+
+    loader.hideLoader();
+    if (response.statusCode == 200) {
+      CustomSnackBar.success(message: "Quote accepted successfully!");
+      Get.offNamed(AppRoutes.bookingConfirmedScreen,arguments: {
+        'quoteId':quoteId
+      });
+    } else {
+      CustomSnackBar.failure(message: response.body['message'] ?? "Failed to accept quote");
+    }
+    update();
+  }
+
+  Future<void> getQuoteDetails(String quoteId) async {
+    loader.showLoader();
+    update();
+
+    Response response = await jobRepo.getQuoteDetails(quoteId);
+
+    if (response.statusCode == 200) {
+      _quote = QuoteModel.fromJson(response.body['data']);
+    } else {
+      CustomSnackBar.failure(
+        message: response.statusText ?? "Failed to load quote details",
+      );
+    }
+
+    loader.hideLoader();
+    update();
+  }
+
+  Future<void> getQuotes() async {
+    loader.showLoader();
+    update();
+
+    Response response = await jobRepo.getMerchantQuotes(1);
+
+    if (response.statusCode == 200) {
+      _quotes = [];
+      List<dynamic> data = response.body['data'];
+      _quotes = data.map((e) => QuoteModel.fromJson(e)).toList();
+    } else {
+      CustomSnackBar.failure(message: response.statusText ?? "Failed to load quotes");
+    }
+
+   loader.hideLoader();
+    update();
+  }
 
   Future<void> getJobDetailsAndQuotes(String jobId) async {
     loader.showLoader();
@@ -57,7 +200,6 @@ class JobController extends GetxController {
         List<dynamic> data = quoteResponse.body['data'];
         _quotesList = data.map((e) => QuoteModel.fromJson(e)).toList();
       }
-
     } catch (e) {
       print("Error fetching job details: $e");
     } finally {
@@ -73,15 +215,21 @@ class JobController extends GetxController {
     update();
   }
 
-  List<JobModel> get activeJobs => _jobList.where((job) =>
-  (job.status?.isOpen == true || job.status?.isInProgress == true) &&
-      job.status?.isCancelled == false).toList();
+  List<JobModel> get activeJobs =>
+      _jobList
+          .where(
+            (job) =>
+                (job.status?.isOpen == true ||
+                    job.status?.isInProgress == true) &&
+                job.status?.isCancelled == false,
+          )
+          .toList();
 
-  List<JobModel> get completedJobs => _jobList.where((job) =>
-  job.status?.isCompleted == true).toList();
+  List<JobModel> get completedJobs =>
+      _jobList.where((job) => job.status?.isCompleted == true).toList();
 
-  List<JobModel> get cancelledJobs => _jobList.where((job) =>
-  job.status?.isCancelled == true).toList();
+  List<JobModel> get cancelledJobs =>
+      _jobList.where((job) => job.status?.isCancelled == true).toList();
 
   Future<void> getUserJobs() async {
     loader.showLoader();
@@ -100,30 +248,37 @@ class JobController extends GetxController {
     } catch (e) {
       print("Error: $e");
     } finally {
-      // 2. Hide Central Loader regardless of success/failure
       loader.hideLoader();
       jobLoading = false;
-      update(); // Update UI to show the list
+      update();
     }
   }
 
-  Future<void> createJob(Map<String, dynamic> apiBody, List<XFile>? images) async {
+  Future<void> createJob(
+    Map<String, dynamic> apiBody,
+    List<XFile>? images,
+  ) async {
     loader.showLoader();
     update();
 
     try {
       // --- SCENARIO: Use Multipart (FormData) ---
-      print("📸 Preparing FormData Request with ${images?.length ?? 0} images...");
+      print(
+        "📸 Preparing FormData Request with ${images?.length ?? 0} images...",
+      );
 
       var request = http.MultipartRequest(
-          'POST',
-          Uri.parse('${jobRepo.apiClient.appBaseUrl}${AppConstants.POST_NEW_JOB}')
+        'POST',
+        Uri.parse(
+          '${jobRepo.apiClient.appBaseUrl}${AppConstants.POST_NEW_JOB}',
+        ),
       );
 
       // 1. Add Headers (Important for Auth)
       request.headers.addAll({
         'Authorization': 'Bearer ${jobRepo.apiClient.token}',
-        'Content-Type': 'multipart/form-data', // Though MultipartRequest sets this automatically, sometimes explicit helps
+        'Content-Type': 'multipart/form-data',
+        // Though MultipartRequest sets this automatically, sometimes explicit helps
       });
 
       // 2. Add Text Fields
@@ -145,10 +300,10 @@ class JobController extends GetxController {
       // 3. Add Files
       if (images != null && images.isNotEmpty) {
         for (var image in images) {
-
           // Determine Mime Type based on extension
           String? mimeType;
-          if (image.path.toLowerCase().endsWith('.jpg') || image.path.toLowerCase().endsWith('.jpeg')) {
+          if (image.path.toLowerCase().endsWith('.jpg') ||
+              image.path.toLowerCase().endsWith('.jpeg')) {
             mimeType = 'image/jpeg';
           } else if (image.path.toLowerCase().endsWith('.png')) {
             mimeType = 'image/png';
@@ -159,7 +314,9 @@ class JobController extends GetxController {
           var file = await http.MultipartFile.fromPath(
             'images', // Field name
             image.path,
-            contentType: MediaType.parse(mimeType), // <--- THIS FIXES THE 415 ERROR
+            contentType: MediaType.parse(
+              mimeType,
+            ), // <--- THIS FIXES THE 415 ERROR
           );
           request.files.add(file);
         }
@@ -176,11 +333,15 @@ class JobController extends GetxController {
       update();
 
       if (response.statusCode == 201 || response.statusCode == 200) {
-        CustomSnackBar.success(message: "Service request created successfully!");
+        CustomSnackBar.success(
+          message: "Service request created successfully!",
+        );
         Get.offAllNamed(AppRoutes.homeScreen);
       } else {
         String errorMsg = "Failed to create request";
-        if (response.body != null && response.body is Map && response.body['error'] != null) {
+        if (response.body != null &&
+            response.body is Map &&
+            response.body['error'] != null) {
           errorMsg = response.body['error'];
         } else if (response.statusText != null) {
           errorMsg = response.statusText!;
@@ -188,7 +349,6 @@ class JobController extends GetxController {
         print("❌ Error Response: ${response.body}");
         CustomSnackBar.failure(message: errorMsg);
       }
-
     } catch (e) {
       loader.hideLoader();
       update();

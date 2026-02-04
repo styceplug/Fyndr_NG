@@ -33,31 +33,36 @@ class _ReviewRequestScreenState extends State<ReviewRequestScreen> {
     }
   }
 
-  // --- API LOGIC ---
+
   void _confirmAndSend() {
     if (data == null) return;
 
-    // 1. Format Category (slugify)
     String categorySlug = _getApiCategorySlug(data!.serviceType);
-
     String apiDate = "${data!.rawDate}T${data!.rawTime}:00Z";
 
     Map<String, dynamic> apiBody = {
       "category": categorySlug,
-      "subcategory": data!.subcategory?.toLowerCase() ?? 'null',
+      if (data!.subcategory != null && data!.subcategory!.isNotEmpty)
+        "subCategory": data!.subcategory!.toLowerCase(),
+
+      // --- LOCATION BLOCK ---
       "location": {
-        "state": data!.state ?? "Unknown",
-        "lga": data!.city ?? "Unknown",
+        "state": data!.state ?? "Unknown", // Passed correctly from form
+        "lga": data!.city ?? "Unknown",    // Passed correctly from form
         "type": "Point",
         "coordinates": [data!.lng ?? 0.0, data!.lat ?? 0.0]
       },
+
+      // --- ADDRESS BLOCK ---
+      // For non-real estate, we send basic info or Nil
       "address": {
-        "street":"Nil",
+        "street": (data!.street != null && data!.street!.isNotEmpty) ? data!.street : "Nil",
         "houseNumber": (data!.houseNumber != null && data!.houseNumber!.isNotEmpty)
             ? data!.houseNumber
             : "N/A",
         "additionalDirections": "None"
       },
+
       "date": apiDate,
       "urgency": data!.urgency.toLowerCase(),
       "budget": {

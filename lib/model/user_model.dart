@@ -1,3 +1,5 @@
+import '../utils/app_constants.dart';
+
 class UserModel {
   String? id;
   String? name;
@@ -5,6 +7,7 @@ class UserModel {
   String? email;
   String? currentRole;
   bool? isActive;
+  String? avatar;
 
   // --- NEW STATUS FLAGS ---
   bool? isEmailValidated;
@@ -40,6 +43,7 @@ class UserModel {
     this.hasVendorProfile,
     this.businessDetails,
     this.businessDocs,
+    this.avatar
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -50,7 +54,7 @@ class UserModel {
       email: json['email'],
       currentRole: json['currentRole'],
       isActive: json['isActive'],
-
+      avatar: json['avatar'],
       // Parse new flags (using default false just in case)
       isEmailValidated: json['isEmailValidated'] ?? false,
       isProfileVerified: json['isProfileVerified'] ?? false,
@@ -78,6 +82,7 @@ class UserModel {
           : null,
     );
   }
+
 
   Map<String, dynamic> toJson() {
     return {
@@ -113,6 +118,7 @@ class UserModel {
 
 
 
+
   String getAccountAge(String? dateString) {
     if (dateString == null) return "0 days";
 
@@ -131,6 +137,18 @@ class UserModel {
     }
   }
 
+  String? get profilePicture {
+    if (avatar == null || avatar!.isEmpty) {
+      return null;
+    }
+    // If it already has http/https, return as is.
+    if (avatar!.startsWith('http')) {
+      return avatar;
+    }
+    // Otherwise, prepend the Base URL
+    return '${AppConstants.BASE_URL}$avatar';
+  }
+
 }
 
 class BusinessDetails {
@@ -141,7 +159,7 @@ class BusinessDetails {
   String? businessType;
   String? businessYearEstablished;
   List<String>? servicesOffered;
-  String? subCategory;
+  String? subcategory;
 
   BusinessDetails({
     this.businessLocation,
@@ -151,7 +169,7 @@ class BusinessDetails {
     this.businessType,
     this.businessYearEstablished,
     this.servicesOffered,
-    this.subCategory,
+    this.subcategory,
   });
 
   factory BusinessDetails.fromJson(Map<String, dynamic> json) {
@@ -167,7 +185,7 @@ class BusinessDetails {
       servicesOffered: json['servicesOffered'] != null
           ? List<String>.from(json['servicesOffered'])
           : [],
-      subCategory: json['subCategory'],
+      subcategory: json['subcategory'],
     );
   }
 
@@ -180,7 +198,7 @@ class BusinessDetails {
       'businessType': businessType,
       'businessYearEstablished': businessYearEstablished,
       'servicesOffered': servicesOffered,
-      'subCategory': subCategory,
+      'subCategory': subcategory,
     };
   }
 }

@@ -35,10 +35,10 @@ class _HomePageState extends State<HomePage> {
     // 1. Initialize List & Controller IMMEDIATELY
     pages = [
       AppConstants.getPngAsset('slider1'),
+      AppConstants.getPngAsset('slider5'),
       AppConstants.getPngAsset('slider2'),
       AppConstants.getPngAsset('slider3'),
       AppConstants.getPngAsset('slider4'),
-      AppConstants.getPngAsset('slider5'),
     ];
     pageController = PageController();
 
@@ -82,8 +82,25 @@ class _HomePageState extends State<HomePage> {
     horizontal: Dimensions.width20,
   );
 
+
+
   @override
   Widget build(BuildContext context) {
+
+    String? avatarUrl = authController.userModel?.avatar;
+    if (avatarUrl != null && avatarUrl.isNotEmpty && !avatarUrl.startsWith('http')) {
+      avatarUrl = '${AppConstants.BASE_URL}$avatarUrl';
+    }
+
+    String? displayUrl;
+    if (avatarUrl != null && avatarUrl.isNotEmpty) {
+      if (avatarUrl.startsWith('http')) {
+        displayUrl = avatarUrl;
+      } else {
+        displayUrl = '${AppConstants.BASE_URL}$avatarUrl';
+      }
+    }
+
     return Scaffold(
       body: SingleChildScrollView(
         padding: EdgeInsets.only(
@@ -99,14 +116,30 @@ class _HomePageState extends State<HomePage> {
               padding: _screenPadding,
               child: Row(
                 children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(Dimensions.radius20 * 5),
-                    child: Image.asset(
-                      AppConstants.getPngAsset('user-icon'),
-                      height: Dimensions.height10 * 6,
-                      width: Dimensions.width10 * 6,
-                      fit: BoxFit.cover,
+                  Container(
+                    height: Dimensions.height10 * 6,
+                    width: Dimensions.width10 * 6,
+                    decoration: BoxDecoration(
+                      color: AppColors.color3,
+                      shape: BoxShape.circle,
+                      image: displayUrl != null
+                          ? DecorationImage(
+                        fit: BoxFit.cover, // 'cover' usually looks better for avatars than 'fill'
+                        image: NetworkImage(displayUrl),
+                      )
+                          : null, // No image decoration if null
                     ),
+                    // 3. Fallback Child if no image
+                    child: displayUrl == null
+                        ? Center(
+                      child: Image.asset(
+                        AppConstants.getPngAsset('head-icon'),
+                        height: Dimensions.height30, // Adjust size to fit inside circle
+                        width: Dimensions.width30,
+                        fit: BoxFit.contain,
+                      ),
+                    )
+                        : null,
                   ),
                   SizedBox(width: Dimensions.width15),
                   Expanded(
@@ -283,7 +316,7 @@ class _HomePageState extends State<HomePage> {
 
 
             SizedBox(
-              height: Dimensions.height100 * 2.1,
+              height: Dimensions.height100 * 2.15,
               width: double.infinity,
               child: PageView.builder(
                 controller: pageController,
@@ -295,7 +328,7 @@ class _HomePageState extends State<HomePage> {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(Dimensions.radius15),
                       image: DecorationImage(
-                        fit: BoxFit.fitWidth,
+                        fit: BoxFit.cover,
                         image: AssetImage(pages[index]),
                       ),
                       border: Border.all(color: AppColors.grey4)

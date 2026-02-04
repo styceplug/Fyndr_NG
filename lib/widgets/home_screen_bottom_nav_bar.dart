@@ -117,8 +117,6 @@ class HomeScreenBottomNavBar extends StatelessWidget {
   }
 }
 
-
-
 class VendorBottomNavBar extends StatelessWidget {
   const VendorBottomNavBar({super.key});
 

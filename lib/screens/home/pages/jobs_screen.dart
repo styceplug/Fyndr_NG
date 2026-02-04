@@ -61,9 +61,26 @@ class _JobsScreenState extends State<JobsScreen> {
     String cat = (category ?? "").toLowerCase();
     if (cat.contains("real-estate")) return "real-estate"; // Ensure these match asset names
     if (cat.contains("cleaning")) return "cleaning";
-    if (cat.contains("home-maintenance")) return "maintenance";
+    if (cat.contains("home-maintenance")) return "home-maintenance";
     return "beauty"; // Default asset
   }
+
+  String formatServiceTitle(String? slug) {
+    if (slug == null || slug.isEmpty) return 'Service Order';
+
+    return slug
+        .split('-') // ["real", "estate"]
+        .map(
+          (word) =>
+      word.isNotEmpty
+          ? word[0].toUpperCase() + word.substring(1)
+          : '',
+    )
+        .join(' ') // "Real Estate"
+        .trim() +
+        ' Order'; // "Real Estate Order"
+  }
+  
 
   @override
   Widget build(BuildContext context) {
@@ -131,18 +148,18 @@ class _JobsScreenState extends State<JobsScreen> {
       itemCount: jobs.length,
       itemBuilder: (context, index) {
         JobModel job = jobs[index];
+        int quoteCount = job.quotes?.length ?? 0;
+        String quoteText = quoteCount == 1 ? "1" : "$quoteCount";
         return JobCard(
           imageAsset: getImageForCategory(job.category),
-          title: job.category?.toUpperCase() ?? "SERVICE",
-          // Construct location string from API data
-          location: "${job.address?.street ?? ''}, ${job.location?.lga ?? ''}",
+          title: formatServiceTitle(job.category),
+          location: "${job.location?.lga ?? ''}, ${job.location?.state ?? ''}",
           distance: job.location?.state ?? "NG", // API doesn't give distance, showing State
           date: formatDate(job.date),
-          dayTime: job.urgency ?? "Normal", // Using urgency as tag
+          dayTime: job.urgency?.capitalizeFirst ?? "Normal", // Using urgency as tag
           timeAgo: timeAgo(job.createdAt),
-          quote: '0', // API doesn't have quotes yet
+          quote: quoteText,
           onTap: () {
-            // Pass the entire job object to details screen
             Get.toNamed(AppRoutes.jobDetailsScreen, arguments: job);
           },
         );

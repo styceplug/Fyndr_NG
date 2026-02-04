@@ -17,55 +17,74 @@ class VendorLeadScreen extends StatefulWidget {
 }
 
 class _VendorLeadScreenState extends State<VendorLeadScreen> {
-
-
   LeadController leadController = Get.find<LeadController>();
 
   @override
   void initState() {
-    leadController.getLeads();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      leadController.getLeads();
+    });
+
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppbar(leadingIcon: BackButton(), title: 'New Leads'),
-      body: GetBuilder<LeadController>(builder: (ctrl){
-        return Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: Dimensions.width20,
-            vertical: Dimensions.height20,
+      appBar: CustomAppbar(
+        leadingIcon: BackButton(),
+        title: 'New Leads',
+        actionIcon: InkWell(
+          onTap: () {
+            Get.toNamed(AppRoutes.vendorQuotesScreen);
+          },
+          child: Text(
+            'Quotes',
+            style: TextStyle(
+              fontWeight: FontWeight.w500,
+              color: AppColors.color1,
+            ),
           ),
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  _buildFilterTab(ctrl, 0, 'ALL'),
-                  SizedBox(width: Dimensions.width20),
-                  _buildFilterTab(ctrl, 1, 'HIGH PRIORITY'),
-                  SizedBox(width: Dimensions.width20),
-                  _buildFilterTab(ctrl, 2, 'NEARBY'),
-                ],
-              ),
-              SizedBox(height: Dimensions.height20),
-
-                  ctrl.leads.isEmpty
-                  ? Expanded(child: Center(child: Text("No leads found")))
-                  : Expanded(
-                child: ListView.builder(
-                  itemCount: ctrl.leads.length,
-                  itemBuilder: (context, index) {
-                    return _buildLeadCard(ctrl.leads[index]);
-                  },
+        ),
+      ),
+      body: GetBuilder<LeadController>(
+        builder: (ctrl) {
+          return Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: Dimensions.width20,
+              vertical: Dimensions.height20,
+            ),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    _buildFilterTab(ctrl, 0, 'ALL'),
+                    SizedBox(width: Dimensions.width20),
+                    _buildFilterTab(ctrl, 1, 'HIGH PRIORITY'),
+                    SizedBox(width: Dimensions.width20),
+                    _buildFilterTab(ctrl, 2, 'NEARBY'),
+                  ],
                 ),
-              ),
-            ],
-          ),
-        );
-      }),
+                SizedBox(height: Dimensions.height20),
+
+                ctrl.leads.isEmpty
+                    ? Expanded(child: Center(child: Text("No leads found")))
+                    : Expanded(
+                      child: ListView.builder(
+                        itemCount: ctrl.leads.length,
+                        itemBuilder: (context, index) {
+                          return _buildLeadCard(ctrl.leads[index]);
+                        },
+                      ),
+                    ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
+
   Widget _buildFilterTab(LeadController ctrl, int index, String title) {
     bool isSelected = ctrl.selectedTabIndex == index;
     return InkWell(
@@ -91,24 +110,54 @@ class _VendorLeadScreenState extends State<VendorLeadScreen> {
     );
   }
 
+  String formatServiceTitle(String? slug) {
+    if (slug == null || slug.isEmpty) return 'Service Order';
+
+    return slug
+            .split('-') // ["real", "estate"]
+            .map(
+              (word) =>
+                  word.isNotEmpty
+                      ? word[0].toUpperCase() + word.substring(1)
+                      : '',
+            )
+            .join(' ') // "Real Estate"
+            .trim() +
+        ' Order'; // "Real Estate Order"
+  }
+
   Widget _buildLeadCard(var job) {
     // Format Budget (N5,000 - N20,000)
-    final currencyFormatter = NumberFormat.currency(locale: 'en_NG', symbol: 'N', decimalDigits: 0);
-    String budgetRange = "${currencyFormatter.format(job.budget?.min ?? 0)} - ${currencyFormatter.format(job.budget?.max ?? 0)}";
+    final currencyFormatter = NumberFormat.currency(
+      locale: 'en_NG',
+      symbol: 'N',
+      decimalDigits: 0,
+    );
+    String budgetRange =
+        "${currencyFormatter.format(job.budget?.min ?? 0)} - ${currencyFormatter.format(job.budget?.max ?? 0)}";
 
     // Construct Address
-    String address = "${job.address?.street ?? ''}, ${job.location?.lga ?? ''}";
+    String address = "${job.location?.lga ?? ''}, ${job.location?.state ?? ''}";
     if (address.trim() == ",") address = "Location Hidden";
 
     // Urgency Badge Logic
     bool isHighUrgency = job.urgency == 'high';
+
+    String getImageForCategory(String? category) {
+      String cat = (category ?? "").toLowerCase();
+      if (cat.contains("real-estate"))
+        return "real-estate"; // Ensure these match asset names
+      if (cat.contains("cleaning")) return "cleaning";
+      if (cat.contains("home-maintenance")) return "home-maintenance";
+      return "beauty"; // Default asset
+    }
 
     return Padding(
       padding: EdgeInsets.only(bottom: Dimensions.height15),
       child: InkWell(
         onTap: () {
           // Pass the specific job object to the details screen
-          Get.toNamed(AppRoutes.vendorLeadDetailsScreen, arguments: {'job': job});
+          Get.toNamed(AppRoutes.vendorLeadDetailsScreen, arguments: job);
         },
         child: Container(
           padding: EdgeInsets.symmetric(
@@ -122,22 +171,20 @@ class _VendorLeadScreenState extends State<VendorLeadScreen> {
             color: AppColors.grey1.withOpacity(0.2),
           ),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // Image Handling
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: (job.photos != null && job.photos!.isNotEmpty)
-                    ? Image.network(
-                  job.photos![0],
-                  width: Dimensions.width50,
-                  height: Dimensions.width50,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_,__,___) => Image.asset(AppConstants.getPngAsset('kitchen-sink'), width: Dimensions.width50),
-                )
-                    : Image.asset(
-                  AppConstants.getPngAsset('kitchen-sink'), // Fallback asset
-                  width: Dimensions.width50,
+              Container(
+                height: Dimensions.height70,
+                width: Dimensions.width70,
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage(
+                      AppConstants.getPngAsset(
+                        getImageForCategory(job.category),
+                      ),
+                    ),
+                  ),
                 ),
               ),
 
@@ -149,14 +196,42 @@ class _VendorLeadScreenState extends State<VendorLeadScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     // Title (SubCategory or Description)
-                    Text(
-                      job.subCategory?.toUpperCase() ?? job.category ?? 'Service',
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: AppColors.color1,
-                        fontSize: Dimensions.font16,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          formatServiceTitle(job.subcategory ?? job.category),
+
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: AppColors.color1,
+                            fontSize: Dimensions.font16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: Dimensions.width5,
+                            vertical: Dimensions.height5,
+                          ),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(Dimensions.radius10*0.5),
+                            color:
+                            (job.urgency == 'normal')
+                                ? AppColors.color2
+                                : AppColors.error,
+                          ),
+                          child: Text(
+                            job.urgency.toString().capitalizeFirst ?? '',
+                            style: TextStyle(
+                              fontSize: Dimensions.font10,
+                              color: AppColors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+
+                      ],
                     ),
                     SizedBox(height: 4),
                     // Address
@@ -182,7 +257,9 @@ class _VendorLeadScreenState extends State<VendorLeadScreen> {
                     // Date
                     Text(
                       job.date != null
-                          ? DateFormat('MMM dd, yyyy').format(DateTime.parse(job.date!))
+                          ? DateFormat(
+                            'MMM dd, yyyy',
+                          ).format(DateTime.parse(job.date!))
                           : "Flexible",
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -208,12 +285,15 @@ class _VendorLeadScreenState extends State<VendorLeadScreen> {
                   ),
                   child: Text(
                     'HIGH',
-                    style: TextStyle(color: AppColors.white, fontSize: Dimensions.font12),
+                    style: TextStyle(
+                      color: AppColors.white,
+                      fontSize: Dimensions.font12,
+                    ),
                   ),
                 ),
 
               SizedBox(width: Dimensions.width5),
-              Icon(Icons.more_vert, color: AppColors.grey4)
+              Icon(Icons.more_vert, color: AppColors.grey4),
             ],
           ),
         ),

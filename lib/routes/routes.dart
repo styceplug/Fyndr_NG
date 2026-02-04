@@ -5,6 +5,7 @@ import 'package:fyndr_ng/screens/auth/user/forgotten_pass_screen.dart';
 import 'package:fyndr_ng/screens/auth/login_screen.dart';
 import 'package:fyndr_ng/screens/auth/phone_verification_screen.dart';
 import 'package:fyndr_ng/screens/auth/verified_screen.dart';
+import 'package:fyndr_ng/screens/declutter/my_products.dart';
 import 'package:fyndr_ng/screens/home/home_screen.dart';
 import 'package:fyndr_ng/screens/home/pages/genie_screen.dart';
 import 'package:fyndr_ng/screens/home/request_form.dart';
@@ -13,11 +14,15 @@ import 'package:fyndr_ng/screens/in_app/job_details_screen.dart';
 import 'package:fyndr_ng/screens/in_app/job_in_progress.dart';
 import 'package:fyndr_ng/screens/in_app/notification_screen.dart';
 import 'package:fyndr_ng/screens/in_app/quote_detail_screen.dart';
+import 'package:fyndr_ng/screens/declutter/sell_item_screen.dart';
 import 'package:fyndr_ng/screens/in_app/toasts/booking_confirmed.dart';
 import 'package:fyndr_ng/screens/in_app/toasts/counter_offer_sent.dart';
+import 'package:fyndr_ng/screens/in_app/toasts/quote_sent.dart';
 import 'package:fyndr_ng/screens/in_app/toasts/rating_screen.dart';
 import 'package:fyndr_ng/screens/in_app/toasts/service_completed.dart';
 import 'package:fyndr_ng/screens/in_app/toasts/thank_you_screen.dart';
+import 'package:fyndr_ng/screens/in_app/vendor_quotes.dart';
+import 'package:fyndr_ng/screens/messaging/chat_screen.dart';
 import 'package:fyndr_ng/screens/settings/edit_profile.dart';
 import 'package:fyndr_ng/screens/settings/help_center.dart';
 import 'package:fyndr_ng/screens/settings/payment_method_screen.dart';
@@ -73,6 +78,8 @@ class AppRoutes {
   static const String thankYouScreen = '/thank-you-screen';
   static const String requestForm = '/request-form';
   static const String reviewRequest = '/review-request';
+  static const String sellItemScreen = '/sell-item-screen';
+  static const String myProductsScreen = '/my-products-screen';
 
   //settings
   static const String editProfile = '/edit-profile';
@@ -97,12 +104,46 @@ class AppRoutes {
   static const String vendorLoadingScreen = '/vendor-loading-screen';
   static const String switchScreen = '/switch-screen';
   static const String vendorHomePage = '/vendor-home-page';
+  static const String quoteSentScreen = '/quote-sent-screen';
+  static const String chatScreen = '/chat-screen';
+  static const String vendorQuotesScreen = '/vendor-quotes-screen';
 
 
 
 
 
   static final routes = [
+
+
+
+    GetPage(
+      name: myProductsScreen,
+      page: () {
+        return MyProductsScreen();
+      },
+      transition: Transition.fadeIn,
+    ),
+    GetPage(
+      name: vendorQuotesScreen,
+      page: () {
+        return MerchantQuotesScreen();
+      },
+      transition: Transition.fadeIn,
+    ),
+    GetPage(
+      name: chatScreen,
+      page: () {
+        return ChatScreen();
+      },
+      transition: Transition.fadeIn,
+    ),
+    GetPage(
+      name: quoteSentScreen,
+      page: () {
+        return QuoteSentScreen();
+      },
+      transition: Transition.fadeIn,
+    ),
 
     //vendor
     GetPage(
@@ -383,6 +424,13 @@ class AppRoutes {
       name: thankYouScreen,
       page: () {
         return const ThankYouScreen();
+      },
+      transition: Transition.fadeIn,
+    ),
+    GetPage(
+      name: sellItemScreen,
+      page: () {
+        return const SellItemScreen();
       },
       transition: Transition.fadeIn,
     ),

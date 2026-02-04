@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fyndr_ng/controllers/app_controller.dart';
 import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
 
@@ -18,6 +19,7 @@ class VendorProfileScreen extends StatefulWidget {
 
 class _VendorProfileScreenState extends State<VendorProfileScreen> {
   AuthController authController = Get.find<AuthController>();
+  AppController appController = Get.find<AppController>();
   UserModel? get user => authController.userModel;
   @override
   Widget build(BuildContext context) {
@@ -61,18 +63,63 @@ class _VendorProfileScreenState extends State<VendorProfileScreen> {
                 ],
               ),
               SizedBox(height: Dimensions.height20),
-              Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: Dimensions.width20,
-                  vertical: Dimensions.height20,
-                ),
-                decoration: BoxDecoration(color: AppColors.color4),
-                child: Image.asset(
-                  AppConstants.getPngAsset('head-icon'),
-                  height: Dimensions.height30,
-                  width: Dimensions.width30,
-                ),
-              ),
+              GetBuilder<AuthController>(builder: (authCtrl) {
+
+                String? avatarUrl = user?.avatar;
+                if (avatarUrl != null && avatarUrl.isNotEmpty && !avatarUrl.startsWith('http')) {
+                  avatarUrl = '${AppConstants.BASE_URL}$avatarUrl';
+                }
+
+                return GestureDetector(
+                  onTap: () {
+                    authCtrl.pickAndUploadAvatar();
+                  },
+                  child: Stack(
+                    children: [
+                      Container(
+                        height: 100,
+                        width: 100,
+                        decoration: BoxDecoration(
+                          color: AppColors.color4,
+                          shape: BoxShape.circle, // Circular profile pic is standard
+                          border: Border.all(color: AppColors.color1, width: 2),
+                          image: (avatarUrl != null && avatarUrl.isNotEmpty)
+                              ? DecorationImage(
+                            image: NetworkImage(avatarUrl),
+                            fit: BoxFit.cover,
+                          )
+                              : null,
+                        ),
+                        child: (user?.avatar == null || user!.avatar!.isEmpty)
+                            ? Center(
+                          child: Image.asset(
+                            AppConstants.getPngAsset('head-icon'),
+                            height: 50,
+                            width: 50,
+                          ),
+                        )
+                            : null,
+                      ),
+
+                      // Camera Icon Badge
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: Container(
+                          padding: EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: AppColors.color1,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                          child: Icon(Icons.camera_alt, size: 14, color: Colors.white),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+
               SizedBox(height: Dimensions.height5),
               Text(user?.name ?? '', style: TextStyle(fontSize: Dimensions.font20)),
               SizedBox(height: Dimensions.height5),
@@ -206,7 +253,9 @@ class _VendorProfileScreenState extends State<VendorProfileScreen> {
                     Divider(color: AppColors.grey2),
                     OptionCard('payment-icon', 'Payment Method'),
                     Divider(color: AppColors.grey2),
-                    OptionCard('log-out', 'Logout'),
+                    OptionCard('log-out', 'Logout',onTap: (){
+                      appController.clearSharedData();
+                    }),
                   ],
                 ),
               ),

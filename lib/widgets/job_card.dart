@@ -149,11 +149,13 @@ class JobCard extends StatelessWidget {
 
 class QuotesCard extends StatelessWidget {
   String imageAsset;
+  bool isNetworkImage;
   String title;
   String price;
   String location;
   String distance;
   String timeAgo;
+  VoidCallback? onTap;
 
   QuotesCard({
     super.key,
@@ -163,19 +165,20 @@ class QuotesCard extends StatelessWidget {
     required this.location,
     required this.distance,
     required this.timeAgo,
+    this.isNetworkImage = false,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () {
-        Get.toNamed(AppRoutes.quoteDetailsScreen);
-      },
+      onTap: onTap,
       child: Container(
         padding: EdgeInsets.symmetric(
           vertical: Dimensions.height10,
           horizontal: Dimensions.width10,
         ),
+        margin: EdgeInsets.only(bottom: Dimensions.height10),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(Dimensions.radius20),
           border: Border.all(color: AppColors.grey2),
@@ -190,11 +193,18 @@ class QuotesCard extends StatelessWidget {
                     color: AppColors.color3,
                     borderRadius: BorderRadius.circular(Dimensions.radius10),
                   ),
-                  child: Image.asset(
-                    AppConstants.getPngAsset(imageAsset),
-                    height: Dimensions.height10 * 6,
-                    width: Dimensions.width10 * 6,
-                  ),
+                  child:
+                      isNetworkImage
+                          ? Image.network(
+                            imageAsset,
+                            height: Dimensions.height10 * 6,
+                            width: Dimensions.width10 * 6,
+                          )
+                          : Image.asset(
+                            AppConstants.getPngAsset(imageAsset),
+                            height: Dimensions.height10 * 6,
+                            width: Dimensions.width10 * 6,
+                          ),
                 ),
                 SizedBox(width: Dimensions.width10),
                 Expanded(

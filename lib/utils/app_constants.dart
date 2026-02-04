@@ -36,6 +36,22 @@ class AppConstants {
 
   static const String GET_MERCHANT_LEADS = '/api/v1/job/merchant';
 
+  static const String POST_JOB_QUOTE = '/api/v1/quote';
+  static  String GET_QUOTE_DETAILS (String quoteId) => '/api/v1/quote/$quoteId';
+
+
+  static  String ACCEPT_QUOTE (String quoteId) => '/api/v1/quote/$quoteId/accept';
+  static  String COUNTER_QUOTE (String quoteId) => '/api/v1/quote/$quoteId/counter';
+  static  String DECLINE_QUOTE (String quoteId) => '/api/v1/quote/$quoteId/reject';
+
+
+
+  static  String CREATE_CHAT (String jobId) => '/api/v1/job/$jobId/chat';
+
+
+  static const String CREATE_PRODUCT  = '/api/v1/product';
+
+
 
 
   static String getPngAsset(String image) {

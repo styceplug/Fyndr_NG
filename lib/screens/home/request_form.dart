@@ -208,6 +208,8 @@ class _RequestFormState extends State<RequestForm> {
     }
   }
 
+
+
   void _submitForm() {
     String finalHouseNum = "";
     String finalStreet = "";
@@ -222,58 +224,63 @@ class _RequestFormState extends State<RequestForm> {
     double finalLat = _latitude ?? 0.0;
     double finalLng = _longitude ?? 0.0;
 
+    // --- LOGIC FIX START ---
     if (_serviceTitle == 'Real Estate') {
-      // Use the text fields we populated
       finalHouseNum = _houseNumController.text;
-      finalStreet = _streetController.text; // or _addressController if you used that
+      finalStreet = _streetController.text;
       finalCity = _cityController.text;
       finalState = _stateController.text;
-
     } else {
-      finalStreet = _detectedStreet ?? jobController.locationController.text;
-      finalCity = _detectedCity ?? "";
-      finalState = _detectedState ?? "";
+      // For Cleaning/Maintenance
+      // 1. Prioritize manually selected location from the picker
+      if (selectedLga != null && selectedState != null) {
+        finalCity = selectedLga!;
+        finalState = selectedState!;
+        finalStreet = locationDisplayController.text; // Or just use City, State
+      }
+      // 2. Fallback to GPS detected location if picker wasn't used
+      else if (_detectedCity != null) {
+        finalCity = _detectedCity!;
+        finalState = _detectedState!;
+        finalStreet = _detectedStreet ?? jobController.locationController.text;
+      }
+      // 3. Fallback to whatever is in the text controller (manual entry?)
+      else {
+        finalCity = "Unknown";
+        finalState = "Unknown";
+        finalStreet = jobController.locationController.text;
+      }
     }
+    // --- LOGIC FIX END ---
 
-    // --- FIX: HANDLE EMPTY TIME ---
     String finalTime = _timeController.text.trim().isEmpty
         ? "00:00"
         : _timeController.text.trim();
 
     String displayAddr = _serviceTitle == 'Real Estate'
-        ? "$finalCity, $finalState" // Simplified display or use address controller
-        : jobController.locationController.text;
+        ? "$finalHouseNum $finalStreet, $finalCity"
+        : "$finalCity, $finalState"; // Better display format
 
     String fullBudget = "N${_minBudgetController.text} - N${_maxBudgetController.text}";
 
-    // 2. Create Data Object
     final requestData = ServiceRequestData(
       serviceType: _serviceTitle,
       displayLocation: displayAddr,
-
-      // Use finalTime here
       displayDate: "${_dateController.text} at $finalTime",
-
       urgency: _urgency,
       displayBudget: fullBudget,
       description: _descController.text,
-
-      // Raw Data Passing
       houseNumber: finalHouseNum,
       street: finalStreet,
-      city: finalCity,
-      state: finalState,
+      city: finalCity, // This now holds LGA correctly
+      state: finalState, // This now holds State correctly
       lat: finalLat,
       lng: finalLng,
       rawDate: _dateController.text,
-
-      // Use finalTime here
       rawTime: finalTime,
-
       minBudget: _minBudgetController.text,
       maxBudget: _maxBudgetController.text,
       images: _selectedImages,
-
       subcategory: _serviceTitle == 'Home Maintenance' ? _selectedSubCategory : null,
     );
 
@@ -420,13 +427,21 @@ class _RequestFormState extends State<RequestForm> {
               ),
             ),
           ),
+          SizedBox(height: Dimensions.height20)
         ],
 
         if(_serviceTitle == 'Real Estate') ...[
           Text('WHERE DO YOU NEED THE PROPERTY?', style: TextStyle(fontSize: Dimensions.font13,
               color: AppColors.color1,
               fontWeight: FontWeight.w500)),
-          SizedBox(height: Dimensions.height10),
+          SizedBox(height: Dimensions.height10),],
+
+        if(_serviceTitle != 'Real Estate') ...[
+          Text('WHAT AREA BEST DESCRIBES WHERE YOU ARE?', style: TextStyle(fontSize: Dimensions.font13,
+              color: AppColors.color1,
+              fontWeight: FontWeight.w500)),
+          SizedBox(height: Dimensions.height10),],
+
           GestureDetector(
             onTap: _openLocationPicker,
             child: AbsorbPointer( // Prevents keyboard from opening
@@ -442,7 +457,7 @@ class _RequestFormState extends State<RequestForm> {
             ),
           ),
 
-        ]
+
       ],
     );
   }
