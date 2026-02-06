@@ -19,9 +19,7 @@ class _LoadingScreenVendorsState extends State<LoadingScreenVendors> {
   void initState() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Future.delayed(const Duration(seconds: 3), () {
-        Get.offAllNamed(AppRoutes.vendorRegistrationScreen,arguments: {
-          'isExistingUser': true
-        });
+        Get.offAllNamed(AppRoutes.vendorRegistrationScreen,arguments: Get.arguments);
       });
     });
     super.initState();

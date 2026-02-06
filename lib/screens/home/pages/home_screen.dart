@@ -232,58 +232,56 @@ class _HomePageState extends State<HomePage> {
             SizedBox(height: Dimensions.height10),
 
             // --- RECENT REQUESTS ---
-            Padding(
-              padding: _screenPadding,
-              child: Text(
-                'RECENT REQUESTS',
-                style: TextStyle(
-                  fontSize: Dimensions.font15,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.color1,
-                ),
-              ),
-            ),
-            SizedBox(height: Dimensions.height10),
-
             GetBuilder<JobController>(
               builder: (controller) {
+                // 1. Loading State
                 if (controller.jobLoading) {
-                  return Center(
-                    child: LinearProgressIndicator(color: AppColors.color1),
+                  return Padding(
+                    padding: EdgeInsets.symmetric(horizontal: Dimensions.width20),
+                    child: LinearProgressIndicator(color: AppColors.color1, minHeight: 2),
                   );
                 }
+
                 var recentJobs = controller.activeJobs.take(3).toList();
 
+                // 2. Empty State -> Hide Section Completely
                 if (recentJobs.isEmpty) {
-                  return Padding(
-                    padding: _screenPadding,
-                    child: Center(
-                      child: Text(
-                        "No recent requests found.",
-                        style: TextStyle(color: AppColors.grey4),
-                      ),
-                    ),
-                  );
+                  return const SizedBox.shrink();
                 }
 
-                return SizedBox(
-                  height: Dimensions.height10 * 9,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    padding: EdgeInsets.symmetric(
-                      horizontal: Dimensions.width20,
+                // 3. Data Exists -> Show Title + List
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: _screenPadding, // Ensure this variable is defined or use EdgeInsets
+                      child: Text(
+                        'RECENT REQUESTS',
+                        style: TextStyle(
+                          fontSize: Dimensions.font15,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.color1,
+                        ),
+                      ),
                     ),
-                    itemCount: recentJobs.length,
-                    itemBuilder: (context, index) {
-                      var job = recentJobs[index];
-                      return RequestCard(job);
-                    },
-                  ),
+                    SizedBox(height: Dimensions.height10),
+                    SizedBox(
+                      height: Dimensions.height10 * 9, // Adjust height based on RequestCard
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        padding: EdgeInsets.symmetric(horizontal: Dimensions.width20),
+                        itemCount: recentJobs.length,
+                        itemBuilder: (context, index) {
+                          var job = recentJobs[index];
+                          return RequestCard(job);
+                        },
+                      ),
+                    ),
+                    SizedBox(height: Dimensions.height10),
+                  ],
                 );
               },
             ),
-
-            SizedBox(height: Dimensions.height10),
 
             // --- POPULAR SERVICES ---
             Padding(
@@ -299,7 +297,7 @@ class _HomePageState extends State<HomePage> {
                       color: AppColors.color1,
                     ),
                   ),
-                  SizedBox(height: Dimensions.height20),
+                  SizedBox(height: Dimensions.height10),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [

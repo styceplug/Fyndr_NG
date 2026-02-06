@@ -4,20 +4,21 @@
 <dict>
     <key>NSLocationWhenInUseUsageDescription</key>
     <string>This app needs access to location to find services near you.</string>
+
     <key>NSLocationAlwaysUsageDescription</key>
     <string>This app needs access to location to provide better service matching.</string>
 
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>This app needs access to location to find services near you and provide better service matching.</string>
+
     <key>NSMicrophoneUsageDescription</key>
-    <string>We need microphone access to record voice messages</string>
+    <string>We need microphone access to record voice messages and capture audio during video recording.</string>
 
     <key>NSPhotoLibraryUsageDescription</key>
     <string>We need access to your photo library to allow you to upload profile photos, service requests, and verification documents.</string>
 
     <key>NSCameraUsageDescription</key>
     <string>We need access to your camera to take photos of issues or capture documents for verification.</string>
-
-    <key>NSMicrophoneUsageDescription</key>
-    <string>Used for capturing audio during video recording if required.</string>
 
     <key>PHPhotoLibraryPreventAutomaticLimitedAccessAlert</key>
     <true/>

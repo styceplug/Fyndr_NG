@@ -80,112 +80,132 @@ class _ProfileScreeState extends State<ProfileScree> {
                   avatarUrl = '${AppConstants.BASE_URL}$avatarUrl';
                 }
 
+                double ratingValue = double.tryParse(user?.ratings ?? '0.0') ?? 0.0;
+
+
+
                 return GestureDetector(
                   onTap: () {
                     authCtrl.pickAndUploadAvatar();
                   },
-                  child: Stack(
+                  child: Column(
                     children: [
-                      Container(
-                        height: 100,
-                        width: 100,
-                        decoration: BoxDecoration(
-                          color: AppColors.color4,
-                          shape: BoxShape.circle, // Circular profile pic is standard
-                          border: Border.all(color: AppColors.color1, width: 2),
-                          image: (avatarUrl != null && avatarUrl.isNotEmpty)
-                              ? DecorationImage(
-                            image: NetworkImage(avatarUrl),
-                            fit: BoxFit.cover,
-                          )
-                              : null,
-                        ),
-                        child: (user?.avatar == null || user!.avatar!.isEmpty)
-                            ? Center(
-                          child: Image.asset(
-                            AppConstants.getPngAsset('head-icon'),
-                            height: 50,
-                            width: 50,
+                      Stack(
+                        children: [
+                          Container(
+                            height: 100,
+                            width: 100,
+                            decoration: BoxDecoration(
+                              color: AppColors.color4,
+                              shape: BoxShape.circle, // Circular profile pic is standard
+                              border: Border.all(color: AppColors.color1, width: 2),
+                              image: (avatarUrl != null && avatarUrl.isNotEmpty)
+                                  ? DecorationImage(
+                                image: NetworkImage(avatarUrl),
+                                fit: BoxFit.cover,
+                              )
+                                  : null,
+                            ),
+                            child: (user?.avatar == null || user!.avatar!.isEmpty)
+                                ? Center(
+                              child: Image.asset(
+                                AppConstants.getPngAsset('head-icon'),
+                                height: 50,
+                                width: 50,
+                              ),
+                            )
+                                : null,
                           ),
-                        )
-                            : null,
+
+                          // Camera Icon Badge
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: Container(
+                              padding: EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: AppColors.color1,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white, width: 2),
+                              ),
+                              child: Icon(Icons.camera_alt, size: 14, color: Colors.white),
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: Dimensions.height5),
+                      Text(
+                        user?.name ?? '',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: Dimensions.font20),
+                      ),
+                      SizedBox(height: Dimensions.height5),
+                      IntrinsicWidth(
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: Dimensions.width10,
+                            vertical: Dimensions.height5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.color3,
+                            borderRadius: BorderRadius.circular(Dimensions.radius20),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Iconsax.location,
+                                color: Colors.white,
+                                size: Dimensions.iconSize16 * 0.9,
+                              ),
+                              SizedBox(width: Dimensions.width10),
+                              Text(
+                                '${user?.location?.state}, ${user?.location?.lga}',
+                                style: TextStyle(
+                                  fontSize: Dimensions.font12 * 0.9,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: Dimensions.height5),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          // Generate 5 stars dynamically
+                          ...List.generate(5, (index) {
+                            return Icon(
+                              // If the rating is greater than the current index, fill the star
+                              // e.g., if rating is 3.5:
+                              // index 0 (1st star) < 3.5 -> Filled
+                              // index 3 (4th star) > 3.5 -> Empty (or half if you want advanced logic)
+                              index < ratingValue.floor() ? Iconsax.star1 : Iconsax.star, // Filled vs Outline
+                              color: index < ratingValue.floor() ? AppColors.color4 : AppColors.grey3,
+                              size: Dimensions.iconSize20, // Optional: ensure consistent size
+                            );
+                          }),
+
+                          SizedBox(width: Dimensions.width5),
+
+                          // Display the value
+                          Text(
+                            ratingValue.toStringAsFixed(1), // Ensures "4.0" instead of "4"
+                            style: TextStyle(
+                              fontWeight: FontWeight.w500,
+                              fontSize: Dimensions.font16,
+                            ),
+                          ),
+                        ],
                       ),
 
-                      // Camera Icon Badge
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: Container(
-                          padding: EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: AppColors.color1,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2),
-                          ),
-                          child: Icon(Icons.camera_alt, size: 14, color: Colors.white),
-                        ),
-                      ),
                     ],
                   ),
                 );
               }),
-              SizedBox(height: Dimensions.height5),
-              Text(
-                user?.name ?? '',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: Dimensions.font20),
-              ),
-              SizedBox(height: Dimensions.height5),
-              IntrinsicWidth(
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: Dimensions.width10,
-                    vertical: Dimensions.height5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.color3,
-                    borderRadius: BorderRadius.circular(Dimensions.radius20),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Iconsax.location,
-                        color: Colors.white,
-                        size: Dimensions.iconSize16 * 0.9,
-                      ),
-                      SizedBox(width: Dimensions.width10),
-                      Text(
-                        '${user?.location?.state}, ${user?.location?.lga}',
-                        style: TextStyle(
-                          fontSize: Dimensions.font12 * 0.9,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              SizedBox(height: Dimensions.height5),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Icon(Iconsax.star1, color: AppColors.color4),
-                  Icon(Iconsax.star1, color: AppColors.color4),
-                  Icon(Iconsax.star1, color: AppColors.color4),
-                  Icon(Iconsax.star1, color: AppColors.color4),
-                  Icon(Iconsax.star1, color: AppColors.color4),
-                  SizedBox(width: Dimensions.width5),
-                  Text(
-                    '0.0',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w500,
-                      fontSize: Dimensions.font16,
-                    ),
-                  ),
-                ],
-              ),
+
               SizedBox(height: Dimensions.height20),
               Container(
                 padding: EdgeInsets.symmetric(
@@ -235,15 +255,7 @@ class _ProfileScreeState extends State<ProfileScree> {
                       'switch-icon',
                       'Switch Account',
                       onTap: () {
-                        bool hasVendorProfile = user?.hasVendorProfile ?? false;
-                        print(hasVendorProfile);
-                        if (hasVendorProfile) {
-                          Get.toNamed(AppRoutes.switchScreen);
-                        } else {
-                          Get.toNamed(AppRoutes.becomeVendorScreen,arguments: {
-                            'isExistingUser': true
-                          });
-                        }
+                        authController.handleSwitchAccountTap();
                       },
                     ),
                   ],

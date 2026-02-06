@@ -5,14 +5,13 @@ class ChatModel {
   String? id;
   String? customer;
   String? vendor;
-  String? service; // Job ID
-  String? product; // Product ID (New)
-  String? type;    // 'job-chat' or 'product-chat'
+  String? service;
+  String? product;
+  String? type;
 
   UserModel? customerDetails;
   UserModel? vendorDetails;
 
-  // You might want to store the full object details if needed later
   Map<String, dynamic>? serviceDetails;
   Map<String, dynamic>? productDetails;
 

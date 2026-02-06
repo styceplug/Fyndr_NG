@@ -18,6 +18,8 @@ class JobModel {
   String? subcategory;
   String? createdAt;
   List<String>? quotes;
+  List<BookingProgress>? bookingProgress;
+
 
   JobModel({
     this.id,
@@ -35,6 +37,7 @@ class JobModel {
     this.subcategory,
     this.createdAt,
     this.quotes,
+    this.bookingProgress
   });
 
   JobModel.fromJson(Map<String, dynamic> json) {
@@ -71,6 +74,13 @@ class JobModel {
       quotes = [];
     }
 
+    if (json['bookingProgress'] != null) {
+      bookingProgress = <BookingProgress>[];
+      json['bookingProgress'].forEach((v) {
+        bookingProgress!.add(BookingProgress.fromJson(v));
+      });
+    }
+
   }
 
   Map<String, dynamic> toJson() {
@@ -103,6 +113,31 @@ class JobModel {
   }
 }
 
+
+class BookingProgress {
+  String? id;
+  String? status;
+  String? notes;
+  String? timestamp;
+
+  BookingProgress({this.id, this.status, this.notes, this.timestamp});
+
+  BookingProgress.fromJson(Map<String, dynamic> json) {
+    id = json['id'] ?? json['_id'];
+    status = json['status'];
+    notes = json['notes'];
+    timestamp = json['timestamp'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['id'] = id;
+    data['status'] = status;
+    data['notes'] = notes;
+    data['timestamp'] = timestamp;
+    return data;
+  }
+}
 
 
 class JobBudget {

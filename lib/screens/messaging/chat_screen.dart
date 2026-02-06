@@ -128,6 +128,10 @@ class ChatScreen extends StatelessWidget {
 
           body: Column(
             children: [
+
+              if (ctrl.currentChat?.type == 'product-chat' && ctrl.currentChat?.productDetails != null)
+                _buildProductInfo(ctrl.currentChat!.productDetails!),
+
               //warning
               Container(
                 margin: EdgeInsets.symmetric(
@@ -151,6 +155,8 @@ class ChatScreen extends StatelessWidget {
                   textAlign: TextAlign.center,
                 ),
               ),
+
+
 
               // ==================== MESSAGE LIST ====================
               Expanded(
@@ -262,6 +268,90 @@ class ChatScreen extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+
+  Widget _buildProductInfo(Map<String, dynamic> product) {
+    // 1. Extract Data safely
+    String name = product['name'] ?? 'Product';
+
+    // Price formatting
+    var rawPrice = product['price'];
+    String price = "N0.00";
+    if (rawPrice != null) {
+      final formatter = NumberFormat.currency(locale: 'en_NG', symbol: 'N');
+      price = formatter.format(num.tryParse(rawPrice.toString()) ?? 0);
+    }
+
+    // Image Handling
+    String? imageUrl;
+    if (product['images'] != null && (product['images'] as List).isNotEmpty) {
+      String rawImg = (product['images'] as List)[0];
+      imageUrl = rawImg.startsWith('http') ? rawImg : '${AppConstants.BASE_URL}$rawImg';
+    }
+
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: Dimensions.width20, vertical: Dimensions.height10),
+      padding: EdgeInsets.all(Dimensions.width10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(Dimensions.radius10),
+        border: Border.all(color: AppColors.grey3),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 5,
+            offset: Offset(0, 2),
+          )
+        ],
+      ),
+      child: Row(
+        children: [
+          // Product Image
+          Container(
+            height: 50,
+            width: 50,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              color: AppColors.grey2,
+              image: imageUrl != null
+                  ? DecorationImage(image: NetworkImage(imageUrl), fit: BoxFit.cover)
+                  : null,
+            ),
+            child: imageUrl == null ? Icon(Iconsax.box, color: AppColors.grey4) : null,
+          ),
+          SizedBox(width: Dimensions.width10),
+
+          // Details
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: TextStyle(
+                      fontSize: Dimensions.font14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  price,
+                  style: TextStyle(
+                      fontSize: Dimensions.font12,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.color1
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+        ],
+      ),
     );
   }
 

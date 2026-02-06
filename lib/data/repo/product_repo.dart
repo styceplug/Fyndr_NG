@@ -18,7 +18,7 @@ class ProductRepo {
 
   Future<Response> getUserProducts({int page = 1, int limit = 10}) async {
     return await apiClient.getData(
-        '${AppConstants.BASE_URL}/api/v1/product/user/me?page=$page&limit=$limit'
+        '/api/v1/product/user/me?page=$page&limit=$limit'
     );
   }
 

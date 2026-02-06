@@ -243,6 +243,13 @@ class ChatController extends GetxController {
       if (response.statusCode == 201 || response.statusCode == 200) {
         String chatId = response.body['data']['id'];
         await loadChatDetails(chatId);
+
+        Get.toNamed(AppRoutes.chatScreen, arguments: {
+          'chatId': chatId,
+          'type': 'job-chat'
+        });
+
+
       } else {
         CustomSnackBar.failure(
           message: response.body['message'] ?? response.body['error'] ?? "Could not start chat",

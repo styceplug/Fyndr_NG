@@ -16,12 +16,19 @@ class UserModel {
   bool? isAvailable;
   bool? isFyndrRecommended;
 
+  // --- MISSING FIELDS ADDED ---
+  String? verificationStatus;
+  String? ratings;
+
   UserLocation? location;
   UserPreferences? preferences;
   String? createdAt;
-  bool? hasVendorProfile;
 
-  // --- NEW NESTED OBJECTS ---
+  // --- PROFILE SWITCHING FLAGS ---
+  bool? hasVendorProfile;
+  bool? hasCustomerProfile;
+
+  // --- NESTED OBJECTS ---
   BusinessDetails? businessDetails;
   BusinessDocs? businessDocs;
 
@@ -37,10 +44,13 @@ class UserModel {
     this.isBusinessVerified,
     this.isAvailable,
     this.isFyndrRecommended,
+    this.verificationStatus, // New
+    this.ratings,            // New
     this.location,
     this.preferences,
     this.createdAt,
     this.hasVendorProfile,
+    this.hasCustomerProfile, // New
     this.businessDetails,
     this.businessDocs,
     this.avatar
@@ -55,12 +65,17 @@ class UserModel {
       currentRole: json['currentRole'],
       isActive: json['isActive'],
       avatar: json['avatar'],
-      // Parse new flags (using default false just in case)
+
+      // Parse flags
       isEmailValidated: json['isEmailValidated'] ?? false,
       isProfileVerified: json['isProfileVerified'] ?? false,
       isBusinessVerified: json['isBusinessVerified'] ?? false,
       isAvailable: json['isAvailable'] ?? false,
       isFyndrRecommended: json['isFyndrRecommended'] ?? false,
+
+      // Parse missing fields
+      verificationStatus: json['verificationStatus'],
+      ratings: json['ratings']?.toString(), // Safely convert to string
 
       location: json['location'] != null
           ? UserLocation.fromJson(json['location'])
@@ -71,9 +86,11 @@ class UserModel {
           : null,
 
       createdAt: json['createdAt'],
-      hasVendorProfile: json['hasVendorProfile'] ?? false,
 
-      // Parse new objects
+      // Handle both profile flags
+      hasVendorProfile: json['hasVendorProfile'] ?? false,
+      hasCustomerProfile: json['hasCustomerProfile'] ?? false,
+
       businessDetails: json['businessDetails'] != null
           ? BusinessDetails.fromJson(json['businessDetails'])
           : null,
@@ -82,7 +99,6 @@ class UserModel {
           : null,
     );
   }
-
 
   Map<String, dynamic> toJson() {
     return {
@@ -97,31 +113,32 @@ class UserModel {
       'isBusinessVerified': isBusinessVerified,
       'isAvailable': isAvailable,
       'isFyndrRecommended': isFyndrRecommended,
+      'verificationStatus': verificationStatus,
+      'ratings': ratings,
       'location': location?.toJson(),
       'preferences': preferences?.toJson(),
       'createdAt': createdAt,
       'hasVendorProfile': hasVendorProfile,
+      'hasCustomerProfile': hasCustomerProfile,
       'businessDetails': businessDetails?.toJson(),
       'businessDocs': businessDocs?.toJson(),
     };
   }
 
+  // ... (Keep your helper methods like isProfileComplete, getAccountAge, profilePicture)
+
   bool get isProfileComplete {
     bool hasName = name != null && name!.isNotEmpty;
     bool hasEmail = email != null && email!.isNotEmpty;
-    bool hasLocation = location != null &&
-        location!.state != null &&
-        location!.state!.isNotEmpty;
+    // Note: For vendors, location might be inside businessDetails, not root location
+    bool hasLocation = (location != null && location!.state != null) ||
+        (businessDetails?.businessLocation?.state != null);
 
     return hasName && hasEmail && hasLocation;
   }
 
-
-
-
   String getAccountAge(String? dateString) {
     if (dateString == null) return "0 days";
-
     DateTime createdDate = DateTime.parse(dateString);
     DateTime now = DateTime.now();
     Duration diff = now.difference(createdDate);
@@ -141,14 +158,11 @@ class UserModel {
     if (avatar == null || avatar!.isEmpty) {
       return null;
     }
-    // If it already has http/https, return as is.
     if (avatar!.startsWith('http')) {
       return avatar;
     }
-    // Otherwise, prepend the Base URL
     return '${AppConstants.BASE_URL}$avatar';
   }
-
 }
 
 class BusinessDetails {

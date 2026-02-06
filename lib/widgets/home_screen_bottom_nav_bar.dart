@@ -19,7 +19,7 @@ class HomeScreenBottomNavBar extends StatelessWidget {
     AppController appController = Get.find<AppController>();
 
     return Obx(
-          () => SizedBox(
+      () => SizedBox(
         height: Dimensions.height10 * 8.7,
         child: Stack(
           alignment: Alignment.bottomCenter,
@@ -80,7 +80,9 @@ class HomeScreenBottomNavBar extends StatelessWidget {
                 color: Colors.transparent,
                 child: InkWell(
                   onTap: () {
-                    CustomSnackBar.processing(message: 'Genie AI, Coming Soon');
+                    CustomSnackBar.processing(
+                      message: 'Genie AI is coming soon, watch this space',
+                    );
                   },
                   customBorder: const CircleBorder(),
                   child: Container(
@@ -92,7 +94,8 @@ class HomeScreenBottomNavBar extends StatelessWidget {
                         // Floating Icon
                         Image.asset(
                           AppConstants.getPngAsset('genie-icon'),
-                          height: Dimensions.height10 * 6, // Added explicit height to prevent layout jumps
+                          height: Dimensions.height10 * 6,
+                          // Added explicit height to prevent layout jumps
                           fit: BoxFit.contain,
                         ),
                         SizedBox(height: Dimensions.height5),
@@ -125,7 +128,7 @@ class VendorBottomNavBar extends StatelessWidget {
     AppController appController = Get.find<AppController>();
 
     return Obx(
-          () => SizedBox(
+      () => SizedBox(
         height: Dimensions.height10 * 9,
         child: Stack(
           alignment: Alignment.bottomCenter,
@@ -186,7 +189,9 @@ class VendorBottomNavBar extends StatelessWidget {
                 color: Colors.transparent,
                 child: InkWell(
                   onTap: () {
-                    CustomSnackBar.processing(message: 'Coming Soon');
+                    CustomSnackBar.processing(
+                      message: 'Genie AI is coming soon, watch this space',
+                    );
                   },
                   customBorder: const CircleBorder(),
                   child: Container(
@@ -198,7 +203,8 @@ class VendorBottomNavBar extends StatelessWidget {
                         // Floating Icon
                         Image.asset(
                           AppConstants.getPngAsset('genie-icon'),
-                          height: Dimensions.height10 * 6, // Added explicit height to prevent layout jumps
+                          height: Dimensions.height10 * 6,
+                          // Added explicit height to prevent layout jumps
                           fit: BoxFit.contain,
                         ),
                         SizedBox(height: Dimensions.height5),

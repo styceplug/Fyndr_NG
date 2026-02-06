@@ -4,6 +4,7 @@ import 'package:fyndr_ng/utils/colors.dart';
 import 'package:fyndr_ng/widgets/custom_button.dart';
 import 'package:get/get.dart';
 
+import '../../controllers/auth_controller.dart';
 import '../../utils/dimensions.dart';
 
 class SwitchProfile extends StatefulWidget {
@@ -14,11 +15,22 @@ class SwitchProfile extends StatefulWidget {
 }
 
 class _SwitchProfileState extends State<SwitchProfile> {
-  // defaulting to 'customer' so one is active by default
-  String selectedOption = 'customer';
+  final AuthController authController = Get.find<AuthController>();
+  String selectedOption = '';
+
+  @override
+  void initState() {
+    super.initState();
+    // Pre-select the CURRENT role
+    selectedOption = authController.userModel?.currentRole ?? 'customer';
+  }
 
   @override
   Widget build(BuildContext context) {
+    // Get User Data
+    final user = authController.userModel;
+    final isCurrentlyVendor = user?.currentRole == 'vendor';
+
     return Scaffold(
       body: Container(
         padding: EdgeInsets.symmetric(
@@ -33,54 +45,58 @@ class _SwitchProfileState extends State<SwitchProfile> {
             Text(
               'Switch Account',
               style: TextStyle(
-                fontSize: Dimensions.font22,
+                fontSize: Dimensions.font23,
                 fontWeight: FontWeight.w600,
                 color: AppColors.color1,
               ),
             ),
             SizedBox(height: Dimensions.height5),
             Text(
-              'You are currently in customer mode',
+              'You are currently in ${user?.currentRole ?? "customer"} mode',
               style: TextStyle(color: AppColors.grey5),
             ),
             SizedBox(height: Dimensions.height20),
 
             // --- CUSTOMER CARD ---
             _buildAccountCard(
-              name: 'John Doe',
+              name: user?.name ?? 'User',
               role: 'Customer',
-              value: 'customer', // This ID tracks the selection
-              isVerified: true,
+              value: 'customer',
+              isVerified: user?.isProfileVerified ?? false, // User verification
             ),
 
             SizedBox(height: Dimensions.height20),
 
             // --- VENDOR CARD ---
             _buildAccountCard(
-              name: 'ABC Plumbing & Co.',
+              // If they have business details, use that name, else use User name
+              name: user?.businessDetails?.businessName ?? user?.name ?? 'Vendor Profile',
               role: 'Vendor',
-              value: 'vendor', // This ID tracks the selection
-              isVerified: true,
+              value: 'vendor',
+              // Vendor verification status
+              isVerified: user?.isBusinessVerified ?? false,
             ),
 
             SizedBox(height: Dimensions.height20),
 
             // --- ACTION BUTTONS ---
-            CustomButton(
-              text: 'Switch Account',
-              onPressed: () {
-                if (selectedOption == 'vendor') {
-                  // Navigate to Vendor Home
-                  // Get.offAllNamed(AppRoutes.vendorHomeScreen);
-                  print("Switching to Vendor...");
-                  Get.offAllNamed(AppRoutes.vendorLoadingScreen);
-                } else {
-                  // Navigate to Customer Home
-                  // Get.offAllNamed(AppRoutes.homeScreen);
-                  print("Switching to Customer...");
-                }
-              },
-            ),
+            GetBuilder<AuthController>(builder: (controller) {
+              return CustomButton(
+                text: 'Switch Account',
+                // Disable if user selected the role they are already in
+                onPressed: (selectedOption == user?.currentRole)
+                    ? null // Disable button
+                    : () {
+                  // Trigger the switch
+                  controller.attemptRoleSwitch();
+                },
+                // Visual feedback for disabled state
+                backgroundColor: (selectedOption == user?.currentRole)
+                    ? AppColors.grey3
+                    : AppColors.color2,
+              );
+            }),
+
             SizedBox(height: Dimensions.height20),
             CustomButton(
               text: 'Cancel',
@@ -88,7 +104,7 @@ class _SwitchProfileState extends State<SwitchProfile> {
                 Get.back();
               },
               backgroundColor: AppColors.white,
-              borderColor: AppColors.color1,
+              borderColor: AppColors.color2,
             ),
           ],
         ),
@@ -121,7 +137,7 @@ class _SwitchProfileState extends State<SwitchProfile> {
           borderRadius: BorderRadius.circular(Dimensions.radius20),
           border: Border.all(
             // Change border color if selected
-            color: isSelected ? AppColors.color1 : AppColors.grey2,
+            color: isSelected ? AppColors.color2 : AppColors.grey2,
             width: isSelected ? 2 : 1,
           ),
         ),

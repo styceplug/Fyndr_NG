@@ -85,7 +85,12 @@ class BrowseScreen extends StatelessWidget {
                 Expanded(
                   child: CustomTextField(
                     onChanged: (val) => controller.searchProducts(val),
-                    prefixIcon: Icon(Icons.search, color: AppColors.grey4),
+                    prefixIcon: Padding(
+                      padding: EdgeInsets.only(
+                        left: Dimensions.width15
+                      ),
+                      child: Icon(Icons.search, color: AppColors.grey4),
+                    ),
                     // Simplified icon
                     hintText: 'Search items...',
                   ),

@@ -17,7 +17,7 @@ class JobRepo {
 
   Future<Response> getMerchantAcceptedJobs({int page = 1, int limit = 20}) async {
     return await apiClient.getData(
-        '${AppConstants.BASE_URL}/api/v1/job/merchant/accepted?page=$page&limit=$limit'
+        '/api/v1/job/merchant/accepted?page=$page&limit=$limit'
     );
   }
 

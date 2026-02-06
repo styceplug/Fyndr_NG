@@ -62,7 +62,6 @@ class AppController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    // initializeApp();
   }
 
   Future<void> initializeApp() async {

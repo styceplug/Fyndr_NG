@@ -44,12 +44,10 @@ class _VendorJobsState extends State<VendorJobs> {
       length: 3,
       child: Scaffold(
         appBar: CustomAppbar(
-            leadingIcon: BackButton(),
             title: 'My Jobs'
         ),
         body: GetBuilder<JobController>(
           builder: (ctrl) {
-
             return Container(
               padding: EdgeInsets.symmetric(
                 horizontal: Dimensions.width20,
@@ -123,176 +121,183 @@ class _VendorJobsState extends State<VendorJobs> {
     final currencyFormatter = NumberFormat.currency(locale: 'en_NG', symbol: 'N');
     String price = currencyFormatter.format(job.budget?.preference ?? 0);
 
-    return Container(
-      padding: EdgeInsets.symmetric(
-        vertical: Dimensions.height20,
-        horizontal: Dimensions.width20,
-      ),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(Dimensions.radius20),
-        border: Border.all(color: AppColors.grey2),
-        color: Colors.white,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header: Date & Status Tag
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                dateStr,
-                style: TextStyle(
-                  fontSize: Dimensions.font13,
-                  color: AppColors.grey3,
-                ),
-              ),
-              Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: Dimensions.width10,
-                  vertical: Dimensions.height5,
-                ),
-                decoration: BoxDecoration(
-                  color: isActive ? AppColors.color5 : AppColors.grey2,
-                  borderRadius: BorderRadius.circular(Dimensions.radius10),
-                ),
-                child: Text(
-                  isActive ? 'Ongoing' : (job.status?.isCancelled == true ? 'Cancelled' : 'Completed'),
+    return InkWell(
+      onTap: (){
+        jobController.getJobDetailsAndQuotes(job.id ?? '');
+        Get.toNamed(AppRoutes.jobInProgress, arguments: job);
+      },
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          vertical: Dimensions.height20,
+          horizontal: Dimensions.width20,
+        ),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(Dimensions.radius20),
+          border: Border.all(color: AppColors.grey2),
+          color: Colors.white,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header: Date & Status Tag
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  dateStr,
                   style: TextStyle(
                     fontSize: Dimensions.font13,
-                    color: isActive ? AppColors.color2 : AppColors.black,
+                    color: AppColors.grey3,
                   ),
                 ),
-              ),
-            ],
-          ),
-          SizedBox(height: Dimensions.height10),
-
-          // Job Title (Description snippet)
-          Text(
-            job.description ?? "Service Request",
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: Dimensions.font18,
-              color: AppColors.color2,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          SizedBox(height: Dimensions.height10),
-
-          // Location & Customer Info
-          Row(
-            children: [
-              Icon(Icons.location_on, size: 14, color: AppColors.grey4),
-              SizedBox(width: 4),
-              Expanded(
-                child: Text(
-                  "${job.location?.lga ?? ''}",
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: Dimensions.font14, color: AppColors.grey4),
-                ),
-              ),
-              SizedBox(width: Dimensions.width20),
-
-              Icon(Icons.person, size: 14, color: AppColors.grey4),
-              SizedBox(width: 4),
-              Text(
-                job.user?.name ?? 'Customer',
-                style: TextStyle(fontSize: Dimensions.font14, color: AppColors.grey4),
-              ),
-            ],
-          ),
-          SizedBox(height: Dimensions.height10),
-
-          // Price
-          Text(
-            price,
-            style: TextStyle(
-              fontSize: Dimensions.font15,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          SizedBox(height: Dimensions.height10),
-          Divider(color: AppColors.grey2),
-          SizedBox(height: Dimensions.height10),
-
-          // Action Buttons (Only show actions if Active)
-          if (isActive) ...[
-            Row(
-              children: [
-                // CALL
-                Expanded(
-                  child: CustomButton(
-                    text: 'Call',
-                    onPressed: () {
-                      if (job.user?.number != null) {
-                        launchUrl(Uri.parse("tel:${job.user!.number}"));
-                      } else {
-                        CustomSnackBar.failure(message: "No phone number available");
-                      }
-                    },
-                    backgroundColor: AppColors.black,
-                    icon: Icon(Iconsax.call, color: AppColors.white, size: 18),
-
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: Dimensions.width10,
+                    vertical: Dimensions.height5,
                   ),
-                ),
-                SizedBox(width: 10),
-
-                // CHAT
-                Expanded(
-                  child: CustomButton(
-                    text: 'Chat',
-                    onPressed: () {
-                      // Initiate Chat: Job ID, Customer ID (from job), Vendor ID (me)
-                      chatController.initiateChat(
-                        job.id!,
-                        job.user!.id!, // Customer
-                        Get.find<AuthController>().userModel!.id!, // Me (Vendor)
-                      );
-                      // Navigation handled inside initiateChat
-                    },
-                    backgroundColor: AppColors.white,
-                    icon: Icon(Iconsax.message, color: AppColors.black, size: 18),
-                    borderColor: AppColors.black,
-
+                  decoration: BoxDecoration(
+                    color: isActive ? AppColors.color5 : AppColors.grey2,
+                    borderRadius: BorderRadius.circular(Dimensions.radius10),
                   ),
-                ),
-                SizedBox(width: 10),
-
-                // MAP (Location)
-                InkWell(
-                  onTap: () {
-                    // Open Maps Logic
-                    if (job.location?.coordinates != null) {
-                      final lat = job.location!.coordinates![1];
-                      final lng = job.location!.coordinates![0];
-                      launchUrl(Uri.parse("https://www.google.com/maps/search/?api=1&query=$lat,$lng"));
-                    }
-                  },
-                  child: Container(
-                    height: 45,
-                    width: 45,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(Dimensions.radius15),
-                      color: AppColors.black,
+                  child: Text(
+                    isActive ? 'Ongoing' : (job.status?.isCancelled == true ? 'Cancelled' : 'Completed'),
+                    style: TextStyle(
+                      fontSize: Dimensions.font13,
+                      color: isActive ? AppColors.color2 : AppColors.black,
                     ),
-                    child: Icon(Iconsax.location5, color: AppColors.white),
                   ),
                 ),
               ],
             ),
             SizedBox(height: Dimensions.height10),
 
-            // COMPLETE BUTTON
-            CustomButton(
-              text: 'Mark as completed',
-              onPressed: () => jobController.completeJob(job.id!),
-              backgroundColor: AppColors.color2,
+            // Job Title (Description snippet)
+            Text(
+              job.description ?? "Service Request",
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: Dimensions.font18,
+                color: AppColors.color2,
+                fontWeight: FontWeight.w600,
+              ),
             ),
+            SizedBox(height: Dimensions.height10),
+
+            // Location & Customer Info
+            Row(
+              children: [
+                Icon(Icons.location_on, size: 14, color: AppColors.grey4),
+                SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    "${job.location?.lga ?? ''}",
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: Dimensions.font14, color: AppColors.grey4),
+                  ),
+                ),
+                SizedBox(width: Dimensions.width20),
+
+                Icon(Icons.person, size: 14, color: AppColors.grey4),
+                SizedBox(width: 4),
+                Text(
+                  job.user?.name ?? 'Customer',
+                  style: TextStyle(fontSize: Dimensions.font14, color: AppColors.grey4),
+                ),
+              ],
+            ),
+            SizedBox(height: Dimensions.height10),
+
+            // Price
+            Text(
+              price,
+              style: TextStyle(
+                fontSize: Dimensions.font15,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            SizedBox(height: Dimensions.height10),
+            Divider(color: AppColors.grey2),
+            SizedBox(height: Dimensions.height10),
+
+            // Action Buttons (Only show actions if Active)
+            if (isActive) ...[
+              Row(
+                children: [
+                  // CALL
+                  Expanded(
+                    child: CustomButton(
+                      text: 'Call',
+                      onPressed: () {
+                        if (job.user?.number != null) {
+                          launchUrl(Uri.parse("tel:${job.user!.number}"));
+                        } else {
+                          CustomSnackBar.failure(message: "No phone number available");
+                        }
+                      },
+                      backgroundColor: AppColors.black,
+                      icon: Icon(Iconsax.call, color: AppColors.white, size: 18),
+
+                    ),
+                  ),
+                  SizedBox(width: 10),
+
+                  // CHAT
+                  Expanded(
+                    child: CustomButton(
+                      text: 'Chat',
+                      onPressed: () {
+                        chatController.initiateChat(
+                          job.id!,
+                          job.user!.id!,
+                          Get.find<AuthController>().userModel!.id!,
+                        );
+                        if (chatController.currentChat != null) {
+                          Get.toNamed(AppRoutes.chatScreen);
+                        }
+                      },
+                      backgroundColor: AppColors.white,
+                      icon: Icon(Iconsax.message, color: AppColors.black, size: 18),
+                      borderColor: AppColors.black,
+
+                    ),
+                  ),
+                  SizedBox(width: 10),
+
+                  // MAP (Location)
+                  InkWell(
+                    onTap: () {
+                      // Open Maps Logic
+                      if (job.location?.coordinates != null) {
+                        final lat = job.location!.coordinates![1];
+                        final lng = job.location!.coordinates![0];
+                        launchUrl(Uri.parse("https://www.google.com/maps/search/?api=1&query=$lat,$lng"));
+                      }
+                    },
+                    child: Container(
+                      height: 45,
+                      width: 45,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(Dimensions.radius15),
+                        color: AppColors.black,
+                      ),
+                      child: Icon(Iconsax.location5, color: AppColors.white),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: Dimensions.height10),
+
+              // COMPLETE BUTTON
+              CustomButton(
+                text: 'Mark as completed',
+                onPressed: () => jobController.completeJob(job.id!),
+                backgroundColor: AppColors.color2,
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

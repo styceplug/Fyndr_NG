@@ -26,60 +26,93 @@ class AuthController extends GetxController {
 
 
 
+  void handleSwitchAccountTap() {
+    final user = userModel;
+    if (user == null) return;
+
+    if (user.currentRole == 'vendor') {
+      // If I am Vendor, I DEFINITELY have a customer profile (base account)
+      Get.toNamed(AppRoutes.switchScreen);
+    } else {
+      // I am Customer. Do I have a vendor profile?
+      if (user.hasVendorProfile == true) {
+        // Yes -> Go to Switch Screen
+        Get.toNamed(AppRoutes.switchScreen);
+      } else {
+        // No -> Go to Become Vendor Screen (Passing flag to hide owner info)
+        Get.toNamed(AppRoutes.becomeVendorScreen, arguments: {
+          'isExistingUser': true
+        });
+      }
+    }
+  }
 
   Future<void> attemptRoleSwitch() async {
-    loader.showLoader();
+    // 1. Show Global Loader
+    Get.find<GlobalLoaderController>().showLoader();
     update();
 
     try {
+      // 2. Call API
       Response response = await authRepo.switchUserRole();
 
       if (response.statusCode == 200) {
+        // --- SUCCESS CASE ---
+        var data = response.body['data'];
+        String newRole = data['currentRole'];
 
-        String newRole = response.body['data']['currentRole'];
-
+        // Update Local Model
         if (_userModel != null) {
           _userModel!.currentRole = newRole;
+          // Optionally update local storage if you cache the user object
         }
 
-        // 3. Dynamic Navigation based on the NEW role
+        // Navigate based on NEW role
         if (newRole == "vendor") {
           print("✅ Switched to Vendor Mode");
           CustomSnackBar.success(message: "Welcome back to your Vendor Dashboard");
-          Get.offAllNamed(AppRoutes.vendorHomeScreen);
-
+          appController.changeCurrentAppPage(0);
+          await getUserProfile();
+          Get.offAllNamed(AppRoutes.vendorHomePage);
         } else {
           print("✅ Switched to Customer Mode");
           CustomSnackBar.success(message: "Switched to Customer Profile");
-          Get.offAllNamed(AppRoutes.homeScreen); // Customer Home
+          appController.changeCurrentAppPage(0);
+          await getUserProfile();
+          Get.offAllNamed(AppRoutes.homeScreen);
         }
 
       } else if (response.statusCode == 400) {
-
-
+        // --- INCOMPLETE VENDOR PROFILE CASE ---
         print("⚠️ Cannot switch: Vendor profile incomplete.");
+
+        // Close loader before navigating
+        Get.find<GlobalLoaderController>().hideLoader();
+
         CustomSnackBar.processing(
-            message: "Setup Required: Please complete your vendor registration first."
+            message: "Setup Required: Please complete your vendor registration."
         );
-        Get.offAllNamed(AppRoutes.getStartedScreen);
+
+        appController.changeCurrentAppPage(0);
+        // Redirect to Vendor Onboarding Flow (Existing User Mode)
+        Get.toNamed(AppRoutes.becomeVendorScreen, arguments: {
+          'isExistingUser': true
+        });
 
       } else {
         // --- OTHER ERRORS ---
         CustomSnackBar.failure(message: response.statusText ?? "Failed to switch role");
-        Get.back();
       }
 
     } catch (e) {
       print("❌ Switch Role Error: $e");
       CustomSnackBar.failure(message: "An error occurred");
-      Get.back();
     } finally {
-     loader.hideLoader();
+      // Hide loader if we haven't navigated away in the 400 case
+      Get.find<GlobalLoaderController>().hideLoader();
       update();
     }
   }
-
-
 
   Future<void> pickAndUploadAvatar() async {
     try {
