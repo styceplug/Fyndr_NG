@@ -35,12 +35,16 @@ class ProductRepo {
     );
   }
 
-  Future<Response> getProducts({int page = 1, String? userId}) async {
-    String url = '${AppConstants.CREATE_PRODUCT}?page=$page&limit=20';
-    if (userId != null) {
-      url += '&user=$userId';
-    }
-    return await apiClient.getData(url);
+  Future<Response> getProducts({
+    required double lat,
+    required double lng,
+    double maxDistance = 50000 // Default to 50km radius
+  }) async {
+    // Construct the URL with query parameters
+    // Assuming AppConstants.ALL_PRODUCTS_URI is "/api/v1/product"
+    String uri = '${AppConstants.GET_PRODUCT}?page=1&limit=20&lat=$lat&lng=$lng&maxDistance=$maxDistance';
+
+    return await apiClient.getData(uri);
   }
 
 
@@ -49,32 +53,62 @@ class ProductRepo {
     required bool isFree,
     required String? price,
     required String condition,
-    required String state,
-    required String lga,
+    required double lat, // Keeping as double
+    required double lng, // Keeping as double
     required String description,
     required List<XFile> images,
   }) async {
-    // 1. Prepare Request
     final uri = Uri.parse(apiClient.baseUrl! + AppConstants.CREATE_PRODUCT);
     final request = http.MultipartRequest('POST', uri);
 
-    // 3. Add Text Fields
-    request.fields.addAll({
-      'name': name,
-      'isFree': isFree.toString(),
-      'condition': condition,
-      'state': state,
-      'lga': lga,
-      'description': description,
-    });
+    // 1. Send NORMAL TEXT fields
+    request.fields['name'] = name;
+    request.fields['condition'] = condition;
+    request.fields['description'] = description;
 
+    // 2. SEND NUMBERS/BOOLEANS AS "JSON PARTS"
+    // This tells the backend: "Do not treat this as a text string, treat it as a JSON value (Number/Boolean)"
+
+    // Send Latitude
+    request.files.add(
+      http.MultipartFile.fromString(
+        'lat',
+        lat.toString(), // We send the characters "37.5", but...
+        contentType: MediaType('application', 'json'), // ...this tells backend it's a Number
+      ),
+    );
+
+    // Send Longitude
+    request.files.add(
+      http.MultipartFile.fromString(
+        'lng',
+        lng.toString(),
+        contentType: MediaType('application', 'json'),
+      ),
+    );
+
+    // Send Boolean
+    request.files.add(
+      http.MultipartFile.fromString(
+        'isFree',
+        isFree.toString(),
+        contentType: MediaType('application', 'json'),
+      ),
+    );
+
+    // Send Price (if exists)
     if (!isFree && price != null) {
-      request.fields['price'] = price;
+      request.files.add(
+        http.MultipartFile.fromString(
+          'price',
+          price,
+          contentType: MediaType('application', 'json'),
+        ),
+      );
     }
 
-    // 4. Add Images (Loop through list)
+    // 3. Add Images
     for (var image in images) {
-      // Determine MIME type (optional but recommended)
       MediaType contentType = MediaType('image', 'jpeg');
       if (image.path.toLowerCase().endsWith('.png')) {
         contentType = MediaType('image', 'png');
@@ -82,7 +116,7 @@ class ProductRepo {
 
       request.files.add(
         http.MultipartFile.fromBytes(
-          'images', // Key name expected by backend
+          'images',
           await File(image.path).readAsBytes(),
           filename: image.name,
           contentType: contentType,
@@ -90,7 +124,6 @@ class ProductRepo {
       );
     }
 
-    // 5. Send via ApiClient wrapper
     return await apiClient.postMultipartData(AppConstants.CREATE_PRODUCT, request);
   }
 }

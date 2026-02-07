@@ -9,6 +9,7 @@ import 'package:fyndr_ng/widgets/snackbars.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../data/api/api_checker.dart';
 import '../data/repo/auth_repo.dart';
 import '../model/user_model.dart';
 
@@ -25,6 +26,42 @@ class AuthController extends GetxController {
   UserModel? get userModel => _userModel;
 
 
+  Future<void> toggleUserAvailability(bool newValue) async {
+    // 1. Get current status to revert if API fails
+    bool previousStatus = userModel?.isAvailable ?? true;
+
+    if (userModel != null) {
+      userModel?.isAvailable = newValue;
+      update();
+    }
+
+    // 3. Call API
+    try {
+      Response response = await authRepo.updateAvailability(newValue);
+
+      if (response.statusCode == 200) {
+        CustomSnackBar.success(
+            message: newValue ? "Account is now Active" : "Account Paused"
+        );
+      } else {
+        // 4. Failure: Revert UI
+        _revertAvailability(previousStatus);
+        ApiChecker.checkApi(response);
+      }
+    } catch (e) {
+      // 5. Error: Revert UI
+      _revertAvailability(previousStatus);
+      print("Error toggling availability: $e");
+      CustomSnackBar.failure(message: "Connection error");
+    }
+  }
+
+  void _revertAvailability(bool status) {
+    if (userModel != null) {
+      userModel?.isAvailable = status;
+      update();
+    }
+  }
 
   void handleSwitchAccountTap() {
     final user = userModel;

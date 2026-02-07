@@ -1,9 +1,7 @@
-import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:fyndr_ng/helpers/global_loader_controller.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
-import 'package:fyndr_ng/utils/app_constants.dart';
 import 'package:image_picker/image_picker.dart';
-
 import '../data/api/api_checker.dart';
 import '../data/repo/product_repo.dart';
 import '../model/product_model.dart';
@@ -14,17 +12,10 @@ class ProductController extends GetxController {
 
   ProductController({required this.productRepo});
 
-  // Loaders
   GlobalLoaderController loader = Get.find<GlobalLoaderController>();
-
-  // Image Picking
   List<XFile> _selectedImages = [];
-
   List<XFile> get selectedImages => _selectedImages;
-
-  // Form State
   bool _isFree = false;
-
   bool get isFree => _isFree;
   String? _selectedLocationFilter;
   String? get selectedLocation => _selectedLocationFilter;
@@ -35,6 +26,8 @@ class ProductController extends GetxController {
   List<ProductModel> _filteredList = [];
   List<ProductModel> get products => _filteredList;
   List<ProductModel> userProducts = [];
+  double? selectedDistanceFilter;
+
 
 
   Future<void> updateProduct(String productId, Map<String, dynamic> body) async {
@@ -101,20 +94,38 @@ class ProductController extends GetxController {
   }
 
   Future<void> getProducts() async {
-    // loader.showLoader();
     update();
 
-    Response response = await productRepo.getProducts();
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          print("Location permission denied");
+          return;
+        }
+      }
 
-    if (response.statusCode == 200) {
-      List<dynamic> data = response.body['data'];
-      _productList = data.map((e) => ProductModel.fromJson(e)).toList();
-      _filteredList = List.from(_productList); // Init filtered list
-    } else {
-      ApiChecker.checkApi(response);
+      Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high
+      );
+
+      Response response = await productRepo.getProducts(
+        lat: position.latitude,
+        lng: position.longitude,
+        maxDistance: 50000,
+      );
+
+      if (response.statusCode == 200) {
+        List<dynamic> data = response.body['data'];
+        _productList = data.map((e) => ProductModel.fromJson(e)).toList();
+        _filteredList = List.from(_productList);
+      } else {
+        ApiChecker.checkApi(response);
+      }
+    } catch (e) {
+      print("Error getting products: $e");
     }
-
-    // loader.hideLoader();
     update();
   }
 
@@ -130,15 +141,14 @@ class ProductController extends GetxController {
     update();
   }
 
-  void filterByLocation(String? location) {
-    _selectedLocationFilter = location;
-    if (location == null) {
+  void filterByDistance(double? km) {
+    selectedDistanceFilter = km;
+
+    if (km == null) {
       _restoreList();
     } else {
-      // Basic client-side filter (checks if state or LGA matches)
       _filteredList = _productList.where((p) {
-        return (p.state?.contains(location) ?? false) ||
-            (p.lga?.contains(location) ?? false);
+        return p.rawDistance != null && p.rawDistance! <= km;
       }).toList();
     }
     update();
@@ -147,7 +157,7 @@ class ProductController extends GetxController {
   void _restoreList() {
     if (_selectedLocationFilter != null) {
       // If search is cleared but filter is active, re-apply filter
-      filterByLocation(_selectedLocationFilter);
+      filterByDistance(selectedDistanceFilter);
     } else {
       _filteredList = List.from(_productList);
     }
@@ -165,7 +175,6 @@ class ProductController extends GetxController {
     }
   }
 
-  // --- Image Logic ---
   Future<void> pickImages() async {
     final ImagePicker picker = ImagePicker();
     // Pick multiple images
@@ -186,13 +195,12 @@ class ProductController extends GetxController {
     update();
   }
 
-  // --- Create Product Logic ---
   Future<void> createProduct({
     required String name,
     required String description,
     required String price,
-    required String state,
-    required String lga,
+    required double lat,
+    required double lng,
   }) async {
     if (_selectedImages.isEmpty) {
       CustomSnackBar.failure(message: "Please add at least one image");
@@ -208,8 +216,8 @@ class ProductController extends GetxController {
         isFree: _isFree,
         price: _isFree ? null : price,
         condition: _selectedCondition,
-        state: state,
-        lga: lga,
+        lat: lat,
+        lng: lng,
         description: description,
         images: _selectedImages,
       );

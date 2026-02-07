@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fyndr_ng/controllers/app_controller.dart';
 import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
 
@@ -17,6 +18,8 @@ class CongratulationsVendors extends StatefulWidget {
 }
 
 class _CongratulationsVendorsState extends State<CongratulationsVendors> {
+
+  AppController appController = Get.find<AppController>();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -212,7 +215,8 @@ class _CongratulationsVendorsState extends State<CongratulationsVendors> {
             SizedBox(height: Dimensions.height20),
             CustomButton(
               text: 'Go to Dashboard',
-              onPressed: () {
+              onPressed: () async {
+                appController.changeCurrentAppPage(0);
                 Get.toNamed(AppRoutes.vendorHomePage);
               },
               backgroundColor: AppColors.white,

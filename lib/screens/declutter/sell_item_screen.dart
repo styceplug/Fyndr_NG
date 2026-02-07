@@ -5,6 +5,7 @@ import 'package:fyndr_ng/routes/routes.dart';
 import 'package:fyndr_ng/widgets/custom_appbar.dart';
 import 'package:fyndr_ng/widgets/custom_button.dart';
 import 'package:fyndr_ng/widgets/custom_textfield.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import '../../controllers/product_controller.dart';
 import '../../utils/colors.dart';
@@ -24,12 +25,13 @@ class _SellItemScreenState extends State<SellItemScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
-
-  // Location Logic
   final TextEditingController _locationDisplayController =
       TextEditingController();
-  String? selectedState;
-  String? selectedLga;
+
+  double? _latitude;
+  double? _longitude;
+  bool _isFetchingLocation = false;
+  String _locationText = "Tap to get current location";
 
   @override
   void dispose() {
@@ -40,27 +42,39 @@ class _SellItemScreenState extends State<SellItemScreen> {
     super.dispose();
   }
 
-  void _openLocationPicker() {
-    // Dismiss keyboard if open
-    FocusScope.of(context).unfocus();
+  Future<void> _getCurrentLocation() async {
+    setState(() => _isFetchingLocation = true);
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder:
-          (context) => LocationPickerModal(
-            enableState: selectedState,
-            enableLga: selectedLga,
-            onConfirm: (newState, newLga) {
-              setState(() {
-                selectedState = newState;
-                selectedLga = newLga;
-                _locationDisplayController.text = "$newState, $newLga";
-              });
-            },
-          ),
-    );
+    try {
+      // 1. Check Permissions (Basic check, refine as needed)
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          CustomSnackBar.failure(message: "Location permission denied");
+          return;
+        }
+      }
+
+      // 2. Get Position
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      setState(() {
+        _latitude = position.latitude;
+        _longitude = position.longitude;
+        _locationText =
+            "Lat: ${_latitude!.toStringAsFixed(4)}, Lng: ${_longitude!.toStringAsFixed(4)}";
+        _locationDisplayController.text = _locationText;
+      });
+
+      CustomSnackBar.success(message: "Location acquired!");
+    } catch (e) {
+      CustomSnackBar.failure(message: "Failed to get location");
+    } finally {
+      setState(() => _isFetchingLocation = false);
+    }
   }
 
   @override
@@ -70,12 +84,10 @@ class _SellItemScreenState extends State<SellItemScreen> {
         leadingIcon: BackButton(),
         title: 'Sell Item',
         actionIcon: InkWell(
-          onTap: (){
+          onTap: () {
             Get.toNamed(AppRoutes.myProductsScreen);
           },
-          child: Text('My Products',style: TextStyle(
-            color: AppColors.color1
-          ),),
+          child: Text('My Products', style: TextStyle(color: AppColors.color1)),
         ),
       ),
       body: GetBuilder<ProductController>(
@@ -255,16 +267,36 @@ class _SellItemScreenState extends State<SellItemScreen> {
                 // --- 4. LOCATION (UPDATED) ---
                 _buildLabel('Location'),
                 GestureDetector(
-                  onTap: _openLocationPicker, // Opens your modal
-                  child: AbsorbPointer(
-                    // Prevents typing manually
-                    child: CustomTextField(
-                      controller: _locationDisplayController,
-                      hintText: 'Select State & LGA',
-                      suffixIcon: Icon(
-                        Icons.arrow_drop_down,
-                        color: AppColors.grey4,
-                      ),
+                  onTap: _getCurrentLocation, // Fetch GPS on tap
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: AppColors.grey4),
+                      borderRadius: BorderRadius.circular(Dimensions.radius10),
+                      color: AppColors.grey1.withOpacity(0.3),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.my_location, color: AppColors.color1),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            _locationText,
+                            style: TextStyle(
+                              color:
+                                  _latitude != null
+                                      ? Colors.black
+                                      : AppColors.grey4,
+                            ),
+                          ),
+                        ),
+                        if (_isFetchingLocation)
+                          SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                      ],
                     ),
                   ),
                 ),
@@ -282,11 +314,8 @@ class _SellItemScreenState extends State<SellItemScreen> {
                       return;
                     }
 
-                    // Location Validation
-                    if (selectedState == null || selectedLga == null) {
-                      CustomSnackBar.failure(
-                        message: "Please select a location",
-                      );
+                    if (_latitude == null || _longitude == null) {
+                      CustomSnackBar.failure(message: "Please detect your location first");
                       return;
                     }
 
@@ -299,9 +328,8 @@ class _SellItemScreenState extends State<SellItemScreen> {
                       name: _nameController.text.trim(),
                       description: _descController.text.trim(),
                       price: _priceController.text.trim(),
-                      state: selectedState!,
-                      // Use the variable from picker
-                      lga: selectedLga!, // Use the variable from picker
+                      lat: _latitude!,
+                      lng: _longitude!,
                     );
                   },
                 ),

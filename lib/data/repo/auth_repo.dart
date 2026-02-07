@@ -17,6 +17,13 @@ class AuthRepo extends GetConnect {
 
 
 
+  Future<Response> updateAvailability(bool isAvailable) async {
+    return await apiClient.putData(
+      AppConstants.UPDATE_AVAILABILITY,
+      {'isAvailable': isAvailable},
+    );
+  }
+
   Future<Response> registerVendor(
       String uri,
       Map<String, String> body,

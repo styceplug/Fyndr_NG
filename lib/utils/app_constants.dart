@@ -32,7 +32,7 @@ class AppConstants {
 
 
   static const String SWITCH_ROLE_URI = '/api/v1/user/role/switch';
-
+  static const String UPDATE_AVAILABILITY = '/api/v1/user/availability';
 
   static const String GET_MERCHANT_LEADS = '/api/v1/job/merchant';
 
@@ -50,6 +50,7 @@ class AppConstants {
 
 
   static const String CREATE_PRODUCT  = '/api/v1/product';
+  static const String GET_PRODUCT  = '/api/v1/product';
 
 
 

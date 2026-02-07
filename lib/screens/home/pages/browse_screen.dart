@@ -16,11 +16,19 @@ import 'package:intl/intl.dart';
 
 import '../../../widgets/snackbars.dart';
 
-class BrowseScreen extends StatelessWidget {
-  // Use Get.put to initialize if not already done in binding
-  final ProductController controller = Get.put(
-    ProductController(productRepo: Get.find()),
-  );
+class BrowseScreen extends StatefulWidget {
+  @override
+  State<BrowseScreen> createState() => _BrowseScreenState();
+}
+
+class _BrowseScreenState extends State<BrowseScreen> {
+  ProductController productController = Get.find<ProductController>();
+
+  @override
+  void initState() {
+    productController.getProducts();
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -84,11 +92,9 @@ class BrowseScreen extends StatelessWidget {
               children: [
                 Expanded(
                   child: CustomTextField(
-                    onChanged: (val) => controller.searchProducts(val),
+                    onChanged: (val) => productController.searchProducts(val),
                     prefixIcon: Padding(
-                      padding: EdgeInsets.only(
-                        left: Dimensions.width15
-                      ),
+                      padding: EdgeInsets.only(left: Dimensions.width15),
                       child: Icon(Icons.search, color: AppColors.grey4),
                     ),
                     // Simplified icon
@@ -260,7 +266,7 @@ class BrowseScreen extends StatelessWidget {
                             SizedBox(width: 4),
                             Expanded(
                               child: Text(
-                                product.location,
+                                product.location?.distance ?? '',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
@@ -296,49 +302,156 @@ class BrowseScreen extends StatelessWidget {
   void _showFilterModal(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      shape: RoundedRectangleBorder(
+      shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
         return GetBuilder<ProductController>(
           builder: (ctrl) {
-            return Container(
-              padding: EdgeInsets.all(Dimensions.width20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Filter By Location",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            // Initialize local state with current filter or default to 50km
+            double sliderValue = ctrl.selectedDistanceFilter ?? 50.0;
+
+            return StatefulBuilder(
+              builder: (context, setModalState) {
+                return Container(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // --- Header ---
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            "Filter By Distance",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          // Display dynamic value
+                          Text(
+                            "${sliderValue.toInt()} km",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.color1,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      const Text(
+                        "Show items within this radius",
+                        style: TextStyle(color: Colors.grey, fontSize: 12),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // --- SLIDER ---
+                      SliderTheme(
+                        data: SliderTheme.of(context).copyWith(
+                          activeTrackColor: AppColors.color1,
+                          inactiveTrackColor: AppColors.grey2,
+                          thumbColor: AppColors.color1,
+                          overlayColor: AppColors.color1.withOpacity(0.2),
+                          trackHeight: 4.0,
+                          thumbShape: const RoundSliderThumbShape(
+                            enabledThumbRadius: 10.0,
+                          ),
+                          overlayShape: const RoundSliderOverlayShape(
+                            overlayRadius: 20.0,
+                          ),
+                        ),
+                        child: Slider(
+                          value: sliderValue,
+                          min: 1.0,
+                          max: 100.0,
+                          // Max distance (adjust as needed)
+                          divisions: 100,
+                          // Makes it snap to integers
+                          label: "${sliderValue.toInt()} km",
+                          onChanged: (value) {
+                            // Update ONLY the modal state (smooth sliding)
+                            setModalState(() {
+                              sliderValue = value;
+                            });
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+
+                      // Min/Max Labels
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: const [
+                          Text("1 km", style: TextStyle(color: Colors.grey)),
+                          Text("100 km", style: TextStyle(color: Colors.grey)),
+                        ],
+                      ),
+
+                      const SizedBox(height: 30),
+
+                      // --- ACTION BUTTONS ---
+                      Row(
+                        children: [
+                          // Clear Filter Button
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () {
+                                ctrl.filterByDistance(null); // Clear logic
+                                Navigator.pop(context);
+                              },
+                              style: OutlinedButton.styleFrom(
+                                side: BorderSide(color: AppColors.grey3),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 15,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              child: const Text(
+                                "Clear",
+                                style: TextStyle(color: Colors.black),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 15),
+
+                          // Apply Button
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () {
+                                // Trigger filter with final value
+                                ctrl.filterByDistance(sliderValue);
+                                Navigator.pop(context);
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.color1,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 15,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              child: const Text(
+                                "Apply Filter",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                    ],
                   ),
-                  SizedBox(height: 20),
-                  Wrap(
-                    spacing: 10,
-                    children:
-                        [
-                          "Abaji",
-                          "Abuja Municipal (AMAC)",
-                          "Bwari",
-                          "Gwagwalada",
-                          "Kuje",
-                          "Kwali",
-                          "Lagos",
-                          "Ikeja",
-                        ].map((loc) {
-                          return ChoiceChip(
-                            label: Text(loc),
-                            selected: ctrl.selectedLocation == loc,
-                            onSelected: (bool selected) {
-                              ctrl.filterByLocation(selected ? loc : null);
-                              Navigator.pop(context);
-                            },
-                          );
-                        }).toList(),
-                  ),
-                  SizedBox(height: 20),
-                ],
-              ),
+                );
+              },
             );
           },
         );
@@ -504,13 +617,14 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                             children: [
                               _buildInfoBadge(
                                 Iconsax.location,
-                                widget.product.location,
+                                widget.product.location?.distance ?? '',
                               ),
                               SizedBox(width: Dimensions.width15),
                               if (widget.product.condition != null)
                                 _buildInfoBadge(
                                   Iconsax.verify,
-                                  widget.product.condition!.capitalizeFirst ?? '',
+                                  widget.product.condition!.capitalizeFirst ??
+                                      '',
                                 ),
                             ],
                           ),
@@ -626,24 +740,24 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                    onPressed:
-                        controller.isLoading
-                            ? null // Disable button while loading
-                            : () {
-                              if (widget.product.id != null &&
-                                  widget.product.user?.id != null) {
-                                controller.initiateProductChat(
-                                  productId: widget.product.id!,
-                                  sellerId: widget.product.user!.id!,
-                                  userId:
-                                      Get.find<AuthController>().userModel!.id!,
-                                );
-                              } else {
-                                CustomSnackBar.failure(
-                                  message: "Invalid product data",
-                                );
-                              }
-                            },
+                    onPressed: () {
+                      // 👇 Debug Prints
+                      print("Product ID: ${widget.product.id}");
+                      print("Seller ID: ${widget.product.user?.id}");
+
+                      if (widget.product.id != null &&
+                          widget.product.user?.id != null) {
+                        controller.initiateProductChat(
+                          productId: widget.product.id!,
+                          sellerId: widget.product.user!.id!,
+                          userId: Get.find<AuthController>().userModel!.id!,
+                        );
+                      } else {
+                        CustomSnackBar.failure(
+                          message: "Invalid product data: Seller ID missing",
+                        );
+                      }
+                    },
                     child:
                         controller.isLoading
                             ? const SizedBox(
