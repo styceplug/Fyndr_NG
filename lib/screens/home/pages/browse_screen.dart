@@ -87,7 +87,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
                 InkWell(
                   onTap: () => Get.toNamed(AppRoutes.productChatScreen),
                   child: Text(
-                    'Product Chats',
+                    'Messages',
                     style: TextStyle(
                       fontSize: Dimensions.font18,
                       fontWeight: FontWeight.w600,

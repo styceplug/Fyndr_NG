@@ -43,7 +43,7 @@ class _ProductChatsState extends State<ProductChats> {
             onPressed: () => Get.back(),
           ),
           title: Text(
-            "Product Chats",
+            "Messages",
             style: TextStyle(
               color: Colors.black,
               fontWeight: FontWeight.bold,
