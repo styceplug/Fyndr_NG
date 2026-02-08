@@ -1,5 +1,6 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:fyndr_ng/model/product_model.dart';
 import 'package:fyndr_ng/utils/dimensions.dart';
 import 'package:fyndr_ng/widgets/custom_appbar.dart';
 import 'package:get/get.dart';
@@ -24,8 +25,8 @@ class ChatScreen extends StatelessWidget {
       builder: (ctrl) {
         final otherUser =
             (ctrl.currentUserId == ctrl.currentChat?.vendor)
-                ? ctrl.currentChat?.customerDetails
-                : ctrl.currentChat?.vendorDetails;
+                ? ctrl.currentChat?.customer
+                : ctrl.currentChat?.vendor;
 
         String lastSeenText = "Offline";
         if (ctrl.otherUserLastSeen != null) {
@@ -115,7 +116,7 @@ class ChatScreen extends StatelessWidget {
                       else
                         Text(
                           ctrl.otherUserLastSeen != null
-                              ? 'Last seen ${lastSeenText}'
+                              ? '${lastSeenText}'
                               : 'Offline',
                           style: TextStyle(fontSize: 10, color: Colors.grey),
                         ),
@@ -129,8 +130,8 @@ class ChatScreen extends StatelessWidget {
           body: Column(
             children: [
 
-              if (ctrl.currentChat?.type == 'product-chat' && ctrl.currentChat?.productDetails != null)
-                _buildProductInfo(ctrl.currentChat!.productDetails!),
+              if (ctrl.currentChat?.type == 'product-chat' && ctrl.currentChat?.product != null)
+                _buildProductInfo(ctrl.currentChat!.product!),
 
               //warning
               Container(
@@ -272,22 +273,21 @@ class ChatScreen extends StatelessWidget {
   }
 
 
-  Widget _buildProductInfo(Map<String, dynamic> product) {
-    // 1. Extract Data safely
-    String name = product['name'] ?? 'Product';
+  Widget _buildProductInfo(ProductModel product) {
+    // 1. Extract Data safely using Model properties
+    String name = product.name ?? 'Product';
 
     // Price formatting
-    var rawPrice = product['price'];
     String price = "N0.00";
-    if (rawPrice != null) {
+    if (product.price != null) {
       final formatter = NumberFormat.currency(locale: 'en_NG', symbol: 'N');
-      price = formatter.format(num.tryParse(rawPrice.toString()) ?? 0);
+      price = formatter.format(product.price);
     }
 
     // Image Handling
     String? imageUrl;
-    if (product['images'] != null && (product['images'] as List).isNotEmpty) {
-      String rawImg = (product['images'] as List)[0];
+    if (product.images != null && product.images!.isNotEmpty) {
+      String rawImg = product.images!.first;
       imageUrl = rawImg.startsWith('http') ? rawImg : '${AppConstants.BASE_URL}$rawImg';
     }
 
@@ -349,7 +349,6 @@ class ChatScreen extends StatelessWidget {
               ],
             ),
           ),
-
         ],
       ),
     );

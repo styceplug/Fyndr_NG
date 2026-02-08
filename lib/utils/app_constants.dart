@@ -52,6 +52,9 @@ class AppConstants {
   static const String CREATE_PRODUCT  = '/api/v1/product';
   static const String GET_PRODUCT  = '/api/v1/product';
 
+  static const String GET_CUSTOMER_CHAT  = '/api/v1/chat/customer';
+  static const String GET_VENDOR_CHAT  = '/api/v1/chat/vendor';
+
 
 
 

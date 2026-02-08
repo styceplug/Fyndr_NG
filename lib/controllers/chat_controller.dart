@@ -44,12 +44,18 @@ class ChatController extends GetxController {
   String? otherUserLastSeen;
   String? currentUserId;
   String? _recordingPath;
+  List<ChatModel> vendorChats = [];
+  List<ChatModel> customerChats = [];
 
   @override
   void onInit() {
     super.onInit();
     currentUserId = Get.find<AuthController>().userModel?.id;
-    socketService.initSocket();
+    print("🔌 ChatController Init: Checking Socket...");
+    if (!socketService.isConnected()) {
+      print("🔌 Socket disconnected. Initializing now...");
+      socketService.initSocket();
+    }
     _setupSocketListeners();
   }
 
@@ -68,7 +74,92 @@ class ChatController extends GetxController {
     super.onClose();
   }
 
-  // ==================== FIX: CORRECT OTHER USER ID LOGIC ====================
+  Future<void> enterChatRoom({required ChatModel chatArg}) async {
+    // 1. Connection Check
+    if (!socketService.isConnected()) {
+      socketService.initSocket();
+      await Future.delayed(const Duration(milliseconds: 500));
+    }
+
+    currentChat = chatArg;
+
+    // ⚡️ OPTIMISTIC UPDATE: Zero out the counter in the local lists IMMEDIATELY
+    // This ensures the badge disappears instantly, even before the API refreshes.
+
+    // Update inside Vendor List
+    int vIndex = vendorChats.indexWhere((c) => c.id == chatArg.id);
+    if (vIndex != -1) {
+      vendorChats[vIndex].vendorUnreadCount = 0;
+      vendorChats[vIndex].customerUnreadCount = 0;
+    }
+
+    // Update inside Customer List
+    int cIndex = customerChats.indexWhere((c) => c.id == chatArg.id);
+    if (cIndex != -1) {
+      customerChats[cIndex].vendorUnreadCount = 0;
+      customerChats[cIndex].customerUnreadCount = 0;
+    }
+
+    update(); // Rebuild UI to remove bold text/badges
+
+    isLoading = true;
+    update();
+
+    if (chatArg.id != null) {
+      // 2. Join Socket
+      socketService.joinChat(chatArg.id!);
+
+      // 3. Mark Read on Server
+      markAsRead();
+
+      // 4. Load Full Details
+      await loadChatDetails(chatArg.id!);
+
+      // 5. Navigate & Refresh on Return
+      Get.toNamed(AppRoutes.chatScreen)?.then((_) {
+        // We fetch the list again just to be sure,
+        // but the UI is already clean thanks to the code above.
+        getChatLists();
+      });
+    }
+  }
+
+  Future<void> getChatLists() async {
+    loader.showLoader();
+    update();
+
+    try {
+      // Fetch both simultaneously for speed
+      var results = await Future.wait([
+        chatRepo.getVendorChats(),
+        chatRepo.getCustomerChats(),
+      ]);
+
+      Response vendorResponse = results[0];
+      Response customerResponse = results[1];
+
+      // 1. Process Vendor (Selling) Chats
+      if (vendorResponse.statusCode == 200) {
+        vendorChats = [];
+        vendorResponse.body['data'].forEach((chat) {
+          vendorChats.add(ChatModel.fromJson(chat));
+        });
+      }
+
+      // 2. Process Customer (Buying) Chats
+      if (customerResponse.statusCode == 200) {
+        customerChats = [];
+        customerResponse.body['data'].forEach((chat) {
+          customerChats.add(ChatModel.fromJson(chat));
+        });
+      }
+    } catch (e) {
+      print("Error fetching chat lists: $e");
+    } finally {
+      loader.hideLoader();
+      update();
+    }
+  }
 
   String? get otherUserId {
     if (currentChat == null || currentUserId == null) return null;
@@ -139,6 +230,7 @@ class ChatController extends GetxController {
           if (!exists) {
             messages.add(newMessage);
             _scrollToBottom();
+            markAsRead();
             update();
           }
         }
@@ -367,8 +459,19 @@ class ChatController extends GetxController {
   Future<void> markAsRead() async {
     if (currentChat?.id == null) return;
 
+    // Optimistic Update: Reset local counts immediately so UI feels responsive
+    currentChat!.customerUnreadCount = 0;
+    currentChat!.vendorUnreadCount = 0;
+
     try {
-      await chatRepo.markAsRead(currentChat!.id!);
+      print("👀 Marking chat ${currentChat!.id} as read...");
+      final response = await chatRepo.markAsRead(currentChat!.id!);
+
+      if(response.statusCode == 200) {
+        print("✅ Chat marked as read successfully");
+      } else {
+        print("⚠️ Mark as read failed: ${response.statusCode}");
+      }
     } catch (e) {
       print('❌ Error marking as read: $e');
     }

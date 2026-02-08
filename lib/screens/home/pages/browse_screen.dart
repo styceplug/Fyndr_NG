@@ -83,6 +83,18 @@ class _BrowseScreenState extends State<BrowseScreen> {
                     ),
                   ),
                 ),
+                SizedBox(width: Dimensions.width20),
+                InkWell(
+                  onTap: () => Get.toNamed(AppRoutes.productChatScreen),
+                  child: Text(
+                    'Product Chats',
+                    style: TextStyle(
+                      fontSize: Dimensions.font18,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.grey4,
+                    ),
+                  ),
+                ),
               ],
             ),
             SizedBox(height: Dimensions.height20),

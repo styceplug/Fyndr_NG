@@ -1,92 +1,114 @@
+import 'package:fyndr_ng/model/product_model.dart';
 import 'package:fyndr_ng/model/user_model.dart';
 
 
 class ChatModel {
   String? id;
-  String? customer;
-  String? vendor;
-  String? service;
-  String? product;
   String? type;
 
-  UserModel? customerDetails;
-  UserModel? vendorDetails;
+  // IDs (Strings)
+  String? customerId;
+  String? vendorId;
+  String? productId;
+  String? serviceId;
+  String? lastMessageId;
 
-  Map<String, dynamic>? serviceDetails;
-  Map<String, dynamic>? productDetails;
-
+  // Objects (Populated Models)
+  UserModel? customer;
+  UserModel? vendor;
+  ProductModel? product;
   List<MessageModel>? messages;
+  MessageModel? lastMessageData;
+
+  // Counters
+  int? customerUnreadCount;
+  int? vendorUnreadCount;
+
   String? createdAt;
 
   ChatModel({
     this.id,
+    this.type,
+    this.customerId,
+    this.vendorId,
+    this.productId,
+    this.serviceId,
     this.customer,
     this.vendor,
-    this.service,
     this.product,
-    this.type,
-    this.customerDetails,
-    this.vendorDetails,
-    this.messages,
+    this.lastMessageData,
+    this.customerUnreadCount,
+    this.vendorUnreadCount,
     this.createdAt,
+    this.messages,
   });
 
   ChatModel.fromJson(Map<String, dynamic> json) {
-    id = json['id'];
+    id = json['id'] ?? json['_id'];
     type = json['type'];
+    createdAt = json['createdAt'];
 
     // --- 1. Customer Handling ---
-    if (json['customer'] is Map) {
-      customer = json['customer']['id'] ?? json['customer']['_id'];
-      customerDetails = UserModel.fromJson(json['customer']);
-    } else {
-      customer = json['customer'];
-      if (json['customerDetails'] != null) {
-        customerDetails = UserModel.fromJson(json['customerDetails']);
+    if (json['customer'] != null) {
+      if (json['customer'] is Map) {
+        customer = UserModel.fromJson(json['customer']);
+        customerId = customer?.id;
+      } else {
+        customerId = json['customer'].toString();
+        customer = UserModel(id: customerId);
       }
     }
 
     // --- 2. Vendor Handling ---
-    if (json['vendor'] is Map) {
-      vendor = json['vendor']['id'] ?? json['vendor']['_id'];
-      vendorDetails = UserModel.fromJson(json['vendor']);
-    } else {
-      vendor = json['vendor'];
-      if (json['vendorDetails'] != null) {
-        vendorDetails = UserModel.fromJson(json['vendorDetails']);
+    if (json['vendor'] != null) {
+      if (json['vendor'] is Map) {
+        vendor = UserModel.fromJson(json['vendor']);
+        vendorId = vendor?.id;
+      } else {
+        vendorId = json['vendor'].toString();
+        vendor = UserModel(id: vendorId);
       }
     }
 
-    // --- 3. FIX: Service (Job) Handling ---
-    if (json['service'] is Map) {
-      final serviceMap = json['service'];
-      // Extract ID safely
-      service = serviceMap['id'] ?? serviceMap['_id'];
-      // Optional: Store details if you have a JobModel
-      serviceDetails = serviceMap;
-    } else {
-      service = json['service'];
+    // --- 3. Product Handling (The likely crasher) ---
+    if (json['product'] != null) {
+      if (json['product'] is Map) {
+        // Only parse if it's an object
+        product = ProductModel.fromJson(json['product']);
+        productId = product?.id;
+      } else {
+        // If it's a String ID, just store the ID
+        productId = json['product'].toString();
+        // Create dummy so UI doesn't break on null check
+        product = ProductModel(id: productId, name: "Product Info");
+      }
     }
 
-    // --- 4. NEW: Product Handling ---
-    if (json['product'] is Map) {
-      final productMap = json['product'];
-      product = productMap['id'] ?? productMap['_id'];
-      productDetails = productMap;
-    } else {
-      product = json['product'];
+    // --- 4. Last Message Handling ---
+    if (json['lastMessage'] != null) {
+      if (json['lastMessage'] is Map) {
+        lastMessageData = MessageModel.fromJson(json['lastMessage']);
+        lastMessageId = lastMessageData?.id;
+      } else {
+        lastMessageId = json['lastMessage'].toString();
+      }
     }
 
-    // --- Messages ---
+    // --- 5. Messages List (CRITICAL FIX) ---
     if (json['messages'] != null) {
       messages = <MessageModel>[];
       json['messages'].forEach((v) {
+        // 🚨 FIX: Check if 'v' is actually a Map before parsing
+        // The API list view returns ["ID", "ID"], not objects.
         if (v is Map<String, dynamic>) {
           messages!.add(MessageModel.fromJson(v));
         }
       });
     }
-    createdAt = json['createdAt'];
+
+    // --- 6. Unread Counts ---
+    customerUnreadCount = json['customerUnreadCount'] ?? 0;
+    vendorUnreadCount = json['vendorUnreadCount'] ?? 0;
   }
 }
 

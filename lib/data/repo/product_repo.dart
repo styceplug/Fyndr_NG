@@ -15,6 +15,14 @@ class ProductRepo {
 
 
 
+  Future<Response> getVendorChats() async {
+    return await apiClient.getData(AppConstants.GET_VENDOR_CHAT);
+  }
+
+  Future<Response> getCustomerChats() async {
+    return await apiClient.getData(AppConstants.GET_CUSTOMER_CHAT);
+  }
+
 
   Future<Response> getUserProducts({int page = 1, int limit = 10}) async {
     return await apiClient.getData(

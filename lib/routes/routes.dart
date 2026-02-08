@@ -6,6 +6,7 @@ import 'package:fyndr_ng/screens/auth/login_screen.dart';
 import 'package:fyndr_ng/screens/auth/phone_verification_screen.dart';
 import 'package:fyndr_ng/screens/auth/verified_screen.dart';
 import 'package:fyndr_ng/screens/declutter/my_products.dart';
+import 'package:fyndr_ng/screens/declutter/product_chats.dart';
 import 'package:fyndr_ng/screens/home/home_screen.dart';
 import 'package:fyndr_ng/screens/home/pages/genie_screen.dart';
 import 'package:fyndr_ng/screens/home/request_form.dart';
@@ -80,6 +81,7 @@ class AppRoutes {
   static const String reviewRequest = '/review-request';
   static const String sellItemScreen = '/sell-item-screen';
   static const String myProductsScreen = '/my-products-screen';
+  static const String productChatScreen = '/product-chat-screen';
 
   //settings
   static const String editProfile = '/edit-profile';
@@ -116,6 +118,13 @@ class AppRoutes {
 
 
 
+    GetPage(
+      name: productChatScreen,
+      page: () {
+        return ProductChats();
+      },
+      transition: Transition.fadeIn,
+    ),
     GetPage(
       name: myProductsScreen,
       page: () {
