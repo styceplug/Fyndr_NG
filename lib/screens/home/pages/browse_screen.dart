@@ -236,7 +236,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
             ),
             // Details
             Expanded(
-              flex: 2,
+              flex: 3,
               child: Padding(
                 padding: EdgeInsets.all(Dimensions.width10),
                 child: Column(
@@ -275,14 +275,47 @@ class _BrowseScreenState extends State<BrowseScreen> {
                                 ),
                               ),
                             ),
+                            if (product.locationCode != null) ...[
+                              SizedBox(width: 8),
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+
+                                child: Text(
+                                  product.locationCode!,
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.black,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ],
                     ),
+                    SizedBox(height: Dimensions.height5,),
+                    Expanded(
+                      child: Text(
+                        product.description ?? '',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: Dimensions.font10*0.9,
+                          fontWeight: FontWeight.w300,
+                          color: AppColors.grey5
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: Dimensions.height5,),
                     Text(
                       (product.isFree ?? false)
                           ? "FREE"
                           : currencyFormatter.format(product.price ?? 0),
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: Dimensions.font15,
@@ -472,6 +505,42 @@ class ProductDetailsScreen extends StatefulWidget {
 
 class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   int _currentImageIndex = 0;
+  String _address = "Loading location...";
+
+  void _loadAddress() async {
+    double? lat = widget.product.lat;
+    double? lng = widget.product.lng;
+
+    if (lat == null && widget.product.location?.coordinates != null) {
+      // Assuming [lng, lat] format
+      lng = widget.product.location!.coordinates![0];
+      lat = widget.product.location!.coordinates![1];
+    }
+
+    if (lat != null && lng != null) {
+      // 2. Call the controller function
+      String foundAddress = await Get.find<ProductController>()
+          .getAddressFromCoordinates(lat, lng);
+
+      if (mounted) {
+        setState(() {
+          _address = foundAddress;
+        });
+      }
+    } else {
+      if (mounted) {
+        setState(() {
+          _address = "Location unavailable";
+        });
+      }
+    }
+  }
+
+  @override
+  void initState() {
+    _loadAddress();
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -481,7 +550,6 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       decimalDigits: 0,
     );
 
-    // Access the controller
     final chatController = Get.find<ChatController>();
 
     return Scaffold(
@@ -615,17 +683,20 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                           scrollDirection: Axis.horizontal,
                           child: Row(
                             children: [
-                              _buildInfoBadge(
-                                Iconsax.location,
-                                widget.product.location?.distance ?? '',
-                              ),
-                              SizedBox(width: Dimensions.width15),
                               if (widget.product.condition != null)
                                 _buildInfoBadge(
                                   Iconsax.verify,
                                   widget.product.condition!.capitalizeFirst ??
                                       '',
                                 ),
+                              SizedBox(width: Dimensions.width15),
+
+                              _buildInfoBadge(
+                                Iconsax.location,
+                                widget.product.location?.distance ?? 'Nearby',
+                              ),
+                              SizedBox(width: Dimensions.width15),
+                              _buildInfoBadge(Iconsax.map, _address),
                             ],
                           ),
                         ),

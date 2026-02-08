@@ -1,4 +1,5 @@
 import 'package:fyndr_ng/helpers/global_loader_controller.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
@@ -29,6 +30,27 @@ class ProductController extends GetxController {
   double? selectedDistanceFilter;
 
 
+
+  Future<String> getAddressFromCoordinates(double lat, double lng) async {
+    try {
+      List<Placemark> placemarks = await placemarkFromCoordinates(lat, lng);
+      if (placemarks.isNotEmpty) {
+        Placemark place = placemarks[0];
+
+        String city = place.locality ?? place.subAdministrativeArea ?? '';
+        String state = place.administrativeArea ?? '';
+
+        if (city.isEmpty && state.isEmpty) return "Unknown Location";
+        if (city.isEmpty) return state;
+        if (state.isEmpty) return city;
+
+        return "$city, $state";
+      }
+    } catch (e) {
+      print("Geocoding error: $e");
+    }
+    return "Unknown Location";
+  }
 
   Future<void> updateProduct(String productId, Map<String, dynamic> body) async {
     CustomSnackBar.processing(message: "Updating product...");
@@ -113,12 +135,13 @@ class ProductController extends GetxController {
       Response response = await productRepo.getProducts(
         lat: position.latitude,
         lng: position.longitude,
-        maxDistance: 50000,
+        maxDistance: 637100000,
       );
 
       if (response.statusCode == 200) {
         List<dynamic> data = response.body['data'];
         _productList = data.map((e) => ProductModel.fromJson(e)).toList();
+
         _filteredList = List.from(_productList);
       } else {
         ApiChecker.checkApi(response);

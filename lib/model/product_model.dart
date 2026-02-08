@@ -1,6 +1,8 @@
 import 'package:fyndr_ng/model/user_model.dart';
 import 'package:fyndr_ng/utils/app_constants.dart';
 
+import '../helpers/location_helper.dart';
+
 class ProductModel {
   String? id;
   UserModel? user;
@@ -13,6 +15,9 @@ class ProductModel {
   String? createdAt;
   ProductLocation? location;
   double? rawDistance;
+  double? lat;
+  double? lng;
+
 
   ProductModel({
     this.id,
@@ -26,6 +31,8 @@ class ProductModel {
     this.createdAt,
     this.location,
     this.rawDistance,
+    this.lat,
+    this.lng,
   });
 
   ProductModel.fromJson(Map<String, dynamic> json) {
@@ -45,6 +52,9 @@ class ProductModel {
     price = json['price'];
     condition = json['condition'];
     description = json['description'];
+    lat = json['lat'];
+    lng = json['lng'];
+
 
     // --- Image Parsing ---
     if (json['images'] != null) {
@@ -77,6 +87,23 @@ class ProductModel {
       // Store Formatted String for UI
       location!.distance = _formatDistance(distInMeters);
     }
+
+
+  }
+
+  String? get locationCode {
+    // Tries to get code from lat/lng
+    // If lat/lng is null, tries to get from location object coordinates
+    double? latitude = lat;
+    double? longitude = lng;
+
+    if (latitude == null && location?.coordinates != null) {
+      // Assuming GeoJSON [lng, lat]
+      longitude = location!.coordinates![0];
+      latitude = location!.coordinates![1];
+    }
+
+    return LocationUtils.getCityCode(latitude, longitude);
   }
 
   // --- Helper to format meters to KM string ---
