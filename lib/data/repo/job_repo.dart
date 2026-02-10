@@ -15,6 +15,13 @@ class JobRepo {
 
 
 
+  Future<Response> markJobAsCompleted(String jobId) async {
+    return await apiClient.postData(
+      AppConstants.MARK_JOB_AS_COMPLETED(jobId),
+      {},
+    );
+  }
+
   Future<Response> getMerchantAcceptedJobs({int page = 1, int limit = 20}) async {
     return await apiClient.getData(
         '/api/v1/job/merchant/accepted?page=$page&limit=$limit'

@@ -288,6 +288,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                               arguments: {'quoteId': quote.id},
                             );
                           },
+                          status: quote.status ?? '',
                         );
                       },
                     ),

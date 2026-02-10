@@ -31,7 +31,6 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen> {
   String _selectedDeclineReason = '';
   String _selectedCounterReason = '';
 
-
   @override
   void initState() {
     super.initState();
@@ -47,7 +46,6 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen> {
     _counterAmountCtrl.dispose();
     super.dispose();
   }
-
 
   String getFullImageUrl(String? path) {
     if (path == null || path.isEmpty) return "";
@@ -78,10 +76,7 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen> {
           builder: (BuildContext context, StateSetter setModalState) {
             return Padding(
               padding: EdgeInsets.only(
-                bottom: MediaQuery
-                    .of(context)
-                    .viewInsets
-                    .bottom,
+                bottom: MediaQuery.of(context).viewInsets.bottom,
               ),
               child: Container(
                 width: Dimensions.screenWidth,
@@ -160,46 +155,41 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen> {
                             _buildRadioRow(
                               'Price too high',
                               _selectedDeclineReason,
-                                  (val) =>
-                                  setModalState(
-                                        () => _selectedDeclineReason = val,
-                                  ),
+                              (val) => setModalState(
+                                () => _selectedDeclineReason = val,
+                              ),
                             ),
                             SizedBox(height: 10),
                             _buildRadioRow(
                               'Accepted another quote',
                               _selectedDeclineReason,
-                                  (val) =>
-                                  setModalState(
-                                        () => _selectedDeclineReason = val,
-                                  ),
+                              (val) => setModalState(
+                                () => _selectedDeclineReason = val,
+                              ),
                             ),
                             SizedBox(height: 10),
                             _buildRadioRow(
                               'Timeline doesn’t work',
                               _selectedDeclineReason,
-                                  (val) =>
-                                  setModalState(
-                                        () => _selectedDeclineReason = val,
-                                  ),
+                              (val) => setModalState(
+                                () => _selectedDeclineReason = val,
+                              ),
                             ),
                             SizedBox(height: 10),
                             _buildRadioRow(
                               'Changed my mind',
                               _selectedDeclineReason,
-                                  (val) =>
-                                  setModalState(
-                                        () => _selectedDeclineReason = val,
-                                  ),
+                              (val) => setModalState(
+                                () => _selectedDeclineReason = val,
+                              ),
                             ),
                             SizedBox(height: 10),
                             _buildRadioRow(
                               'Other reason',
                               _selectedDeclineReason,
-                                  (val) =>
-                                  setModalState(
-                                        () => _selectedDeclineReason = val,
-                                  ),
+                              (val) => setModalState(
+                                () => _selectedDeclineReason = val,
+                              ),
                             ),
                           ],
                         ),
@@ -219,7 +209,7 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen> {
                       SizedBox(height: Dimensions.height10),
                       CustomTextField(
                         hintText:
-                        'The kitchen sink is linking from under the cabinet...',
+                            'The kitchen sink is linking from under the cabinet...',
                         maxLines: 3,
                         controller: _declineCommentCtrl,
                       ),
@@ -282,10 +272,7 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen> {
           builder: (BuildContext context, StateSetter setModalState) {
             return Padding(
               padding: EdgeInsets.only(
-                bottom: MediaQuery
-                    .of(context)
-                    .viewInsets
-                    .bottom,
+                bottom: MediaQuery.of(context).viewInsets.bottom,
               ),
               child: Container(
                 width: Dimensions.screenWidth,
@@ -369,37 +356,33 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen> {
                             _buildRadioRow(
                               'Price too high',
                               _selectedCounterReason,
-                                  (val) =>
-                                  setModalState(
-                                        () => _selectedCounterReason = val,
-                                  ),
+                              (val) => setModalState(
+                                () => _selectedCounterReason = val,
+                              ),
                             ),
                             SizedBox(height: 10),
                             _buildRadioRow(
                               'Budget constraints',
                               _selectedCounterReason,
-                                  (val) =>
-                                  setModalState(
-                                        () => _selectedCounterReason = val,
-                                  ),
+                              (val) => setModalState(
+                                () => _selectedCounterReason = val,
+                              ),
                             ),
                             SizedBox(height: 10),
                             _buildRadioRow(
                               'Better offer elsewhere',
                               _selectedCounterReason,
-                                  (val) =>
-                                  setModalState(
-                                        () => _selectedCounterReason = val,
-                                  ),
+                              (val) => setModalState(
+                                () => _selectedCounterReason = val,
+                              ),
                             ),
                             SizedBox(height: 10),
                             _buildRadioRow(
                               'Other reason',
                               _selectedCounterReason,
-                                  (val) =>
-                                  setModalState(
-                                        () => _selectedCounterReason = val,
-                                  ),
+                              (val) => setModalState(
+                                () => _selectedCounterReason = val,
+                              ),
                             ),
                           ],
                         ),
@@ -561,9 +544,9 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen> {
                   CustomButton(
                     text: 'Continue',
                     backgroundColor:
-                    selectedResponseOption.isEmpty
-                        ? AppColors.grey3
-                        : AppColors.color2,
+                        selectedResponseOption.isEmpty
+                            ? AppColors.grey3
+                            : AppColors.color2,
                     onPressed: () async {
                       if (selectedResponseOption.isEmpty) return;
                       Get.back();
@@ -645,9 +628,9 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen> {
                       fontSize: Dimensions.font16,
                       fontWeight: FontWeight.w400,
                       color:
-                      isSelected
-                          ? AppColors.white.withOpacity(0.9)
-                          : AppColors.grey5,
+                          isSelected
+                              ? AppColors.white.withOpacity(0.9)
+                              : AppColors.grey5,
                     ),
                   ),
                 ],
@@ -664,9 +647,11 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen> {
     );
   }
 
-  Widget _buildRadioRow(String text,
-      String groupValue,
-      Function(String) onTap,) {
+  Widget _buildRadioRow(
+    String text,
+    String groupValue,
+    Function(String) onTap,
+  ) {
     bool isSelected = groupValue == text;
     return GestureDetector(
       onTap: () => onTap(text),
@@ -687,7 +672,6 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -704,11 +688,10 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen> {
             final merchant = quote.merchant;
             final business = merchant?.businessDetails;
 
-            final currentRole = Get
-                .find<AuthController>()
-                .userModel
-                ?.currentRole
-                ?.toLowerCase() ?? '';
+            final currentRole =
+                Get.find<AuthController>().userModel?.currentRole
+                    ?.toLowerCase() ??
+                '';
 
             final lastSender = quote.sender?.toLowerCase() ?? 'merchant';
 
@@ -725,16 +708,15 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen> {
               decimalDigits: 0,
             );
 
-
             String? rawPath =
-            (currentRole == 'vendor')
-                ? quote.user?.avatar
-                : quote.merchant?.avatar;
+                (currentRole == 'vendor')
+                    ? quote.user?.avatar
+                    : quote.merchant?.avatar;
 
             String? displayName =
-            (currentRole == 'vendor')
-                ? quote.user?.name
-                : quote.merchant?.businessDetails?.businessName;
+                (currentRole == 'vendor')
+                    ? quote.user?.name
+                    : quote.merchant?.businessDetails?.businessName;
 
             String? avatarUrl = quote.user?.avatar;
             if (rawPath != null && rawPath.isNotEmpty) {
@@ -748,275 +730,284 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen> {
             return SingleChildScrollView(
               physics: AlwaysScrollableScrollPhysics(),
               child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: Dimensions.width20,
-                    vertical: Dimensions.height20,
-                  ),
-                  child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: Dimensions.screenWidth,
-                          decoration: BoxDecoration(
-                            color: AppColors.color5.withOpacity(0.3),
-                            borderRadius: BorderRadius.circular(Dimensions
-                                .radius20),
-                          ),
-                          padding: EdgeInsets.only(bottom: Dimensions.height20),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              SizedBox(height: Dimensions.height20),
-                              Container(
-                                height: Dimensions.height100,
-                                width: Dimensions.width100,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Colors.grey[200],
-                                  image:
+                padding: EdgeInsets.symmetric(
+                  horizontal: Dimensions.width20,
+                  vertical: Dimensions.height20,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: Dimensions.screenWidth,
+                      decoration: BoxDecoration(
+                        color: AppColors.color5.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(
+                          Dimensions.radius20,
+                        ),
+                      ),
+                      padding: EdgeInsets.only(bottom: Dimensions.height20),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(height: Dimensions.height20),
+                          Container(
+                            height: Dimensions.height100,
+                            width: Dimensions.width100,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.grey[200],
+                              image:
                                   avatarUrl != null
                                       ? DecorationImage(
-                                    image: NetworkImage(avatarUrl),
-                                    fit: BoxFit.cover,
-                                  )
+                                        image: NetworkImage(avatarUrl),
+                                        fit: BoxFit.cover,
+                                      )
                                       : DecorationImage(
-                                    image: AssetImage(
-                                      AppConstants.getPngAsset('head-icon'),
-                                    ),
-                                  ),
-                                ),
-                              ),
-
-                              SizedBox(height: Dimensions.height10),
-                              Text(
-                                displayName ?? '',
-                                style: TextStyle(
-                                  fontSize: Dimensions.font18,
-                                  fontWeight: FontWeight.w400,
-                                ),
-                              ),
-                              SizedBox(height: Dimensions.height10),
-
-                              Padding(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: Dimensions.width20,
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    _buildChip(
-                                      icon: Icons.star,
-                                      text: '4.5',
-                                      color: AppColors.error,
-                                    ),
-                                    SizedBox(width: Dimensions.width10),
-                                    _buildChip(
-                                      icon: Icons.bookmark,
-                                      text: '420',
-                                      color: AppColors.color3,
-                                    ),
-                                    SizedBox(width: Dimensions.width10),
-                                    _buildChip(
-                                      icon: Icons.location_pin,
-                                      text: business?.businessLocation?.lga ??
-                                          '',
-                                      color: AppColors.color3,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
+                                        image: AssetImage(
+                                          AppConstants.getPngAsset('head-icon'),
+                                        ),
+                                      ),
+                            ),
                           ),
-                        ),
 
-                        SizedBox(height: Dimensions.height15),
-                        if (quote.status == 'countered')
-                          Container(
-                            width: double.infinity,
-                            margin: EdgeInsets.only(bottom: 15),
-                            padding: EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                                color: isMyTurn
-                                    ? AppColors.color2.withOpacity(0.1)
-                                    : AppColors.grey2.withOpacity(0.3),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                    color: isMyTurn
-                                        ? AppColors.color2
-                                        : AppColors.grey5)
+                          SizedBox(height: Dimensions.height10),
+                          Text(
+                            displayName ?? '',
+                            style: TextStyle(
+                              fontSize: Dimensions.font18,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                          SizedBox(height: Dimensions.height10),
+
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: Dimensions.width20,
                             ),
                             child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.info_outline,
-                                    color: isMyTurn
-                                        ? AppColors.color2
-                                        : AppColors.grey5),
-                                SizedBox(width: 10),
-                                Expanded(
-                                  child: Text(
-                                    isMyTurn
-                                        ? "Action Required: You received a counter offer."
-                                        : "Waiting for ${displayName}'s response.",
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 13),
-                                  ),
+                                _buildChip(
+                                  icon: Icons.star,
+                                  text: '4.5',
+                                  color: AppColors.error,
+                                ),
+                                SizedBox(width: Dimensions.width10),
+                                _buildChip(
+                                  icon: Icons.bookmark,
+                                  text: '420',
+                                  color: AppColors.color3,
+                                ),
+                                SizedBox(width: Dimensions.width10),
+                                _buildChip(
+                                  icon: Icons.location_pin,
+                                  text: business?.businessLocation?.lga ?? '',
+                                  color: AppColors.color3,
                                 ),
                               ],
                             ),
                           ),
+                        ],
+                      ),
+                    ),
 
-                        SizedBox(height: Dimensions.height15),
-
-
-                        //if Countered show new and old prices
-                        _buildSectionContainer(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                quote.status == 'countered'
-                                    ? 'New Proposed Price'
-                                    : 'Quoted Amount',
-                                style: TextStyle(fontSize: Dimensions.font12,
-                                    color: AppColors.grey5),
-                              ),
-                              SizedBox(height: Dimensions.height5),
-
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Text(
-                                    currencyFormatter.format(quote.amount),
-                                    style: TextStyle(
-                                      fontSize: Dimensions.font23,
-                                      fontWeight: FontWeight.w700,
-                                      color: quote.status == 'countered'
-                                          ? AppColors.color2
-                                          : AppColors.black,
-                                    ),
-                                  ),
-
-                                  // Show Previous Amount strike-through if countered
-                                  if(quote.status == 'countered' &&
-                                      quote.previousAmount != null) ...[
-                                    SizedBox(width: 10),
-                                    Text(
-                                      currencyFormatter.format(
-                                          quote.previousAmount),
-                                      style: TextStyle(
-                                        fontSize: Dimensions.font14,
-                                        decoration: TextDecoration.lineThrough,
-                                        color: AppColors.grey5,
-                                      ),
-                                    ),
-                                  ]
-                                ],
-                              ),
-
-                              // Show Reason if countered
-                              if (quote.status == 'countered' &&
-                                  quote.responseReason != null) ...[
-                                SizedBox(height: 10),
-                                Divider(),
-                                Text("Reason for counter:", style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.grey5)),
-                                Text(
-                                    quote.responseReason!,
-                                    style: TextStyle(fontSize: 14,
-                                        fontStyle: FontStyle.italic)
-                                ),
-                              ]
-                            ],
+                    SizedBox(height: Dimensions.height15),
+                    if (quote.status == 'countered')
+                      Container(
+                        width: double.infinity,
+                        margin: EdgeInsets.only(bottom: 15),
+                        padding: EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color:
+                              isMyTurn
+                                  ? AppColors.color2.withOpacity(0.1)
+                                  : AppColors.grey2.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color:
+                                isMyTurn ? AppColors.color2 : AppColors.grey5,
                           ),
                         ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.info_outline,
+                              color:
+                                  isMyTurn ? AppColors.color2 : AppColors.grey5,
+                            ),
+                            SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                isMyTurn
+                                    ? "Action Required: You received a counter offer."
+                                    : "Waiting for ${displayName}'s response.",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
 
-                        SizedBox(height: Dimensions.height15),
+                    SizedBox(height: Dimensions.height15),
 
-                        _buildSectionContainer(
-                          child: Column(
+                    //if Countered show new and old prices
+                    _buildSectionContainer(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            quote.status == 'countered'
+                                ? 'New Proposed Price'
+                                : 'Quoted Amount',
+                            style: TextStyle(
+                              fontSize: Dimensions.font12,
+                              color: AppColors.grey5,
+                            ),
+                          ),
+                          SizedBox(height: Dimensions.height5),
+
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
-                              Row(
-                                children: [
-                                  _buildDetailItem(
-                                    'Completion time',
-                                    quote.estimatedCompletionTime != null
-                                        ? DateFormat('MMM dd').format(
+                              Text(
+                                currencyFormatter.format(quote.amount),
+                                style: TextStyle(
+                                  fontSize: Dimensions.font23,
+                                  fontWeight: FontWeight.w700,
+                                  color:
+                                      quote.status == 'countered'
+                                          ? AppColors.color2
+                                          : AppColors.black,
+                                ),
+                              ),
+
+                              // Show Previous Amount strike-through if countered
+                              if (quote.status == 'countered' &&
+                                  quote.previousAmount != null) ...[
+                                SizedBox(width: 10),
+                                Text(
+                                  currencyFormatter.format(
+                                    quote.previousAmount,
+                                  ),
+                                  style: TextStyle(
+                                    fontSize: Dimensions.font14,
+                                    decoration: TextDecoration.lineThrough,
+                                    color: AppColors.grey5,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+
+                          // Show Reason if countered
+                          if (quote.status == 'countered' &&
+                              quote.responseReason != null) ...[
+                            SizedBox(height: 10),
+                            Divider(),
+                            Text(
+                              "Reason for counter:",
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.grey5,
+                              ),
+                            ),
+                            Text(
+                              quote.responseReason!,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+
+                    SizedBox(height: Dimensions.height15),
+
+                    _buildSectionContainer(
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              _buildDetailItem(
+                                'Completion time',
+                                quote.estimatedCompletionTime != null
+                                    ? DateFormat('MMM dd').format(
                                       DateTime.parse(
                                         quote.estimatedCompletionTime!,
                                       ),
                                     )
-                                        : "N/A",
-                                  ),
-                                  Spacer(),
-                                  _buildDetailItem(
-                                    'Availability',
-                                    quote.availability?.capitalizeFirst ?? '',
-                                  ),
-                                ],
+                                    : "N/A",
                               ),
-                              SizedBox(height: Dimensions.height20),
-                              Row(
-                                children: [
-                                  _buildDetailItem(
-                                    'Status',
-                                    quote.status?.capitalizeFirst ?? '',
-                                  ),
-                                  Spacer(),
-                                  _buildDetailItem('Experience', '5 Years'),
-                                ],
+                              Spacer(),
+                              _buildDetailItem(
+                                'Availability',
+                                quote.availability?.capitalizeFirst ?? '',
                               ),
                             ],
                           ),
-                        ),
-
-                        SizedBox(height: Dimensions.height15),
-
-                        _buildSectionContainer(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          SizedBox(height: Dimensions.height20),
+                          Row(
                             children: [
-                              Text(
-                                'Message to Client',
-                                style: TextStyle(
-                                  fontSize: Dimensions.font14,
-                                  color: AppColors.grey5,
-                                ),
+                              _buildDetailItem(
+                                'Status',
+                                quote.status?.capitalizeFirst ?? '',
                               ),
-                              SizedBox(height: 5),
-                              Text(
-                                quote.message ?? 'No message provided',
-                                style: TextStyle(
-                                  fontSize: Dimensions.font16,
-                                  fontWeight: FontWeight.w300,
-                                  color: AppColors.black,
-                                ),
-                              ),
+                              Spacer(),
+                              _buildDetailItem('Experience', '5 Years'),
                             ],
                           ),
-                        ),
-                        SizedBox(height: Dimensions.height15),
+                        ],
+                      ),
+                    ),
 
+                    SizedBox(height: Dimensions.height15),
 
-                        if (quote.photos != null &&
-                            quote.photos!.isNotEmpty) ...[
-                          _buildSectionContainer(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Photos',
-                                  style: TextStyle(color: AppColors.grey5),
-                                ),
-                                SizedBox(height: 10),
-                                Row(
-                                  children:
+                    _buildSectionContainer(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Message to Client',
+                            style: TextStyle(
+                              fontSize: Dimensions.font14,
+                              color: AppColors.grey5,
+                            ),
+                          ),
+                          SizedBox(height: 5),
+                          Text(
+                            quote.message ?? 'No message provided',
+                            style: TextStyle(
+                              fontSize: Dimensions.font16,
+                              fontWeight: FontWeight.w300,
+                              color: AppColors.black,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: Dimensions.height15),
+
+                    if (quote.photos != null && quote.photos!.isNotEmpty) ...[
+                      _buildSectionContainer(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Photos',
+                              style: TextStyle(color: AppColors.grey5),
+                            ),
+                            SizedBox(height: 10),
+                            Row(
+                              children:
                                   quote.photos!
                                       .map(
-                                        (url) =>
-                                        Container(
+                                        (url) => Container(
                                           margin: EdgeInsets.only(right: 10),
                                           height: 60,
                                           width: 60,
@@ -1025,89 +1016,113 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen> {
                                             fit: BoxFit.cover,
                                           ),
                                         ),
-                                  )
+                                      )
                                       .toList(),
-                                ),
-                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+
+                    SizedBox(height: Dimensions.height15),
+
+                    _buildSectionContainer(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Job Description',
+                            style: TextStyle(
+                              fontSize: Dimensions.font14,
+                              color: AppColors.grey5,
+                            ),
+                          ),
+                          SizedBox(height: Dimensions.height5),
+                          Text(
+                            quote.job?.description ?? '',
+                            style: TextStyle(
+                              fontSize: Dimensions.font16,
+                              fontWeight: FontWeight.w300,
                             ),
                           ),
                         ],
+                      ),
+                    ),
 
-                        SizedBox(height: Dimensions.height15),
+                    SizedBox(height: Dimensions.height30),
 
-                        _buildSectionContainer(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Job Description',
-                                style: TextStyle(
-                                  fontSize: Dimensions.font14,
-                                  color: AppColors.grey5,
-                                ),
-                              ),
-                              SizedBox(height: Dimensions.height5),
-                              Text(
-                                quote.job?.description ?? '',
-                                style: TextStyle(
-                                  fontSize: Dimensions.font16,
-                                  fontWeight: FontWeight.w300,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        SizedBox(height: Dimensions.height30),
-
-                        if (quote.status == 'accepted')
+                    if (quote.status == 'accepted')
+                      Column(
+                        children: [
                           CustomButton(
                             text: 'Start Chat',
                             onPressed: () => _handleStartChat(quote),
-                          )
+                          ),
+                          SizedBox(height: Dimensions.height10,),
+                          CustomButton(
+                            text: 'Mark Job as Completed',
+                            onPressed: () {
+                              jobController.markJobAsCompleted(quote.job?.id ?? '');
+                            },
+                            backgroundColor: AppColors.white,
+borderColor: AppColors.black,
+                          ),
+                        ],
+                      )
+                    else if (quote.status == 'pending' ||
+                        quote.status == 'countered')
+                      if (isMyTurn)
+                        CustomButton(
+                          text:
+                              quote.status == 'countered'
+                                  ? 'Review & Respond'
+                                  : "Respond to Quote",
+                          backgroundColor: AppColors.color2,
+                          // Green/Brand color
+                          onPressed: () => showRespondModal(),
+                        )
+                      // It is NOT my turn (Waiting)
+                      else
+                        Column(
+                          children: [
+                            Container(
+                              padding: EdgeInsets.symmetric(vertical: 15),
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                color: AppColors.grey2,
+                                borderRadius: BorderRadius.circular(
+                                  Dimensions.radius15,
+                                ),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  "Waiting for response...",
+                                  style: TextStyle(
+                                    color: AppColors.grey5,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: 10),
+                            // Optional: Allow them to withdraw or chat if needed, but usually we just wait
+                          ],
+                        ),
 
-                          else if (quote.status == 'pending' || quote.status == 'countered')
+                    // CASE 3: End States
+                    if (quote.status == 'declined' ||
+                        quote.status == 'rejected')
+                      Center(
+                        child: Text(
+                          "This quote has been declined.",
+                          style: TextStyle(color: AppColors.error),
+                        ),
+                      ),
 
-                  if (isMyTurn)
-              CustomButton(
-            text: quote.status == 'countered' ?
-            'Review & Respond' :
-              "Respond to Quote",
-              backgroundColor: AppColors.color2, // Green/Brand color
-              onPressed: () => showRespondModal(),
-            )
-
-            // It is NOT my turn (Waiting)
-            else
-            Column(
-            children: [
-            Container(
-            padding: EdgeInsets.symmetric(vertical: 15),
-            width: double.infinity,
-            decoration: BoxDecoration(
-            color: AppColors.grey2,
-            borderRadius: BorderRadius.circular(Dimensions.radius15)
-            ),
-            child: Center(
-            child: Text(
-            "Waiting for response...",
-            style: TextStyle(color: AppColors.grey5, fontWeight: FontWeight.bold),
-            ),
-            ),
-            ),
-            SizedBox(height: 10),
-            // Optional: Allow them to withdraw or chat if needed, but usually we just wait
-            ],
-            ),
-
-            // CASE 3: End States
-            if (quote.status == 'declined' || quote.status == 'rejected')
-            Center(child: Text("This quote has been declined.", style: TextStyle(color: AppColors.error))),
-
-            SizedBox(height: Dimensions.height40),
-            ],
-            ),
-            ),
+                    SizedBox(height: Dimensions.height40),
+                  ],
+                ),
+              ),
             );
           },
         ),
@@ -1116,11 +1131,14 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen> {
   }
 
   Future<void> _handleStartChat(QuoteModel quote) async {
-    if (quote.job?.id == null || quote.user?.id == null ||
-        quote.merchant?.id == null) return;
+    if (quote.job?.id == null ||
+        quote.user?.id == null ||
+        quote.merchant?.id == null)
+      return;
 
     final chatController = Get.put(
-        ChatController(chatRepo: Get.find(), socketService: Get.find()));
+      ChatController(chatRepo: Get.find(), socketService: Get.find()),
+    );
 
     // Show loading
     await chatController.initiateChat(

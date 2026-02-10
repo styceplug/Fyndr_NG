@@ -171,9 +171,9 @@ class _VendorHomeState extends State<VendorHome> {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Switch(
-                            value: !isAvailable,
+                            value: isAvailable,
                             onChanged: (value) {
-                              authController.toggleUserAvailability(!value);
+                              authController.toggleUserAvailability(value);
                             },
                             activeColor: AppColors.color2,
                             activeTrackColor: AppColors.color3,

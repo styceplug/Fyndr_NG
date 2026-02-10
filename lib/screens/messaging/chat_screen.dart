@@ -23,10 +23,8 @@ class ChatScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetBuilder<ChatController>(
       builder: (ctrl) {
-        final otherUser =
-            (ctrl.currentUserId == ctrl.currentChat?.vendor)
-                ? ctrl.currentChat?.customer
-                : ctrl.currentChat?.vendor;
+        final otherUser = ctrl.otherUser;
+
 
         String lastSeenText = "Offline";
         if (ctrl.otherUserLastSeen != null) {
@@ -34,7 +32,7 @@ class ChatScreen extends StatelessWidget {
             // Parse the ISO string to DateTime
             DateTime date = DateTime.parse(ctrl.otherUserLastSeen!);
             // Now pass the DateTime object to GetTimeAgo
-            lastSeenText = "Last seen ${GetTimeAgo.parse(date)}";
+             lastSeenText = "Last seen ${GetTimeAgo.parse(date)}";
           } catch (e) {
             lastSeenText = "Offline";
           }
@@ -79,15 +77,29 @@ class ChatScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        otherUser?.businessDetails?.businessName ??
-                            otherUser?.name ??
-                            'Chat',
-                        style: TextStyle(
-                          fontSize: Dimensions.font16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        overflow: TextOverflow.ellipsis,
+                      Row(
+                        children: [
+                          Text(
+                            '${otherUser?.name}',
+                            maxLines: 1,
+                            style: TextStyle(
+                              fontSize: Dimensions.font16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          if(otherUser?.businessDetails?.businessName != null)
+                          Expanded(
+                            child: Text(
+                              '- ${otherUser?.businessDetails?.businessName}',
+                              style: TextStyle(
+                                fontSize: Dimensions.font16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
 
                       if (ctrl.isRemoteUserTyping)

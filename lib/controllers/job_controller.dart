@@ -14,6 +14,7 @@ import '../data/api/api_client.dart';
 import '../model/job_model.dart';
 import '../routes/routes.dart';
 import '../utils/app_constants.dart';
+import '../utils/colors.dart';
 import '../widgets/snackbars.dart';
 
 class JobController extends GetxController {
@@ -43,9 +44,50 @@ class JobController extends GetxController {
   List<JobModel> merchantCancelledJobs = [];
 
 
-  Future<void> completeJob(String jobId) async {
-    CustomSnackBar.processing(message: "Updating job status...");
-    //setup later
+  Future<void> markJobAsCompleted(String jobId) async {
+
+    bool confirm = await Get.dialog(
+      AlertDialog(
+        title: Text("Complete Job"),
+        content: Text("Are you sure you want to mark this job as completed? This action cannot be undone."),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: Text("Cancel", style: TextStyle(color: Colors.grey)),
+          ),
+          TextButton(
+            onPressed: () => Get.back(result: true),
+            child: Text("Yes, Complete", style: TextStyle(color: AppColors.color1, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    ) ?? false;
+
+    if (!confirm) return;
+
+    loader.showLoader();
+    update();
+
+    try {
+      Response response = await jobRepo.markJobAsCompleted(jobId);
+
+      if (response.statusCode == 200) {
+        CustomSnackBar.success(message: "Job marked as completed successfully!");
+
+        await getUserJobs();
+        Get.back();
+
+      } else {
+        String errorMsg = response.body['message'] ?? response.body['error'] ?? "Failed to complete job";
+        CustomSnackBar.failure(message: errorMsg);
+      }
+    } catch (e) {
+      print("Error completing job: $e");
+      CustomSnackBar.failure(message: "An error occurred. Please try again.");
+    } finally {
+      loader.hideLoader();
+      update();
+    }
   }
 
   Future<void> getMerchantJobs() async {

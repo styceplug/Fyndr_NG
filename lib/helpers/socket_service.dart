@@ -5,6 +5,19 @@ class SocketService {
   late IO.Socket socket;
   bool _isInitialized = false;
 
+
+
+  void requestUserStatus(String userId) {
+    if (!_isInitialized) {
+      print('⚠️ Socket not initialized. Call initSocket() first.');
+      return;
+    }
+
+    print('🔍 Requesting status for user: $userId');
+    socket.emit('request:user:status', {'userId': userId});
+  }
+
+
   // ==================== INITIALIZE SOCKET ====================
 
   void initSocket() {

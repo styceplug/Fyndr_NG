@@ -287,14 +287,6 @@ class _VendorJobsState extends State<VendorJobs> {
                   ),
                 ],
               ),
-              SizedBox(height: Dimensions.height10),
-
-              // COMPLETE BUTTON
-              CustomButton(
-                text: 'Mark as completed',
-                onPressed: () => jobController.completeJob(job.id!),
-                backgroundColor: AppColors.color2,
-              ),
             ],
           ],
         ),

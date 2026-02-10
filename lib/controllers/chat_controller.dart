@@ -27,11 +27,14 @@ class ChatController extends GetxController {
   final messageCtrl = TextEditingController();
   final ScrollController scrollCtrl = ScrollController();
   AudioRecorder? _audioRecorder;
+
   AudioRecorder get audioRecorder {
     _audioRecorder ??= AudioRecorder();
     return _audioRecorder!;
   }
+
   GlobalLoaderController loader = Get.find<GlobalLoaderController>();
+
   bool get isMessageEmpty => messageCtrl.text.trim().isEmpty;
   ChatModel? currentChat;
   List<MessageModel> messages = [];
@@ -74,53 +77,60 @@ class ChatController extends GetxController {
     super.onClose();
   }
 
-  Future<void> enterChatRoom({required ChatModel chatArg}) async {
-    // 1. Connection Check
-    if (!socketService.isConnected()) {
-      socketService.initSocket();
-      await Future.delayed(const Duration(milliseconds: 500));
+  // ✅ NEW GETTER: Robustly determine the "Other User" object
+  UserModel? get otherUser {
+    if (currentChat == null || currentUserId == null) return null;
+
+    final myId = _cleanId(currentUserId);
+    final vendorId = _extractUserId(currentChat!.vendor);
+
+    // Am I the vendor?
+    if (myId == vendorId) {
+      return currentChat!.customer; // Then talk to customer
+    } else {
+      return currentChat!.vendor; // Otherwise talk to vendor
     }
+  }
 
-    currentChat = chatArg;
-
-    // ⚡️ OPTIMISTIC UPDATE: Zero out the counter in the local lists IMMEDIATELY
-    // This ensures the badge disappears instantly, even before the API refreshes.
-
-    // Update inside Vendor List
-    int vIndex = vendorChats.indexWhere((c) => c.id == chatArg.id);
-    if (vIndex != -1) {
-      vendorChats[vIndex].vendorUnreadCount = 0;
-      vendorChats[vIndex].customerUnreadCount = 0;
-    }
-
-    // Update inside Customer List
-    int cIndex = customerChats.indexWhere((c) => c.id == chatArg.id);
-    if (cIndex != -1) {
-      customerChats[cIndex].vendorUnreadCount = 0;
-      customerChats[cIndex].customerUnreadCount = 0;
-    }
-
-    update(); // Rebuild UI to remove bold text/badges
-
-    isLoading = true;
+  Future<void> accessExistingChat({
+    required String chatId,
+    required String productId,
+    required String sellerId,
+    required String userId,
+    ChatModel? currentChat,
+  }) async {
+    // 1. Loader & UI Update
+    loader.showLoader();
     update();
 
-    if (chatArg.id != null) {
-      // 2. Join Socket
-      socketService.joinChat(chatArg.id!);
+    try {
+      await loadChatDetails(chatId);
 
-      // 3. Mark Read on Server
       markAsRead();
 
-      // 4. Load Full Details
-      await loadChatDetails(chatArg.id!);
+      if(currentChat != null){
+        this.currentChat = currentChat;
+        print('✅ Chat loaded successfully as ${this.currentChat?.customerId} with ${currentChat?.customerId}');
+      }
 
-      // 5. Navigate & Refresh on Return
-      Get.toNamed(AppRoutes.chatScreen)?.then((_) {
-        // We fetch the list again just to be sure,
-        // but the UI is already clean thanks to the code above.
+      Get.toNamed(
+        AppRoutes.chatScreen,
+        arguments: {
+          "customer": userId,
+          "vendor": sellerId,
+          "product": productId,
+          "chatId": chatId,
+          "type": "product-chat",
+        },
+      )?.then((_) {
         getChatLists();
       });
+    } catch (e) {
+      print('❌ Error entering chat: $e');
+      CustomSnackBar.failure(message: "Could not load chat");
+    } finally {
+      loader.hideLoader();
+      update();
     }
   }
 
@@ -162,26 +172,29 @@ class ChatController extends GetxController {
   }
 
   String? get otherUserId {
-    if (currentChat == null || currentUserId == null) return null;
+    if (currentChat == null || currentUserId == null) {
+      print('${currentChat}, ${currentUserId}');
+      print('currentChat is null');
+      return null;
+    }
+      final myId = _cleanId(currentUserId);
 
-    final myId = _cleanId(currentUserId);
+      // Extract IDs from chat object - handle both String and Map types
+      final custId = _extractUserId(currentChat!.customer);
+      final vendId = _extractUserId(currentChat!.vendor);
 
-    // Extract IDs from chat object - handle both String and Map types
-    final custId = _extractUserId(currentChat!.customer);
-    final vendId = _extractUserId(currentChat!.vendor);
+      print("🔍 My ID: $myId");
+      print("🔍 Customer ID: $custId");
+      print("🔍 Vendor ID: $vendId");
 
-    print("🔍 My ID: $myId");
-    print("🔍 Customer ID: $custId");
-    print("🔍 Vendor ID: $vendId");
+      // Return the ID that's NOT mine
+      final otherId = (myId == custId) ? vendId : custId;
+      print("🔍 Other User ID: $otherId");
 
-    // Return the ID that's NOT mine
-    final otherId = (myId == custId) ? vendId : custId;
-    print("🔍 Other User ID: $otherId");
+      return otherId;
+    }
 
-    return otherId;
-  }
 
-  // Helper to extract user ID from various object types
   String _extractUserId(dynamic userObject) {
     if (userObject == null) return '';
 
@@ -207,8 +220,6 @@ class ChatController extends GetxController {
     if (value is Map) return value['id'] ?? value['_id'] ?? '';
     return value.toString().trim();
   }
-
-  // ==================== SOCKET LISTENERS ====================
 
   void _setupSocketListeners() {
     // 1. Listen for New Messages
@@ -271,7 +282,9 @@ class ChatController extends GetxController {
       final incomingUserId = _extractUserId(data['userId']);
       final targetOtherId = otherUserId; // Uses the fixed getter
 
-      print("🔍 Status Check: Incoming($incomingUserId) vs Target($targetOtherId)");
+      print(
+        "🔍 Status Check: Incoming($incomingUserId) vs Target($targetOtherId)",
+      );
 
       if (incomingUserId.isNotEmpty &&
           targetOtherId != null &&
@@ -307,20 +320,48 @@ class ChatController extends GetxController {
     socketService.socket.on('connect_error', (error) {
       print('⚠️ Socket Connection Error: $error');
     });
+
+    socketService.socket.on('user:connected', (data) {
+      print('👋 User Connected Event: $data');
+
+      final connectedUserId = _extractUserId(data['userId']);
+      final targetOtherId = otherUserId;
+
+      if (connectedUserId.isNotEmpty &&
+          targetOtherId != null &&
+          connectedUserId == targetOtherId) {
+        print("✅ Chat partner came online!");
+        isOtherUserOnline = true;
+        otherUserLastSeen = null; // Clear last seen when online
+        update();
+      }
+    });
+    socketService.socket.on('user:disconnected', (data) {
+      print('👋 User Disconnected Event: $data');
+
+      final disconnectedUserId = _extractUserId(data['userId']);
+      final targetOtherId = otherUserId;
+
+      if (disconnectedUserId.isNotEmpty &&
+          targetOtherId != null &&
+          disconnectedUserId == targetOtherId) {
+        print("❌ Chat partner went offline");
+        isOtherUserOnline = false;
+        otherUserLastSeen =
+            data['lastSeen'] ?? DateTime.now().toIso8601String();
+        update();
+      }
+    });
   }
 
-  // ==================== CHAT INITIATION ====================
-
   Future<void> initiateChat(
-      String jobId,
-      String customerId,
-      String vendorId,
-      ) async {
-
+    String jobId,
+    String customerId,
+    String vendorId,
+  ) async {
     isLoading = true;
     update();
 
-    // Construct Body (Specific for Job)
     final body = {
       "customer": customerId,
       "vendor": vendorId,
@@ -329,29 +370,27 @@ class ChatController extends GetxController {
     };
 
     try {
-      // Call the specific JOB repo method
       final response = await chatRepo.initiateChat(jobId, body);
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         String chatId = response.body['data']['id'];
         await loadChatDetails(chatId);
 
-        Get.toNamed(AppRoutes.chatScreen, arguments: {
-          'chatId': chatId,
-          'type': 'job-chat'
-        });
-
-
+        Get.toNamed(
+          AppRoutes.chatScreen,
+          arguments: {'chatId': chatId, 'type': 'job-chat'},
+        );
       } else {
         CustomSnackBar.failure(
-          message: response.body['message'] ?? response.body['error'] ?? "Could not start chat",
+          message:
+              response.body['message'] ??
+              response.body['error'] ??
+              "Could not start chat",
         );
       }
     } catch (e) {
       print('❌ Error initiating job chat: $e');
-      CustomSnackBar.failure(
-        message: "Network error, please try again",
-      );
+      CustomSnackBar.failure(message: "Network error, please try again");
     } finally {
       isLoading = false;
       update();
@@ -361,9 +400,8 @@ class ChatController extends GetxController {
   Future<void> initiateProductChat({
     required String productId,
     required String sellerId,
-    required String userId
+    required String userId,
   }) async {
-
     // 1. Validation
     final currentUser = Get.find<AuthController>().userModel;
     if (currentUser == null) {
@@ -379,7 +417,6 @@ class ChatController extends GetxController {
     loader.showLoader;
     update();
 
-    // 2. Construct Body (Specific for Product)
     final body = {
       "customer": userId,
       "vendor": sellerId,
@@ -388,7 +425,6 @@ class ChatController extends GetxController {
     };
 
     try {
-      // 3. Call the specific PRODUCT repo method
       final response = await chatRepo.initiateProductChat(productId, body);
 
       if (response.statusCode == 201 || response.statusCode == 200) {
@@ -397,13 +433,16 @@ class ChatController extends GetxController {
         // 4. Load & Navigate
         await loadChatDetails(chatId);
 
-        Get.toNamed(AppRoutes.chatScreen, arguments: {
-          'chatId': chatId,
-          'type': 'product-chat'
-        });
+        Get.toNamed(
+          AppRoutes.chatScreen,
+          arguments: {'chatId': chatId, 'type': 'product-chat'},
+        );
       } else {
         CustomSnackBar.failure(
-          message: response.body['message'] ?? response.body['error'] ?? "Could not start chat",
+          message:
+              response.body['message'] ??
+              response.body['error'] ??
+              "Could not start chat",
         );
       }
     } catch (e) {
@@ -414,8 +453,6 @@ class ChatController extends GetxController {
       update();
     }
   }
-
-  // ==================== LOAD CHAT DETAILS ====================
 
   Future<void> loadChatDetails(String chatId) async {
     isLoading = true;
@@ -431,14 +468,10 @@ class ChatController extends GetxController {
         if (socketService.isConnected()) {
           socketService.joinChat(chatId);
 
-          // ✨ Ask the server to broadcast everyone's status in this chat
           final otherId = otherUserId;
           if (otherId != null) {
-            print('🔍 Broadcasting online status request');
-            socketService.socket.emit('broadcast:status', {
-              'chatId': chatId,
-              'userId': currentUserId
-            });
+            print('🔍 Requesting other user status: $otherId');
+            socketService.requestUserStatus(otherId);
           }
         }
 
@@ -454,8 +487,6 @@ class ChatController extends GetxController {
     }
   }
 
-  // ==================== MARK AS READ ====================
-
   Future<void> markAsRead() async {
     if (currentChat?.id == null) return;
 
@@ -467,7 +498,7 @@ class ChatController extends GetxController {
       print("👀 Marking chat ${currentChat!.id} as read...");
       final response = await chatRepo.markAsRead(currentChat!.id!);
 
-      if(response.statusCode == 200) {
+      if (response.statusCode == 200) {
         print("✅ Chat marked as read successfully");
       } else {
         print("⚠️ Mark as read failed: ${response.statusCode}");
@@ -486,10 +517,7 @@ class ChatController extends GetxController {
     isSending = true;
     update();
 
-    final body = {
-      "text": text,
-      "type": "text"
-    };
+    final body = {"text": text, "type": "text"};
 
     try {
       final response = await chatRepo.sendMessage(currentChat!.id!, body);
@@ -516,9 +544,7 @@ class ChatController extends GetxController {
       }
     } catch (e) {
       print("❌ Send Exception: $e");
-      CustomSnackBar.failure(
-        message: "Network error, please try again",
-      );
+      CustomSnackBar.failure(message: "Network error, please try again");
     } finally {
       isSending = false;
       update();
@@ -563,9 +589,7 @@ class ChatController extends GetxController {
       await Future.delayed(const Duration(seconds: 2));
       openAppSettings();
     } else {
-      CustomSnackBar.failure(
-        message: "Microphone permission is required",
-      );
+      CustomSnackBar.failure(message: "Microphone permission is required");
     }
   }
 
@@ -573,7 +597,8 @@ class ChatController extends GetxController {
     try {
       if (await audioRecorder.hasPermission()) {
         final directory = await getApplicationDocumentsDirectory();
-        _recordingPath = '${directory.path}/audio_${DateTime.now().millisecondsSinceEpoch}.m4a';
+        _recordingPath =
+            '${directory.path}/audio_${DateTime.now().millisecondsSinceEpoch}.m4a';
 
         await audioRecorder.start(
           const RecordConfig(
@@ -645,30 +670,28 @@ class ChatController extends GetxController {
         if (await audioFile.exists()) {
           await audioFile.delete();
         }
-
       } else {
         var errorBody = response.body;
         if (errorBody is String) {
           try {
             errorBody = jsonDecode(errorBody);
-          } catch(e) {
+          } catch (e) {
             errorBody = {};
           }
         }
 
         print("❌ Audio Send Error: $errorBody");
 
-        String errorMessage = (errorBody is Map && errorBody['error'] != null)
-            ? errorBody['error']
-            : "Failed to send audio message";
+        String errorMessage =
+            (errorBody is Map && errorBody['error'] != null)
+                ? errorBody['error']
+                : "Failed to send audio message";
 
         CustomSnackBar.failure(message: errorMessage);
       }
     } catch (e) {
       print("❌ Audio Send Exception: $e");
-      CustomSnackBar.failure(
-        message: "Network error, please try again",
-      );
+      CustomSnackBar.failure(message: "Network error, please try again");
     } finally {
       isSending = false;
       update();

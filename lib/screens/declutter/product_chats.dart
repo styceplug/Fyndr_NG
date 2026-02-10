@@ -118,8 +118,13 @@ class _ProductChatsState extends State<ProductChats> {
 
         return InkWell(
           onTap: () {
-            // 2. Use the controller's enter method to ensure proper loading
-            chatController.enterChatRoom(chatArg: chat);
+            chatController.accessExistingChat(
+              chatId: chat.id!,
+              productId: chat.product?.id ?? '',
+              sellerId: otherUser?.id ?? '',
+              userId: chatController.currentUserId ?? '',
+
+            );
           },
           child: Container(
             padding: EdgeInsets.symmetric(vertical: 10),

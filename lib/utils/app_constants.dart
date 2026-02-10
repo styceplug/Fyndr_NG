@@ -30,6 +30,8 @@ class AppConstants {
   static String GET_JOB_DETAILS(String jobId) => '/api/v1/job/$jobId';
   static String GET_JOB_QUOTES(String jobId) => '/api/v1/job/$jobId/quotes';
 
+  static String MARK_JOB_AS_COMPLETED(String jobId) => '/api/v1/job/$jobId/complete';
+
 
   static const String SWITCH_ROLE_URI = '/api/v1/user/role/switch';
   static const String UPDATE_AVAILABILITY = '/api/v1/user/availability';

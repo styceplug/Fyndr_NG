@@ -156,6 +156,7 @@ class QuotesCard extends StatelessWidget {
   String distance;
   String timeAgo;
   VoidCallback? onTap;
+  String status;
 
   QuotesCard({
     super.key,
@@ -167,6 +168,7 @@ class QuotesCard extends StatelessWidget {
     required this.timeAgo,
     this.isNetworkImage = false,
     this.onTap,
+    required this.status
   });
 
   @override
@@ -234,12 +236,33 @@ class QuotesCard extends StatelessWidget {
                   ),
                 ),
                 SizedBox(width: Dimensions.width10),
-                Text(
-                  'NGN ${price}',
-                  style: TextStyle(
-                    fontSize: Dimensions.font14,
-                    fontWeight: FontWeight.w600,
-                  ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      'NGN ${price}',
+                      style: TextStyle(
+                        fontSize: Dimensions.font14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: Dimensions.width10,vertical: Dimensions.height5
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.grey3,
+                        borderRadius: BorderRadius.circular(Dimensions.radius10)
+                      ),
+                      child: Text(
+                        status.capitalizeFirst ?? '',
+                        style: TextStyle(
+                          fontSize: Dimensions.font10,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

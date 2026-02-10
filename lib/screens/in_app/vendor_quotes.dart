@@ -142,6 +142,7 @@ class _MerchantQuotesScreenState extends State<MerchantQuotesScreen> {
                                   arguments: {'quoteId': quote.id},
                                 );
                               },
+                              status: quote.status ?? '',
                             ),
                           );
                         },
