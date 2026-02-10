@@ -19,7 +19,6 @@ class JobsScreen extends StatefulWidget {
   State<JobsScreen> createState() => _JobsScreenState();
 }
 
-
 class _JobsScreenState extends State<JobsScreen> {
 
   @override
@@ -161,6 +160,9 @@ class _JobsScreenState extends State<JobsScreen> {
           quote: quoteText,
           onTap: () {
             Get.toNamed(AppRoutes.jobDetailsScreen, arguments: job);
+            if(job.status?.isCompleted == true){
+              Get.toNamed(AppRoutes.jobInProgress, arguments: job);
+            }
           },
         );
       },

@@ -23,6 +23,8 @@ class BrowseScreen extends StatefulWidget {
 
 class _BrowseScreenState extends State<BrowseScreen> {
   ProductController productController = Get.find<ProductController>();
+  AuthController authController = Get.find<AuthController>();
+
 
   @override
   void initState() {
@@ -86,13 +88,34 @@ class _BrowseScreenState extends State<BrowseScreen> {
                 SizedBox(width: Dimensions.width20),
                 InkWell(
                   onTap: () => Get.toNamed(AppRoutes.productChatScreen),
-                  child: Text(
-                    'Messages',
-                    style: TextStyle(
-                      fontSize: Dimensions.font18,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.grey4,
-                    ),
+                  child: Row(
+                    children: [
+                      Text(
+                        'Messages',
+                        style: TextStyle(
+                          fontSize: Dimensions.font18,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.grey4,
+                        ),
+                      ),
+                      if(authController.userModel!.chatUnreadCount! > 0)...[
+                        SizedBox(width: Dimensions.width5,),
+                        Container(
+                          padding: EdgeInsets.all(Dimensions.width5),
+                          decoration: BoxDecoration(
+                            color: AppColors.color1,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Text(
+                            authController.userModel!.chatUnreadCount!.toString(),
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: Dimensions.font10,
+                            ),
+                          ),
+                        ),
+                      ]
+                    ],
                   ),
                 ),
               ],

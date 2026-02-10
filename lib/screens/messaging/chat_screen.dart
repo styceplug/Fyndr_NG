@@ -25,8 +25,12 @@ class ChatScreen extends StatelessWidget {
       builder: (ctrl) {
         final otherUser = ctrl.otherUser;
 
+        bool isOnline = ctrl.statuses.any((status) => status['userId'] == ctrl.otherUserId && status['isOnline'] == true);
 
-        String lastSeenText = "Offline";
+        print('rebuild isOnline: $isOnline because ${ctrl.statuses} contains ${ctrl.otherUserId} check ${otherUser?.id}');
+
+        String lastSeenText = "Beans";
+        // String lastSeenText = "Offline";
         if (ctrl.otherUserLastSeen != null) {
           try {
             // Parse the ISO string to DateTime
@@ -111,7 +115,21 @@ class ChatScreen extends StatelessWidget {
                             fontStyle: FontStyle.italic,
                           ),
                         )
-                      else if (ctrl.isOtherUserOnline)
+                      else if (isOnline)
+                        Row(
+                          children: [
+                            Icon(Icons.circle, size: 8, color: Colors.green),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Online',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ],
+                        )
+                      else if (ctrl.isOtherUserOnline.value)
                         Row(
                           children: [
                             Icon(Icons.circle, size: 8, color: Colors.green),

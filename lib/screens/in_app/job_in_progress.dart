@@ -177,7 +177,8 @@ class _JobInProgressState extends State<JobInProgress> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                job.user?.name ?? "Unknown Customer",
+
+                                job.user?.businessDetails?.businessName ?? "Waiting for Vendor",
                                 style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
                               ),
                               SizedBox(height: 5),

@@ -8,6 +8,7 @@ class UserModel {
   String? currentRole;
   bool? isActive;
   String? avatar;
+  int? chatUnreadCount;
 
   // --- NEW STATUS FLAGS ---
   bool? isEmailValidated;
@@ -53,7 +54,8 @@ class UserModel {
     this.hasCustomerProfile, // New
     this.businessDetails,
     this.businessDocs,
-    this.avatar
+    this.avatar,
+    this.chatUnreadCount
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -65,6 +67,7 @@ class UserModel {
       currentRole: json['currentRole'],
       isActive: json['isActive'],
       avatar: json['avatar'],
+      chatUnreadCount: int.tryParse(json['chatUnreadCount']?.toString() ?? '0') ?? 0,
 
       // Parse flags
       isEmailValidated: json['isEmailValidated'] ?? false,
@@ -108,6 +111,8 @@ class UserModel {
       'email': email,
       'currentRole': currentRole,
       'isActive': isActive,
+      'avatar': avatar,
+      'chatUnreadCount': chatUnreadCount,
       'isEmailValidated': isEmailValidated,
       'isProfileVerified': isProfileVerified,
       'isBusinessVerified': isBusinessVerified,

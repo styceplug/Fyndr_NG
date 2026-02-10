@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/widgets.dart';
@@ -43,12 +44,17 @@ class ChatController extends GetxController {
   bool isTyping = false;
   bool isRemoteUserTyping = false;
   bool isRecording = false;
-  bool isOtherUserOnline = false;
+  RxBool isOtherUserOnline = false.obs;
   String? otherUserLastSeen;
   String? currentUserId;
   String? _recordingPath;
   List<ChatModel> vendorChats = [];
   List<ChatModel> customerChats = [];
+  RxList<Map<String, dynamic>> statuses = RxList<Map<String, dynamic>>([]);
+  Timer? _statusPollTimer;
+
+
+
 
   @override
   void onInit() {
@@ -62,6 +68,8 @@ class ChatController extends GetxController {
     _setupSocketListeners();
   }
 
+  // i need to change screen
+
   @override
   void onClose() {
     if (currentChat?.id != null) {
@@ -74,6 +82,7 @@ class ChatController extends GetxController {
     messageCtrl.dispose();
     scrollCtrl.dispose();
     _audioRecorder?.dispose();
+    _statusPollTimer?.cancel();
     super.onClose();
   }
 
@@ -108,9 +117,11 @@ class ChatController extends GetxController {
 
       markAsRead();
 
-      if(currentChat != null){
+      if (currentChat != null) {
         this.currentChat = currentChat;
-        print('✅ Chat loaded successfully as ${this.currentChat?.customerId} with ${currentChat?.customerId}');
+        print(
+          '✅ Chat loaded successfully as ${this.currentChat?.customerId} with ${currentChat?.customerId}',
+        );
       }
 
       Get.toNamed(
@@ -177,23 +188,22 @@ class ChatController extends GetxController {
       print('currentChat is null');
       return null;
     }
-      final myId = _cleanId(currentUserId);
+    final myId = _cleanId(currentUserId);
 
-      // Extract IDs from chat object - handle both String and Map types
-      final custId = _extractUserId(currentChat!.customer);
-      final vendId = _extractUserId(currentChat!.vendor);
+    // Extract IDs from chat object - handle both String and Map types
+    final custId = _extractUserId(currentChat!.customer);
+    final vendId = _extractUserId(currentChat!.vendor);
 
-      print("🔍 My ID: $myId");
-      print("🔍 Customer ID: $custId");
-      print("🔍 Vendor ID: $vendId");
+    print("🔍 My ID: $myId");
+    print("🔍 Customer ID: $custId");
+    print("🔍 Vendor ID: $vendId");
 
-      // Return the ID that's NOT mine
-      final otherId = (myId == custId) ? vendId : custId;
-      print("🔍 Other User ID: $otherId");
+    // Return the ID that's NOT mine
+    final otherId = (myId == custId) ? vendId : custId;
+    print("🔍 Other User ID: $otherId");
 
-      return otherId;
-    }
-
+    return otherId;
+  }
 
   String _extractUserId(dynamic userObject) {
     if (userObject == null) return '';
@@ -275,30 +285,73 @@ class ChatController extends GetxController {
       }
     });
 
-    // 5. Listen for User Status Updates - FIX APPLIED HERE
+    // 5. Handle Single User Status Update (Broadcast)
     socketService.socket.on('user:status', (data) {
       print('👤 User Status Event Received: $data');
 
-      final incomingUserId = _extractUserId(data['userId']);
-      final targetOtherId = otherUserId; // Uses the fixed getter
+      final userId = _extractUserId(data['userId']);
+      final isOnline =
+          data['isOnline'] == true || data['isOnline'].toString() == 'true';
 
-      print(
-        "🔍 Status Check: Incoming($incomingUserId) vs Target($targetOtherId)",
-      );
-
-      if (incomingUserId.isNotEmpty &&
-          targetOtherId != null &&
-          incomingUserId == targetOtherId) {
-        print("✅ MATCH! Updating Status -> Online: ${data['isOnline']}");
-        isOtherUserOnline = data['isOnline'] ?? false;
-        otherUserLastSeen = data['lastSeen'];
-        update();
+      // Update the list (Source of Truth)
+      int index = statuses.indexWhere((s) => s['userId'] == userId);
+      if (index != -1) {
+        statuses[index]['isOnline'] = isOnline;
+        statuses.refresh();
       } else {
-        print("❌ NO MATCH - Status update ignored");
+        statuses.add({'userId': userId, 'isOnline': isOnline});
       }
+
+      // Update the specific chat boolean
+      if (userId == otherUserId) {
+        isOtherUserOnline.value = isOnline;
+        if (data['lastSeen'] != null) {
+          otherUserLastSeen = data['lastSeen'];
+        }
+      }
+      update();
     });
 
-    // 6. Connection Events
+    // 6. Handle Full List (Initial Join)
+    socketService.socket.on('chat:participant-info', (data) {
+      print('👥 Participant Info Received: $data');
+
+      // 1. Clear the old list to avoid stale data
+      statuses.clear();
+
+      List<dynamic> rawParticipants = [];
+
+      // Handle different data structures safely
+      if (data['participants'] is List) {
+        rawParticipants = data['participants'];
+      } else if (data is List) {
+        rawParticipants = data;
+      }
+
+      for (var item in rawParticipants) {
+        if (item is Map<String, dynamic>) {
+          final userId = _extractUserId(item['userId'] ?? item['id']);
+          final isOnline =
+              item['isOnline'] == true || item['isOnline'].toString() == 'true';
+
+          // Populate the list
+          statuses.add({'userId': userId, 'isOnline': isOnline});
+
+          // If this is the person we are talking to, update the boolean
+          if (userId == otherUserId) {
+            print("✅ MATCH found in list! Setting Online: $isOnline");
+            isOtherUserOnline.value = isOnline;
+            if (item['lastSeen'] != null) {
+              otherUserLastSeen = item['lastSeen'];
+            }
+          }
+        }
+      }
+
+      update();
+    });
+
+    // 7. Connection Events
     socketService.socket.on('connect', (_) {
       print('✅ Socket Connected');
       if (currentUserId != null) {
@@ -307,13 +360,20 @@ class ChatController extends GetxController {
       // Re-join chat if we have one loaded
       if (currentChat?.id != null) {
         socketService.joinChat(currentChat!.id!);
+
+        Future.delayed(const Duration(milliseconds: 500), () {
+          final otherId = otherUserId;
+          if (otherId != null) {
+            socketService.requestUserStatus(otherId);
+          }
+        });
       }
     });
 
     socketService.socket.on('disconnect', (reason) {
       print('❌ Socket Disconnected: $reason');
       // Set other user as offline when we disconnect
-      isOtherUserOnline = false;
+      isOtherUserOnline.value = false;
       update();
     });
 
@@ -331,8 +391,8 @@ class ChatController extends GetxController {
           targetOtherId != null &&
           connectedUserId == targetOtherId) {
         print("✅ Chat partner came online!");
-        isOtherUserOnline = true;
-        otherUserLastSeen = null; // Clear last seen when online
+        isOtherUserOnline.value = true;
+        otherUserLastSeen = null;
         update();
       }
     });
@@ -346,7 +406,7 @@ class ChatController extends GetxController {
           targetOtherId != null &&
           disconnectedUserId == targetOtherId) {
         print("❌ Chat partner went offline");
-        isOtherUserOnline = false;
+        isOtherUserOnline.value = false;
         otherUserLastSeen =
             data['lastSeen'] ?? DateTime.now().toIso8601String();
         update();
@@ -465,15 +525,23 @@ class ChatController extends GetxController {
         currentChat = ChatModel.fromJson(response.body['data']);
         messages = currentChat?.messages ?? [];
 
-        if (socketService.isConnected()) {
+        // 1. Connection Check
+        if (!socketService.isConnected()) {
+          socketService.initSocket();
+          // The 'connect' listener will handle the request automatically
+        } else {
           socketService.joinChat(chatId);
 
-          final otherId = otherUserId;
-          if (otherId != null) {
-            print('🔍 Requesting other user status: $otherId');
-            socketService.requestUserStatus(otherId);
-          }
+          Future.delayed(const Duration(milliseconds: 500), () {
+            final otherId = otherUserId;
+            if (otherId != null) {
+              socketService.requestUserStatus(otherId);
+            }
+          });
+
+          _startStatusPolling();
         }
+
 
         await markAsRead();
         update();
@@ -485,6 +553,17 @@ class ChatController extends GetxController {
       isLoading = false;
       update();
     }
+  }
+
+
+  void _startStatusPolling() {
+    _statusPollTimer?.cancel();
+    _statusPollTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      final otherId = otherUserId;
+      if (otherId != null && socketService.isConnected()) {
+        socketService.requestUserStatus(otherId);
+      }
+    });
   }
 
   Future<void> markAsRead() async {

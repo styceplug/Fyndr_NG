@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:fyndr_ng/utils/app_constants.dart';
 
@@ -6,16 +8,17 @@ class SocketService {
   bool _isInitialized = false;
 
 
-
   void requestUserStatus(String userId) {
     if (!_isInitialized) {
       print('⚠️ Socket not initialized. Call initSocket() first.');
       return;
     }
 
-    print('🔍 Requesting status for user: $userId');
+    print('🔍 Emitting request:user:status for: $userId');
+    // Emitting the event exactly as shown in your image
     socket.emit('request:user:status', {'userId': userId});
   }
+
 
 
   // ==================== INITIALIZE SOCKET ====================
@@ -93,6 +96,7 @@ class SocketService {
 
     print('👋 Leaving chat: $chatId');
     socket.emit('leave:chat', chatId);
+    socket.disconnect();
   }
 
   // ==================== SEND TYPING INDICATOR ====================
