@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:fyndr_ng/controllers/auth_controller.dart';
+import 'package:fyndr_ng/controllers/notification_controller.dart';
 import 'package:fyndr_ng/controllers/product_controller.dart';
 import 'package:fyndr_ng/data/api/api_checker.dart';
 import 'package:fyndr_ng/data/api/api_client.dart';
@@ -39,6 +40,7 @@ class AppController extends GetxController {
   PageController pageController = PageController();
   AuthController authController = Get.find<AuthController>();
   ProductController productController = Get.find<ProductController>();
+  NotificationController notificationController = Get.find<NotificationController>();
   ApiClient apiClient;
   ApiChecker apiChecker;
 
@@ -83,6 +85,8 @@ class AppController extends GetxController {
       authController.apiClient.updateHeader(token);
       await productController.getProducts();
       await authController.getUserProfile();
+      await notificationController.refreshUnreadCount();
+
 
       await NotificationService().initializeAndSyncToken(
         upsertDeviceToken: ({required String token, required String platform}) async {

@@ -1,7 +1,10 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:fyndr_ng/controllers/notification_controller.dart';
+import 'package:get/get.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tzData;
 import 'package:permission_handler/permission_handler.dart';
@@ -26,11 +29,14 @@ String buildPayload(RemoteMessage message) {
 }
 
 class NotificationService {
-
-
-
-
   static final NotificationService _instance = NotificationService._internal();
+  bool _initialized = false;
+  bool _listenersAttached = false;
+
+  int _apnsRetryCount = 0;
+  Timer? _apnsRetryTimer;
+
+  static const int _maxApnsRetries = 1;
 
   factory NotificationService() => _instance;
 
@@ -42,32 +48,56 @@ class NotificationService {
 
   Future<void> initializeAndSyncToken({
     required Future<void> Function({
-    required String token,
-    required String platform,
-    }) upsertDeviceToken,
+      required String token,
+      required String platform,
+    })
+    upsertDeviceToken,
   }) async {
+    // ✅ Prevent multiple simultaneous runs
+    if (_initialized) return;
+
+    _initialized = true;
+
     await _initLocalNotifications();
 
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
+    // ✅ Attach listeners ONCE
+    if (!_listenersAttached) {
+      _listenersAttached = true;
 
-      await _showLocal(message);
-    });
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
+        await _showLocal(message);
 
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      print("📲 Notification opened: ${message.data}");
+        // 🔔 update badge count when a push comes in
+        try {
+          Get.find<NotificationController>().refreshUnreadCount();
+        } catch (_) {}
+      });
 
-    });
+      FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+        print("📲 Notification opened: ${message.data}");
+        try {
+          Get.find<NotificationController>().refreshUnreadCount();
+        } catch (_) {}
+      });
 
+      _fcm.onTokenRefresh.listen((newToken) async {
+        await upsertDeviceToken(
+          token: newToken,
+          platform: Platform.isIOS ? "ios" : "android",
+        );
+      });
+    }
 
     final initialMessage = await _fcm.getInitialMessage();
     if (initialMessage != null) {
       print("🚀 Opened from terminated: ${initialMessage.data}");
     }
 
-
-
     final granted = await requestPermissions();
-    if (!granted) return;
+    if (!granted) {
+      _initialized = false;
+      return;
+    }
 
     await _fcm.setForegroundNotificationPresentationOptions(
       alert: true,
@@ -75,26 +105,32 @@ class NotificationService {
       sound: true,
     );
 
-    print("📌 iOS is physical device: ${!Platform.environment.containsKey('SIMULATOR_DEVICE_NAME')}");
-    print("📌 APNs token now: ${await _fcm.getAPNSToken()}");
-
-
-    // ✅ Wait longer
     if (Platform.isIOS) {
-      final apnsToken = await _waitForApnsToken(maxTries: 30);
+      final apnsToken = await _fcm.getAPNSToken();
 
       if (apnsToken == null) {
-        print("⚠️ APNs token still not ready. Will retry in 5 seconds...");
-        Future.delayed(const Duration(seconds: 5), () {
-          initializeAndSyncToken(upsertDeviceToken: upsertDeviceToken);
-        });
+        // ✅ hard cap retries
+        if (_apnsRetryCount < _maxApnsRetries) {
+          _apnsRetryCount++;
+
+          _apnsRetryTimer?.cancel();
+          _apnsRetryTimer = Timer(const Duration(seconds: 5), () {
+            _initialized = false; // allow retry run
+            initializeAndSyncToken(upsertDeviceToken: upsertDeviceToken);
+          });
+        } else {
+          print(
+            "⚠️ APNs token not ready; giving up after $_maxApnsRetries retry.",
+          );
+        }
+
+        _initialized = false;
         return;
       }
 
       print("✅ APNs Token ready: $apnsToken");
     }
 
-    // ✅ Safe now
     try {
       await _fcm.subscribeToTopic('all');
     } catch (e) {
@@ -102,17 +138,9 @@ class NotificationService {
     }
 
     await syncFcmToken(upsertDeviceToken: upsertDeviceToken);
-
-    _fcm.onTokenRefresh.listen((newToken) async {
-      await upsertDeviceToken(
-        token: newToken,
-        platform: Platform.isIOS ? "ios" : "android",
-      );
-    });
   }
 
-
-  Future<String?> _waitForApnsToken({int maxTries = 30}) async {
+  Future<String?> _waitForApnsToken({int maxTries = 1}) async {
     if (!Platform.isIOS) return "na";
 
     String? apns = await _fcm.getAPNSToken();
@@ -158,8 +186,6 @@ class NotificationService {
       payload: buildPayload(message),
     );
   }
-
-
 
   Future<void> _initLocalNotifications() async {
     const androidSettings = AndroidInitializationSettings(
@@ -240,7 +266,11 @@ class NotificationService {
   }
 
   Future<void> syncFcmToken({
-    required Future<void> Function({required String token, required String platform}) upsertDeviceToken,
+    required Future<void> Function({
+      required String token,
+      required String platform,
+    })
+    upsertDeviceToken,
   }) async {
     try {
       final fcmToken = await _fcm.getToken();
@@ -254,7 +284,6 @@ class NotificationService {
       print("❌ Token sync error: $e");
     }
   }
-
 
   Future<void> cancelNotification(int id) async => _local.cancel(id);
 

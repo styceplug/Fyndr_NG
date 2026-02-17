@@ -10,6 +10,7 @@ import 'package:fyndr_ng/widgets/snackbars.dart';
 import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
 
+import '../../../controllers/notification_controller.dart';
 import '../../../utils/dimensions.dart';
 
 class ProfileScree extends StatefulWidget {
@@ -52,23 +53,54 @@ class _ProfileScreeState extends State<ProfileScree> {
                     ),
                   ),
                   InkWell(
-                    onTap: () {
-                      Get.toNamed(AppRoutes.notificationScreen);
-                    },
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: Dimensions.width10,
-                        vertical: Dimensions.height10,
-                      ),
-                      height: Dimensions.height50,
-                      width: Dimensions.width50,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: AppColors.color5,
-                      ),
-                      child: Image.asset(AppConstants.getPngAsset('bell-icon')),
+                    onTap: () => Get.toNamed(AppRoutes.notificationScreen),
+                    child: GetBuilder<NotificationController>(
+                      builder: (notificationController) {
+                        return Stack(
+                          children: [
+                            Container(
+                              padding: EdgeInsets.all(Dimensions.width10),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: AppColors.color5,
+                              ),
+                              child: Image.asset(
+                                AppConstants.getPngAsset('bell-icon'),
+                                height: Dimensions.height20,
+                                width: Dimensions.width20,
+                              ),
+                            ),
+                            if (notificationController.unreadCount > 0)
+                              Positioned(
+                                right: 6,
+                                top: 6,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red,
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    notificationController.unreadCount > 99
+                                        ? '99+'
+                                        : '${notificationController.unreadCount}',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        );
+                      },
                     ),
                   ),
+
                 ],
               ),
               SizedBox(height: Dimensions.height20),

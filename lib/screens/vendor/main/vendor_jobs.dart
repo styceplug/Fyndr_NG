@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_rating/flutter_rating.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:fyndr_ng/widgets/custom_button.dart';
 import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
@@ -17,7 +19,6 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../widgets/snackbars.dart';
-
 
 class VendorJobs extends StatefulWidget {
   const VendorJobs({Key? key}) : super(key: key);
@@ -43,9 +44,7 @@ class _VendorJobsState extends State<VendorJobs> {
     return DefaultTabController(
       length: 3,
       child: Scaffold(
-        appBar: CustomAppbar(
-            title: 'My Jobs'
-        ),
+        appBar: CustomAppbar(title: 'My Jobs'),
         body: GetBuilder<JobController>(
           builder: (ctrl) {
             return Container(
@@ -67,15 +66,21 @@ class _VendorJobsState extends State<VendorJobs> {
                     tabs: [
                       Text('ACTIVE (${ctrl.merchantActiveJobs.length})'),
                       Text('COMPLETED (${ctrl.merchantCompletedJobs.length})'),
-                      Text('CANCELLED (${ctrl.merchantCancelledJobs.length})')
+                      Text('CANCELLED (${ctrl.merchantCancelledJobs.length})'),
                     ],
                   ),
                   Expanded(
                     child: TabBarView(
                       children: [
                         _buildJobList(ctrl.merchantActiveJobs, isActive: true),
-                        _buildJobList(ctrl.merchantCompletedJobs, isActive: false),
-                        _buildJobList(ctrl.merchantCancelledJobs, isActive: false),
+                        _buildJobList(
+                          ctrl.merchantCompletedJobs,
+                          isActive: false,
+                        ),
+                        _buildJobList(
+                          ctrl.merchantCancelledJobs,
+                          isActive: false,
+                        ),
                       ],
                     ),
                   ),
@@ -113,16 +118,23 @@ class _VendorJobsState extends State<VendorJobs> {
 
   Widget _buildJobCard(JobModel job, bool isActive) {
     // Format Date
-    String dateStr = job.date != null
-        ? DateFormat('dd MMM HH:mm').format(DateTime.parse(job.date!))
-        : "N/A";
+    String dateStr =
+        job.date != null
+            ? DateFormat('dd MMM HH:mm').format(DateTime.parse(job.date!))
+            : "N/A";
 
     // Format Price
-    final currencyFormatter = NumberFormat.currency(locale: 'en_NG', symbol: 'N');
+    final currencyFormatter = NumberFormat.currency(
+      locale: 'en_NG',
+      symbol: 'N',
+    );
     String price = currencyFormatter.format(job.budget?.preference ?? 0);
 
+    double rating = 3.5;
+    int starCount = 5;
+
     return InkWell(
-      onTap: (){
+      onTap: () {
         jobController.getJobDetailsAndQuotes(job.id ?? '');
         Get.toNamed(AppRoutes.jobInProgress, arguments: job);
       },
@@ -160,7 +172,11 @@ class _VendorJobsState extends State<VendorJobs> {
                     borderRadius: BorderRadius.circular(Dimensions.radius10),
                   ),
                   child: Text(
-                    isActive ? 'Ongoing' : (job.status?.isCancelled == true ? 'Cancelled' : 'Completed'),
+                    isActive
+                        ? 'Ongoing'
+                        : (job.status?.isCancelled == true
+                            ? 'Cancelled'
+                            : 'Completed'),
                     style: TextStyle(
                       fontSize: Dimensions.font13,
                       color: isActive ? AppColors.color2 : AppColors.black,
@@ -194,7 +210,10 @@ class _VendorJobsState extends State<VendorJobs> {
                     "${job.location?.lga ?? ''}",
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: Dimensions.font14, color: AppColors.grey4),
+                    style: TextStyle(
+                      fontSize: Dimensions.font14,
+                      color: AppColors.grey4,
+                    ),
                   ),
                 ),
                 SizedBox(width: Dimensions.width20),
@@ -203,7 +222,10 @@ class _VendorJobsState extends State<VendorJobs> {
                 SizedBox(width: 4),
                 Text(
                   job.user?.name ?? 'Customer',
-                  style: TextStyle(fontSize: Dimensions.font14, color: AppColors.grey4),
+                  style: TextStyle(
+                    fontSize: Dimensions.font14,
+                    color: AppColors.grey4,
+                  ),
                 ),
               ],
             ),
@@ -233,12 +255,17 @@ class _VendorJobsState extends State<VendorJobs> {
                         if (job.user?.number != null) {
                           launchUrl(Uri.parse("tel:${job.user!.number}"));
                         } else {
-                          CustomSnackBar.failure(message: "No phone number available");
+                          CustomSnackBar.failure(
+                            message: "No phone number available",
+                          );
                         }
                       },
                       backgroundColor: AppColors.black,
-                      icon: Icon(Iconsax.call, color: AppColors.white, size: 18),
-
+                      icon: Icon(
+                        Iconsax.call,
+                        color: AppColors.white,
+                        size: 18,
+                      ),
                     ),
                   ),
                   SizedBox(width: 10),
@@ -258,9 +285,12 @@ class _VendorJobsState extends State<VendorJobs> {
                         }
                       },
                       backgroundColor: AppColors.white,
-                      icon: Icon(Iconsax.message, color: AppColors.black, size: 18),
+                      icon: Icon(
+                        Iconsax.message,
+                        color: AppColors.black,
+                        size: 18,
+                      ),
                       borderColor: AppColors.black,
-
                     ),
                   ),
                   SizedBox(width: 10),
@@ -272,19 +302,35 @@ class _VendorJobsState extends State<VendorJobs> {
                       if (job.location?.coordinates != null) {
                         final lat = job.location!.coordinates![1];
                         final lng = job.location!.coordinates![0];
-                        launchUrl(Uri.parse("https://www.google.com/maps/search/?api=1&query=$lat,$lng"));
+                        launchUrl(
+                          Uri.parse(
+                            "https://www.google.com/maps/search/?api=1&query=$lat,$lng",
+                          ),
+                        );
                       }
                     },
                     child: Container(
                       height: 45,
                       width: 45,
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(Dimensions.radius15),
+                        borderRadius: BorderRadius.circular(
+                          Dimensions.radius15,
+                        ),
                         color: AppColors.black,
                       ),
                       child: Icon(Iconsax.location5, color: AppColors.white),
                     ),
                   ),
+                ],
+              ),
+            ],
+            //if job is completed, show rating
+            if (job.status?.isCompleted == true) ...[
+              Row(
+                children: [
+                  Text('Rate Service:'),
+                  SizedBox(width: Dimensions.width10),
+                  StarRating(),
                 ],
               ),
             ],

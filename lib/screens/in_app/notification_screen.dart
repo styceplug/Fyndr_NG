@@ -33,7 +33,12 @@ class _NotificationScreenState extends State<NotificationScreen> {
       length: 3,
       child: Scaffold(
         appBar: CustomAppbar(
-          leadingIcon: BackButton(),
+          leadingIcon: BackButton(
+            onPressed: () async {
+              await c.refreshUnreadCount();
+              Get.back();
+            },
+          ),
           title: 'Notifications',
           actionIcon: IconButton(
             icon: const Icon(Icons.done_all),

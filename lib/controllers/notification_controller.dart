@@ -10,6 +10,7 @@ import '../data/repo/notification_repo.dart';
 
 import '../model/notification_model.dart';
 import '../routes/routes.dart';
+import '../screens/declutter/product_details.dart';
 import 'auth_controller.dart';
 
 class NotificationController extends GetxController {
@@ -39,6 +40,8 @@ class NotificationController extends GetxController {
 
   static const jobTypes = <String>{'product', 'job', 'quote'};
   static const messageTypes = <String>{'chat'};
+
+
 
   List<AppNotification> get allTab =>
       notifications.where((n) => allTypes.contains(n.type)).toList();
@@ -93,23 +96,23 @@ class NotificationController extends GetxController {
   }
 
   Future<void> refreshUnreadCount() async {
-    final res = await repo.getUnreadCount();
+    final res = await repo.getUnreadCounts();
     if (res.statusCode == 200 && res.body?['success'] == true) {
       unreadCount.value = res.body['data']['unreadCount'] ?? 0;
+      print("Unread Count: ${unreadCount.value}");
+      update();
     }
   }
 
   Future<void> markAllAsRead() async {
     final res = await repo.markAllRead();
     if (res.statusCode == 200 && res.body?['success'] == true) {
-      // Update UI locally (no need to refetch immediately)
       notifications.value =
           notifications.map((n) => n.copyWith(isRead: true)).toList();
       unreadCount.value = 0;
     }
   }
 
-  /// Local-only mark read when user taps it (since you don't have single-read endpoint yet)
   void markAsReadLocally(String id) {
     final idx = notifications.indexWhere((n) => n.id == id);
     if (idx == -1) return;

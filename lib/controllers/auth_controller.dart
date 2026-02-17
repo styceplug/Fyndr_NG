@@ -24,8 +24,53 @@ class AuthController extends GetxController {
   late AppController appController = Get.find<AppController>();
   UserModel? _userModel;
   final ImagePicker _picker = ImagePicker();
-
+  final chatUnreadCount = 0.obs;
   UserModel? get userModel => _userModel;
+
+
+
+
+
+
+  Future<void> getUserProfile() async {
+    update();
+    Response response = await authRepo.getUserProfile();
+
+    if (response.statusCode == 200) {
+      var responseData = response.body['data'];
+      _userModel = UserModel.fromJson(responseData);
+
+      print("Profile Acquired: ${_userModel!.name}");
+
+      // Navigate first
+      if (userModel?.currentRole == 'customer') {
+        Get.offAllNamed(AppRoutes.homeScreen);
+      } else {
+        Get.offAllNamed(AppRoutes.vendorHomePage);
+      }
+
+      _userModel = UserModel.fromJson(responseData);
+      chatUnreadCount.value = _userModel?.chatUnreadCount ?? 0;
+      update();
+
+      // Future.delayed(const Duration(seconds: 2), () {
+      //   NotificationService().initializeAndSyncToken(
+      //     upsertDeviceToken: ({required token, required platform}) async {
+      //       await appController.saveDeviceToken(token);
+      //     },
+      //   );
+      // });
+
+    } else {
+      if (response.statusCode == 401) {
+        Get.offAllNamed(AppRoutes.getStartedScreen);
+      }
+      print("Failed to get profile: ${response.statusText}");
+    }
+
+    update();
+  }
+
 
   Future<void> toggleUserAvailability(bool newValue) async {
     // 1. Get current status to revert if API fails
@@ -380,41 +425,6 @@ class AuthController extends GetxController {
     update();
   }
 
-  Future<void> getUserProfile() async {
-    update();
-    Response response = await authRepo.getUserProfile();
-
-    if (response.statusCode == 200) {
-      var responseData = response.body['data'];
-      _userModel = UserModel.fromJson(responseData);
-
-      print("Profile Acquired: ${_userModel!.name}");
-
-      // Navigate first
-      if (userModel?.currentRole == 'customer') {
-        Get.offAllNamed(AppRoutes.homeScreen);
-      } else {
-        Get.offAllNamed(AppRoutes.vendorHomePage);
-      }
-
-      // ✅ Call once (not twice)
-      // Future.delayed(const Duration(seconds: 2), () {
-      //   NotificationService().initializeAndSyncToken(
-      //     upsertDeviceToken: ({required token, required platform}) async {
-      //       await appController.saveDeviceToken(token);
-      //     },
-      //   );
-      // });
-
-    } else {
-      if (response.statusCode == 401) {
-        Get.offAllNamed(AppRoutes.getStartedScreen);
-      }
-      print("Failed to get profile: ${response.statusText}");
-    }
-
-    update();
-  }
 
 
   bool isLoggedIn() {

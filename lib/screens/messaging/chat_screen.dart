@@ -68,7 +68,7 @@ class ChatScreen extends StatelessWidget {
         }
 
         return SafeArea(
-          bottom: true,
+          bottom: false,
           top: false,
           child: Scaffold(
             appBar: CustomAppbar(

@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
 
 import '../../../controllers/auth_controller.dart';
+import '../../../controllers/notification_controller.dart';
 import '../../../model/user_model.dart';
 import '../../../routes/routes.dart';
 import '../../../utils/app_constants.dart';
@@ -20,8 +21,16 @@ class VendorProfileScreen extends StatefulWidget {
 class _VendorProfileScreenState extends State<VendorProfileScreen> {
   AuthController authController = Get.find<AuthController>();
   AppController appController = Get.find<AppController>();
+  NotificationController notificationController = Get.find<NotificationController>();
+
 
   UserModel? get user => authController.userModel;
+
+  @override
+  void initState() {
+    notificationController.refreshUnreadCount();
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,21 +56,54 @@ class _VendorProfileScreenState extends State<VendorProfileScreen> {
                     ),
                   ),
                   InkWell(
-                    onTap: (){Get.toNamed(AppRoutes.notificationScreen);},
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: Dimensions.width10,
-                        vertical: Dimensions.height10,
-                      ),
-                      height: Dimensions.height50,
-                      width: Dimensions.width50,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: AppColors.color5,
-                      ),
-                      child: Image.asset(AppConstants.getPngAsset('bell-icon')),
+                    onTap: () => Get.toNamed(AppRoutes.notificationScreen),
+                    child: GetBuilder<NotificationController>(
+                      builder: (notificationController) {
+                        return Stack(
+                          children: [
+                            Container(
+                              padding: EdgeInsets.all(Dimensions.width10),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: AppColors.color5,
+                              ),
+                              child: Image.asset(
+                                AppConstants.getPngAsset('bell-icon'),
+                                height: Dimensions.height20,
+                                width: Dimensions.width20,
+                              ),
+                            ),
+                            if (notificationController.unreadCount > 0)
+                              Positioned(
+                                right: 0,
+                                top: 0,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red,
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    notificationController.unreadCount > 99
+                                        ? '99+'
+                                        : '${notificationController.unreadCount}',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        );
+                      },
                     ),
                   ),
+
                 ],
               ),
               SizedBox(height: Dimensions.height20),

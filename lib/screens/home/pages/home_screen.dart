@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fyndr_ng/controllers/auth_controller.dart';
 import 'package:fyndr_ng/controllers/job_controller.dart';
+import 'package:fyndr_ng/controllers/notification_controller.dart';
 import 'package:fyndr_ng/model/user_model.dart';
 import 'package:fyndr_ng/utils/app_constants.dart';
 import 'package:fyndr_ng/utils/colors.dart';
@@ -82,13 +83,12 @@ class _HomePageState extends State<HomePage> {
     horizontal: Dimensions.width20,
   );
 
-
-
   @override
   Widget build(BuildContext context) {
-
     String? avatarUrl = authController.userModel?.avatar;
-    if (avatarUrl != null && avatarUrl.isNotEmpty && !avatarUrl.startsWith('http')) {
+    if (avatarUrl != null &&
+        avatarUrl.isNotEmpty &&
+        !avatarUrl.startsWith('http')) {
       avatarUrl = '${AppConstants.BASE_URL}$avatarUrl';
     }
 
@@ -122,24 +122,28 @@ class _HomePageState extends State<HomePage> {
                     decoration: BoxDecoration(
                       color: AppColors.color3,
                       shape: BoxShape.circle,
-                      image: displayUrl != null
-                          ? DecorationImage(
-                        fit: BoxFit.cover, // 'cover' usually looks better for avatars than 'fill'
-                        image: NetworkImage(displayUrl),
-                      )
-                          : null, // No image decoration if null
+                      image:
+                          displayUrl != null
+                              ? DecorationImage(
+                                fit: BoxFit.cover,
+                                // 'cover' usually looks better for avatars than 'fill'
+                                image: NetworkImage(displayUrl),
+                              )
+                              : null, // No image decoration if null
                     ),
                     // 3. Fallback Child if no image
-                    child: displayUrl == null
-                        ? Center(
-                      child: Image.asset(
-                        AppConstants.getPngAsset('head-icon'),
-                        height: Dimensions.height30, // Adjust size to fit inside circle
-                        width: Dimensions.width30,
-                        fit: BoxFit.contain,
-                      ),
-                    )
-                        : null,
+                    child:
+                        displayUrl == null
+                            ? Center(
+                              child: Image.asset(
+                                AppConstants.getPngAsset('head-icon'),
+                                height: Dimensions.height30,
+                                // Adjust size to fit inside circle
+                                width: Dimensions.width30,
+                                fit: BoxFit.contain,
+                              ),
+                            )
+                            : null,
                   ),
                   SizedBox(width: Dimensions.width15),
                   Expanded(
@@ -165,17 +169,50 @@ class _HomePageState extends State<HomePage> {
                   ),
                   InkWell(
                     onTap: () => Get.toNamed(AppRoutes.notificationScreen),
-                    child: Container(
-                      padding: EdgeInsets.all(Dimensions.width10),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: AppColors.color5,
-                      ),
-                      child: Image.asset(
-                        AppConstants.getPngAsset('bell-icon'),
-                        height: Dimensions.height20,
-                        width: Dimensions.width20,
-                      ),
+                    child: GetBuilder<NotificationController>(
+                      builder: (notificationController) {
+                        return Stack(
+                          children: [
+                            Container(
+                              padding: EdgeInsets.all(Dimensions.width10),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: AppColors.color5,
+                              ),
+                              child: Image.asset(
+                                AppConstants.getPngAsset('bell-icon'),
+                                height: Dimensions.height20,
+                                width: Dimensions.width20,
+                              ),
+                            ),
+                            if (notificationController.unreadCount > 0)
+                              Positioned(
+                                right: 6,
+                                top: 6,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red,
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    notificationController.unreadCount > 99
+                                        ? '99+'
+                                        : '${notificationController.unreadCount}',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        );
+                      },
                     ),
                   ),
                 ],
@@ -237,8 +274,13 @@ class _HomePageState extends State<HomePage> {
                 // 1. Loading State
                 if (controller.jobLoading) {
                   return Padding(
-                    padding: EdgeInsets.symmetric(horizontal: Dimensions.width20),
-                    child: LinearProgressIndicator(color: AppColors.color1, minHeight: 2),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: Dimensions.width20,
+                    ),
+                    child: LinearProgressIndicator(
+                      color: AppColors.color1,
+                      minHeight: 2,
+                    ),
                   );
                 }
 
@@ -254,7 +296,8 @@ class _HomePageState extends State<HomePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Padding(
-                      padding: _screenPadding, // Ensure this variable is defined or use EdgeInsets
+                      padding: _screenPadding,
+                      // Ensure this variable is defined or use EdgeInsets
                       child: Text(
                         'RECENT REQUESTS',
                         style: TextStyle(
@@ -266,10 +309,13 @@ class _HomePageState extends State<HomePage> {
                     ),
                     SizedBox(height: Dimensions.height10),
                     SizedBox(
-                      height: Dimensions.height10 * 9, // Adjust height based on RequestCard
+                      height: Dimensions.height10 * 9,
+                      // Adjust height based on RequestCard
                       child: ListView.builder(
                         scrollDirection: Axis.horizontal,
-                        padding: EdgeInsets.symmetric(horizontal: Dimensions.width20),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: Dimensions.width20,
+                        ),
                         itemCount: recentJobs.length,
                         itemBuilder: (context, index) {
                           var job = recentJobs[index];
@@ -312,7 +358,6 @@ class _HomePageState extends State<HomePage> {
 
             SizedBox(height: Dimensions.height10),
 
-
             SizedBox(
               height: Dimensions.height100 * 2.15,
               width: double.infinity,
@@ -322,14 +367,16 @@ class _HomePageState extends State<HomePage> {
                 onPageChanged: onPageChanged,
                 itemBuilder: (context, index) {
                   return Container(
-                    margin: EdgeInsets.symmetric(horizontal: Dimensions.width10),
+                    margin: EdgeInsets.symmetric(
+                      horizontal: Dimensions.width10,
+                    ),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(Dimensions.radius15),
                       image: DecorationImage(
                         fit: BoxFit.cover,
                         image: AssetImage(pages[index]),
                       ),
-                      border: Border.all(color: AppColors.grey4)
+                      border: Border.all(color: AppColors.grey4),
                     ),
                   );
                 },
