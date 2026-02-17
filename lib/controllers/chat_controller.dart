@@ -52,6 +52,13 @@ class ChatController extends GetxController {
   List<ChatModel> customerChats = [];
   RxList<Map<String, dynamic>> statuses = RxList<Map<String, dynamic>>([]);
   Timer? _statusPollTimer;
+  Timer? _lastSeenTicker;
+  DateTime _now = DateTime.now();
+  DateTime get now => _now;
+
+
+
+
 
 
 
@@ -66,19 +73,19 @@ class ChatController extends GetxController {
       socketService.initSocket();
     }
     _setupSocketListeners();
+    _startLastSeenTicker();
   }
 
-  // i need to change screen
 
   @override
   void onClose() {
     if (currentChat?.id != null) {
       socketService.leaveChat(currentChat!.id!);
-      // Stop typing indicator if active
       if (isTyping) {
         socketService.sendTyping(currentChat!.id!, false);
       }
     }
+    _stopLastSeenTicker();
     messageCtrl.dispose();
     scrollCtrl.dispose();
     _audioRecorder?.dispose();
@@ -86,7 +93,6 @@ class ChatController extends GetxController {
     super.onClose();
   }
 
-  // ✅ NEW GETTER: Robustly determine the "Other User" object
   UserModel? get otherUser {
     if (currentChat == null || currentUserId == null) return null;
 
@@ -101,6 +107,33 @@ class ChatController extends GetxController {
     }
   }
 
+  UserModel? get chatPartner {
+    if (currentChat == null) return null;
+
+    final role = Get.find<AuthController>().userModel?.currentRole; // "vendor" | "customer"
+
+    if (role == 'vendor') {
+      return currentChat!.customer; // vendor talks to customer
+    }
+    return currentChat!.vendor; // customer talks to vendor
+  }
+
+  String? get chatPartnerId => chatPartner?.id ?? chatPartner?.id;
+
+
+  void _startLastSeenTicker() {
+    _lastSeenTicker?.cancel();
+    _lastSeenTicker = Timer.periodic(const Duration(minutes: 1), (_) {
+      update(['chat_status']);
+    });
+  }
+
+  void _stopLastSeenTicker() {
+    _lastSeenTicker?.cancel();
+    _lastSeenTicker = null;
+  }
+
+
   Future<void> accessExistingChat({
     required String chatId,
     required String productId,
@@ -108,22 +141,21 @@ class ChatController extends GetxController {
     required String userId,
     ChatModel? currentChat,
   }) async {
-    // 1. Loader & UI Update
     loader.showLoader();
     update();
 
     try {
+      // 1. Fetch the rich data from API
       await loadChatDetails(chatId);
+
+      // 2. Only overwrite if loadChatDetails failed to populate currentChat
+      if (this.currentChat == null && currentChat != null) {
+        this.currentChat = currentChat;
+      }
 
       markAsRead();
 
-      if (currentChat != null) {
-        this.currentChat = currentChat;
-        print(
-          '✅ Chat loaded successfully as ${this.currentChat?.customerId} with ${currentChat?.customerId}',
-        );
-      }
-
+      // 3. Navigate
       Get.toNamed(
         AppRoutes.chatScreen,
         arguments: {
@@ -131,7 +163,7 @@ class ChatController extends GetxController {
           "vendor": sellerId,
           "product": productId,
           "chatId": chatId,
-          "type": "product-chat",
+          "type": this.currentChat?.type ?? "product-chat",
         },
       )?.then((_) {
         getChatLists();
@@ -316,40 +348,35 @@ class ChatController extends GetxController {
     socketService.socket.on('chat:participant-info', (data) {
       print('👥 Participant Info Received: $data');
 
-      // 1. Clear the old list to avoid stale data
-      statuses.clear();
+      final participants = (data is Map && data['participants'] is List)
+          ? List.from(data['participants'])
+          : <dynamic>[];
 
-      List<dynamic> rawParticipants = [];
-
-      // Handle different data structures safely
-      if (data['participants'] is List) {
-        rawParticipants = data['participants'];
-      } else if (data is List) {
-        rawParticipants = data;
+      // ✅ If backend sent no participant list, DO NOT wipe your existing state
+      if (participants.isEmpty) {
+        print("⚠️ participant-info has empty participants, skipping clear()");
+        return;
       }
 
-      for (var item in rawParticipants) {
-        if (item is Map<String, dynamic>) {
-          final userId = _extractUserId(item['userId'] ?? item['id']);
-          final isOnline =
-              item['isOnline'] == true || item['isOnline'].toString() == 'true';
+      statuses.clear();
 
-          // Populate the list
+      for (final item in participants) {
+        if (item is Map) {
+          final userId = _extractUserId(item['userId'] ?? item['id']);
+          final isOnline = item['isOnline'] == true || item['isOnline'].toString() == 'true';
           statuses.add({'userId': userId, 'isOnline': isOnline});
 
-          // If this is the person we are talking to, update the boolean
           if (userId == otherUserId) {
-            print("✅ MATCH found in list! Setting Online: $isOnline");
             isOtherUserOnline.value = isOnline;
-            if (item['lastSeen'] != null) {
-              otherUserLastSeen = item['lastSeen'];
-            }
+            otherUserLastSeen = item['lastSeen']?.toString();
           }
         }
       }
 
-      update();
+      statuses.refresh();
+      update(['chat_status']);
     });
+
 
     // 7. Connection Events
     socketService.socket.on('connect', (_) {
@@ -513,6 +540,7 @@ class ChatController extends GetxController {
       update();
     }
   }
+
 
   Future<void> loadChatDetails(String chatId) async {
     isLoading = true;

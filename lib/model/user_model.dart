@@ -32,6 +32,7 @@ class UserModel {
   // --- NESTED OBJECTS ---
   BusinessDetails? businessDetails;
   BusinessDocs? businessDocs;
+  String? lastSeen;
 
   UserModel({
     this.id,
@@ -55,7 +56,8 @@ class UserModel {
     this.businessDetails,
     this.businessDocs,
     this.avatar,
-    this.chatUnreadCount
+    this.chatUnreadCount,
+    this.lastSeen,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -93,6 +95,8 @@ class UserModel {
       // Handle both profile flags
       hasVendorProfile: json['hasVendorProfile'] ?? false,
       hasCustomerProfile: json['hasCustomerProfile'] ?? false,
+      lastSeen: json['lastSeen'],
+
 
       businessDetails: json['businessDetails'] != null
           ? BusinessDetails.fromJson(json['businessDetails'])
@@ -127,10 +131,10 @@ class UserModel {
       'hasCustomerProfile': hasCustomerProfile,
       'businessDetails': businessDetails?.toJson(),
       'businessDocs': businessDocs?.toJson(),
+      'lastSeen': lastSeen,
     };
   }
 
-  // ... (Keep your helper methods like isProfileComplete, getAccountAge, profilePicture)
 
   bool get isProfileComplete {
     bool hasName = name != null && name!.isNotEmpty;

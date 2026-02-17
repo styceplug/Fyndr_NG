@@ -19,3 +19,5 @@ class AppRepo {
     return await apiClient.putData(AppConstants.PUT_DEVICE_TOKEN, body);
   }
 }
+
+

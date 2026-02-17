@@ -25,18 +25,36 @@ class ChatScreen extends StatelessWidget {
       builder: (ctrl) {
         final otherUser = ctrl.otherUser;
 
-        bool isOnline = ctrl.statuses.any((status) => status['userId'] == ctrl.otherUserId && status['isOnline'] == true);
+        bool isOnline = ctrl.statuses.any(
+          (status) =>
+              status['userId'] == ctrl.otherUserId &&
+              status['isOnline'] == true,
+        );
 
-        print('rebuild isOnline: $isOnline because ${ctrl.statuses} contains ${ctrl.otherUserId} check ${otherUser?.id}');
+        print(
+          'rebuild isOnline: $isOnline because ${ctrl.statuses} contains ${ctrl.otherUserId} check ${otherUser?.id}',
+        );
 
-        String lastSeenText = "Beans";
-        // String lastSeenText = "Offline";
-        if (ctrl.otherUserLastSeen != null) {
+        String? activeLastSeen =
+            ctrl.otherUserLastSeen ?? ctrl.otherUser?.lastSeen;
+
+        bool currentlyOnline = isOnline || ctrl.isOtherUserOnline.value;
+
+        // 2. Decide which timestamp to use
+        // If they are offline, we prioritize the one from the UserModel (otherUser?.lastSeen)
+        // as it represents the last time the server's response body saw them.
+        String? displayTimestamp = otherUser?.lastSeen;
+
+        // Only fallback to socket's lastSeen if the model has nothing
+        if (displayTimestamp == null || displayTimestamp.isEmpty) {
+          displayTimestamp = ctrl.otherUserLastSeen;
+        }
+
+        String lastSeenText = "Offline";
+        if (displayTimestamp != null) {
           try {
-            // Parse the ISO string to DateTime
-            DateTime date = DateTime.parse(ctrl.otherUserLastSeen!);
-            // Now pass the DateTime object to GetTimeAgo
-             lastSeenText = "Last seen ${GetTimeAgo.parse(date)}";
+            DateTime date = DateTime.parse(displayTimestamp);
+            lastSeenText = "Last seen ${GetTimeAgo.parse(date)}";
           } catch (e) {
             lastSeenText = "Offline";
           }
@@ -49,259 +67,273 @@ class ChatScreen extends StatelessWidget {
           avatarUrl = '${AppConstants.BASE_URL}$avatarUrl';
         }
 
-        return Scaffold(
-          appBar: CustomAppbar(
-            leadingIcon: const BackButton(),
-            customTitle: Row(
-              children: [
-                // User Avatar
-                Container(
-                  height: Dimensions.height40,
-                  width: Dimensions.width40,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.grey[200],
-                    image:
-                        avatarUrl != null
-                            ? DecorationImage(
-                              image: NetworkImage(avatarUrl),
-                              fit: BoxFit.cover,
-                            )
-                            : DecorationImage(
-                              image: AssetImage(
-                                AppConstants.getPngAsset('head-icon'),
+        return SafeArea(
+          bottom: true,
+          top: false,
+          child: Scaffold(
+            appBar: CustomAppbar(
+              leadingIcon: const BackButton(),
+              customTitle: Row(
+                children: [
+                  // User Avatar
+                  Container(
+                    height: Dimensions.height40,
+                    width: Dimensions.width40,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.grey[200],
+                      image:
+                          avatarUrl != null
+                              ? DecorationImage(
+                                image: NetworkImage(avatarUrl),
+                                fit: BoxFit.cover,
+                              )
+                              : DecorationImage(
+                                image: AssetImage(
+                                  AppConstants.getPngAsset('head-icon'),
+                                ),
                               ),
-                            ),
+                    ),
                   ),
-                ),
-                SizedBox(width: Dimensions.width15),
+                  SizedBox(width: Dimensions.width15),
 
-                // User Name and Status
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            '${otherUser?.name}',
-                            maxLines: 1,
-                            style: TextStyle(
-                              fontSize: Dimensions.font16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          if(otherUser?.businessDetails?.businessName != null)
-                          Expanded(
-                            child: Text(
-                              '- ${otherUser?.businessDetails?.businessName}',
+                  // User Name and Status
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              '${otherUser?.name}',
+                              maxLines: 1,
                               style: TextStyle(
                                 fontSize: Dimensions.font16,
                                 fontWeight: FontWeight.w600,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
-                          ),
-                        ],
-                      ),
-
-                      if (ctrl.isRemoteUserTyping)
-                        Text(
-                          'Typing...',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppColors.color2,
-                            fontStyle: FontStyle.italic,
-                          ),
-                        )
-                      else if (isOnline)
-                        Row(
-                          children: [
-                            Icon(Icons.circle, size: 8, color: Colors.green),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Online',
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: Colors.grey,
+                            if (otherUser?.businessDetails?.businessName != null)
+                              Expanded(
+                                child: Text(
+                                  '- ${otherUser?.businessDetails?.businessName}',
+                                  style: TextStyle(
+                                    fontSize: Dimensions.font16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
-                            ),
                           ],
-                        )
-                      else if (ctrl.isOtherUserOnline.value)
-                        Row(
-                          children: [
-                            Icon(Icons.circle, size: 8, color: Colors.green),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Online',
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: Colors.grey,
-                              ),
-                            ),
-                          ],
-                        )
-                      else
-                        Text(
-                          ctrl.otherUserLastSeen != null
-                              ? '${lastSeenText}'
-                              : 'Offline',
-                          style: TextStyle(fontSize: 10, color: Colors.grey),
                         ),
+
+                        GetBuilder<ChatController>(
+                          id: 'chat_status',
+                          builder: (ctrl) {
+                            final otherUser = ctrl.otherUser;
+                            final otherId = ctrl.otherUserId;
+
+                            // socket truth
+                            final socketOnline = ctrl.statuses.any((s) =>
+                            s['userId'] == otherId && s['isOnline'] == true);
+
+                            final currentlyOnline = socketOnline || ctrl.isOtherUserOnline.value;
+
+                            // offline timestamp preference: model first, then socket
+                            String? displayTimestamp = otherUser?.lastSeen;
+                            if (displayTimestamp == null || displayTimestamp.isEmpty) {
+                              displayTimestamp = ctrl.otherUserLastSeen;
+                            }
+
+                            String lastSeenText = "Offline";
+                            final ts = otherUser?.lastSeen; // ✅ always from response body
+                            if (ts != null && ts.isNotEmpty) {
+                              try {
+                                final dt = DateTime.parse(ts).toLocal();
+                                lastSeenText = "Last seen ${GetTimeAgo.parse(dt)}";
+                              } catch (_) {}
+                            }
+
+                            if (ctrl.isRemoteUserTyping) {
+                              return Text(
+                                'Typing...',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.color2,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              );
+                            }
+
+                            if (currentlyOnline) {
+                              return Row(
+                                children: [
+                                  const Icon(Icons.circle, size: 8, color: Colors.green),
+                                  const SizedBox(width: 4),
+                                  const Text(
+                                    'Online',
+                                    style: TextStyle(fontSize: 10, color: Colors.grey),
+                                  ),
+                                ],
+                              );
+                            }
+
+                            return Text(
+                              lastSeenText,
+                              style: const TextStyle(fontSize: 10, color: Colors.grey),
+                            );
+                          },
+                        ),
+
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            body: Column(
+              children: [
+                if (ctrl.currentChat?.type == 'product-chat' &&
+                    ctrl.currentChat?.product != null)
+                  _buildProductInfo(ctrl.currentChat!.product!),
+
+                //warning
+                Container(
+                  margin: EdgeInsets.symmetric(
+                    horizontal: Dimensions.width20,
+                    vertical: Dimensions.height20,
+                  ),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: Dimensions.width10,
+                    vertical: Dimensions.height10,
+                  ),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: AppColors.color1),
+                    borderRadius: BorderRadius.circular(Dimensions.radius20),
+                    color: AppColors.color5,
+                  ),
+                  child: Text(
+                    'Avoid Paying in advance, and remember this chat room is being monitored for moderation.',
+                    style: TextStyle(fontSize: Dimensions.font12),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+
+                // ==================== MESSAGE LIST ====================
+                Expanded(
+                  child:
+                      ctrl.isLoading
+                          ? const Center(child: CircularProgressIndicator())
+                          : RefreshIndicator(
+                            onRefresh: ctrl.refreshChat,
+                            child: ListView.builder(
+                              controller: ctrl.scrollCtrl,
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 10,
+                              ),
+                              itemCount: ctrl.messages.length,
+                              itemBuilder: (context, index) {
+                                final msg = ctrl.messages[index];
+                                final isMe = msg.sender == ctrl.currentUserId;
+
+                                // --- DATE GROUPING LOGIC ---
+                                bool showDateHeader = false;
+                                if (index == 0) {
+                                  showDateHeader = true;
+                                } else {
+                                  final prevMsg = ctrl.messages[index - 1];
+                                  if (!_isSameDay(
+                                    msg.createdAt,
+                                    prevMsg.createdAt,
+                                  )) {
+                                    showDateHeader = true;
+                                  }
+                                }
+
+                                return Column(
+                                  children: [
+                                    if (showDateHeader)
+                                      _buildDateHeader(msg.createdAt),
+                                    msg.isAudio
+                                        ? _buildAudioBubble(msg, isMe)
+                                        : _buildMessageBubble(msg, isMe),
+                                  ],
+                                );
+                              },
+                            ),
+                          ),
+                ),
+
+                // ==================== INPUT AREA ====================
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                  margin: EdgeInsets.only(bottom: Dimensions.height30),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border(top: BorderSide(color: AppColors.grey3)),
+                  ),
+                  child: Row(
+                    children: [
+                      // Text Input Field
+                      Expanded(
+                        child: CustomTextField(
+                          maxLines: 1,
+                          controller: ctrl.messageCtrl,
+                          onChanged: (val) => ctrl.handleTyping(val),
+                          hintText:
+                              ctrl.isRecording
+                                  ? 'Recording audio...'
+                                  : 'Type a message...',
+                          enabled: !ctrl.isRecording,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+
+                      // Send/Record Button
+                      GestureDetector(
+                        onTap:
+                            ctrl.isMessageEmpty
+                                ? ctrl.toggleRecording
+                                : ctrl.sendMessage,
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color:
+                                ctrl.isRecording ? Colors.red : AppColors.color2,
+                            shape: BoxShape.circle,
+                          ),
+                          child:
+                              ctrl.isSending
+                                  ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                  : Icon(
+                                    ctrl.isRecording
+                                        ? Icons.stop
+                                        : (ctrl.isMessageEmpty
+                                            ? Iconsax.microphone
+                                            : Iconsax.send_1),
+                                    color: Colors.white,
+                                  ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
               ],
             ),
           ),
-
-          body: Column(
-            children: [
-
-              if (ctrl.currentChat?.type == 'product-chat' && ctrl.currentChat?.product != null)
-                _buildProductInfo(ctrl.currentChat!.product!),
-
-              //warning
-              Container(
-                margin: EdgeInsets.symmetric(
-                  horizontal: Dimensions.width20,
-                  vertical: Dimensions.height20,
-                ),
-                padding: EdgeInsets.symmetric(
-                  horizontal: Dimensions.width10,
-                  vertical: Dimensions.height10
-                ),
-                decoration: BoxDecoration(
-                  border: Border.all(color: AppColors.color1),
-                  borderRadius: BorderRadius.circular(Dimensions.radius20),
-                  color: AppColors.color5
-                ),
-                child: Text(
-                  'Avoid Paying in advance, and remember this chat room is being monitored for moderation.',
-                  style: TextStyle(
-                    fontSize: Dimensions.font12,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-
-
-
-              // ==================== MESSAGE LIST ====================
-              Expanded(
-                child:
-                    ctrl.isLoading
-                        ? const Center(child: CircularProgressIndicator())
-                        : RefreshIndicator(
-                          onRefresh: ctrl.refreshChat,
-                          child: ListView.builder(
-                            controller: ctrl.scrollCtrl,
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 10,
-                            ),
-                            itemCount: ctrl.messages.length,
-                            itemBuilder: (context, index) {
-                              final msg = ctrl.messages[index];
-                              final isMe = msg.sender == ctrl.currentUserId;
-
-                              // --- DATE GROUPING LOGIC ---
-                              bool showDateHeader = false;
-                              if (index == 0) {
-                                showDateHeader = true;
-                              } else {
-                                final prevMsg = ctrl.messages[index - 1];
-                                if (!_isSameDay(
-                                  msg.createdAt,
-                                  prevMsg.createdAt,
-                                )) {
-                                  showDateHeader = true;
-                                }
-                              }
-
-                              return Column(
-                                children: [
-                                  if (showDateHeader)
-                                    _buildDateHeader(msg.createdAt),
-                                  msg.isAudio
-                                      ? _buildAudioBubble(msg, isMe)
-                                      : _buildMessageBubble(msg, isMe),
-                                ],
-                              );
-                            },
-                          ),
-                        ),
-              ),
-
-              // ==================== INPUT AREA ====================
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                margin: EdgeInsets.only(bottom: Dimensions.height30),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border(top: BorderSide(color: AppColors.grey3)),
-                ),
-                child: Row(
-                  children: [
-                    // Text Input Field
-                    Expanded(
-                      child: CustomTextField(
-                        controller: ctrl.messageCtrl,
-                        onChanged: (val) => ctrl.handleTyping(val),
-                        hintText:
-                            ctrl.isRecording
-                                ? 'Recording audio...'
-                                : 'Type a message...',
-                        enabled: !ctrl.isRecording,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-
-                    // Send/Record Button
-                    GestureDetector(
-                      onTap:
-                          ctrl.isMessageEmpty
-                              ? ctrl.toggleRecording
-                              : ctrl.sendMessage,
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color:
-                              ctrl.isRecording ? Colors.red : AppColors.color2,
-                          shape: BoxShape.circle,
-                        ),
-                        child:
-                            ctrl.isSending
-                                ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                                : Icon(
-                                  ctrl.isRecording
-                                      ? Icons.stop
-                                      : (ctrl.isMessageEmpty
-                                          ? Iconsax.microphone
-                                          : Iconsax.send_1),
-                                  color: Colors.white,
-                                ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
         );
       },
     );
   }
-
 
   Widget _buildProductInfo(ProductModel product) {
     // 1. Extract Data safely using Model properties
@@ -318,11 +350,17 @@ class ChatScreen extends StatelessWidget {
     String? imageUrl;
     if (product.images != null && product.images!.isNotEmpty) {
       String rawImg = product.images!.first;
-      imageUrl = rawImg.startsWith('http') ? rawImg : '${AppConstants.BASE_URL}$rawImg';
+      imageUrl =
+          rawImg.startsWith('http')
+              ? rawImg
+              : '${AppConstants.BASE_URL}$rawImg';
     }
 
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: Dimensions.width20, vertical: Dimensions.height10),
+      margin: EdgeInsets.symmetric(
+        horizontal: Dimensions.width20,
+        vertical: Dimensions.height10,
+      ),
       padding: EdgeInsets.all(Dimensions.width10),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -333,7 +371,7 @@ class ChatScreen extends StatelessWidget {
             color: Colors.black.withOpacity(0.05),
             blurRadius: 5,
             offset: Offset(0, 2),
-          )
+          ),
         ],
       ),
       child: Row(
@@ -345,11 +383,18 @@ class ChatScreen extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
               color: AppColors.grey2,
-              image: imageUrl != null
-                  ? DecorationImage(image: NetworkImage(imageUrl), fit: BoxFit.cover)
-                  : null,
+              image:
+                  imageUrl != null
+                      ? DecorationImage(
+                        image: NetworkImage(imageUrl),
+                        fit: BoxFit.cover,
+                      )
+                      : null,
             ),
-            child: imageUrl == null ? Icon(Iconsax.box, color: AppColors.grey4) : null,
+            child:
+                imageUrl == null
+                    ? Icon(Iconsax.box, color: AppColors.grey4)
+                    : null,
           ),
           SizedBox(width: Dimensions.width10),
 
@@ -361,9 +406,9 @@ class ChatScreen extends StatelessWidget {
                 Text(
                   name,
                   style: TextStyle(
-                      fontSize: Dimensions.font14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87
+                    fontSize: Dimensions.font14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -371,9 +416,9 @@ class ChatScreen extends StatelessWidget {
                 Text(
                   price,
                   style: TextStyle(
-                      fontSize: Dimensions.font12,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.color1
+                    fontSize: Dimensions.font12,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.color1,
                   ),
                 ),
               ],

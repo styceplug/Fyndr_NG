@@ -60,6 +60,9 @@ class AppConstants {
 
 
 
+
+
+
   static String getPngAsset(String image) {
     return 'assets/images/$image.png';
   }

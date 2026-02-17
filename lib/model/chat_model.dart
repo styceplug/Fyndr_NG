@@ -1,116 +1,91 @@
+import 'package:fyndr_ng/model/job_model.dart';
 import 'package:fyndr_ng/model/product_model.dart';
 import 'package:fyndr_ng/model/user_model.dart';
-
 
 class ChatModel {
   String? id;
   String? type;
 
-  // IDs (Strings)
+  // IDs
   String? customerId;
   String? vendorId;
   String? productId;
   String? serviceId;
   String? lastMessageId;
 
-  // Objects (Populated Models)
+  // Populated Models
   UserModel? customer;
   UserModel? vendor;
   ProductModel? product;
+  JobModel? service; // Make sure you have this model
   List<MessageModel>? messages;
   MessageModel? lastMessageData;
 
-  // Counters
   int? customerUnreadCount;
   int? vendorUnreadCount;
-
   String? createdAt;
 
   ChatModel({
-    this.id,
-    this.type,
-    this.customerId,
-    this.vendorId,
-    this.productId,
-    this.serviceId,
-    this.customer,
-    this.vendor,
-    this.product,
-    this.lastMessageData,
-    this.customerUnreadCount,
-    this.vendorUnreadCount,
-    this.createdAt,
-    this.messages,
+    this.id, this.type, this.customerId, this.vendorId,
+    this.productId, this.serviceId, this.customer, this.vendor,
+    this.product, this.service, this.lastMessageData,
+    this.customerUnreadCount, this.vendorUnreadCount,
+    this.createdAt, this.messages,
   });
 
   ChatModel.fromJson(Map<String, dynamic> json) {
     id = json['id'] ?? json['_id'];
     type = json['type'];
     createdAt = json['createdAt'];
-
-    // --- 1. Customer Handling ---
-    if (json['customer'] != null) {
-      if (json['customer'] is Map) {
-        customer = UserModel.fromJson(json['customer']);
-        customerId = customer?.id;
-      } else {
-        customerId = json['customer'].toString();
-        customer = UserModel(id: customerId);
-      }
-    }
-
-    // --- 2. Vendor Handling ---
-    if (json['vendor'] != null) {
-      if (json['vendor'] is Map) {
-        vendor = UserModel.fromJson(json['vendor']);
-        vendorId = vendor?.id;
-      } else {
-        vendorId = json['vendor'].toString();
-        vendor = UserModel(id: vendorId);
-      }
-    }
-
-    // --- 3. Product Handling (The likely crasher) ---
-    if (json['product'] != null) {
-      if (json['product'] is Map) {
-        // Only parse if it's an object
-        product = ProductModel.fromJson(json['product']);
-        productId = product?.id;
-      } else {
-        // If it's a String ID, just store the ID
-        productId = json['product'].toString();
-        // Create dummy so UI doesn't break on null check
-        product = ProductModel(id: productId, name: "Product Info");
-      }
-    }
-
-    // --- 4. Last Message Handling ---
-    if (json['lastMessage'] != null) {
-      if (json['lastMessage'] is Map) {
-        lastMessageData = MessageModel.fromJson(json['lastMessage']);
-        lastMessageId = lastMessageData?.id;
-      } else {
-        lastMessageId = json['lastMessage'].toString();
-      }
-    }
-
-    // --- 5. Messages List (CRITICAL FIX) ---
-    if (json['messages'] != null) {
-      messages = <MessageModel>[];
-      json['messages'].forEach((v) {
-        // 🚨 FIX: Check if 'v' is actually a Map before parsing
-        // The API list view returns ["ID", "ID"], not objects.
-        if (v is Map<String, dynamic>) {
-          messages!.add(MessageModel.fromJson(v));
-        }
-      });
-    }
-
-    // --- 6. Unread Counts ---
     customerUnreadCount = json['customerUnreadCount'] ?? 0;
     vendorUnreadCount = json['vendorUnreadCount'] ?? 0;
+
+    // --- Helper for Model vs ID parsing ---
+    // This keeps your code DRY (Don't Repeat Yourself)
+    void parseField<T>(
+        dynamic data,
+        Function(T) onModel,
+        Function(String) onId
+        ) {
+      if (data == null) return;
+      if (data is Map<String, dynamic>) {
+        // It's a populated object
+        if (T == UserModel) onModel(UserModel.fromJson(data) as T);
+        if (T == ProductModel) onModel(ProductModel.fromJson(data) as T);
+        if (T == JobModel) onModel(JobModel.fromJson(data) as T);
+        if (T == MessageModel) onModel(MessageModel.fromJson(data) as T);
+
+        // Also extract the ID from the map
+        final extractedId = (data['id'] ?? data['_id'])?.toString();
+        if (extractedId != null) onId(extractedId);
+      } else {
+        // It's just a String ID
+        onId(data.toString());
+      }
+    }
+
+    // --- Execute Parsing ---
+    parseField<UserModel>(json['customer'], (m) => customer = m, (id) => customerId = id);
+    parseField<UserModel>(json['vendor'], (m) => vendor = m, (id) => vendorId = id);
+    parseField<ProductModel>(json['product'], (m) => product = m, (id) => productId = id);
+    parseField<JobModel>(json['service'], (m) => service = m, (id) => serviceId = id);
+    parseField<MessageModel>(json['lastMessage'], (m) => lastMessageData = m, (id) => lastMessageId = id);
+
+    // --- Messages List Fix ---
+    if (json['messages'] != null && json['messages'] is List) {
+      messages = [];
+      for (var v in json['messages']) {
+        if (v is Map<String, dynamic>) {
+          messages!.add(MessageModel.fromJson(v));
+        } else if (v is String) {
+          // Optional: If you want to keep track of IDs even if not populated
+          messages!.add(MessageModel(id: v));
+        }
+      }
+    }
   }
 }
+
 
 class MessageModel {
   String? id;
@@ -143,7 +118,6 @@ class MessageModel {
       chat = json['chat'] ?? json['chatId'];
     }
 
-
     if (json['sender'] is Map) {
       final senderMap = json['sender'];
       sender = senderMap['id'] ?? senderMap['_id'];
@@ -151,7 +125,6 @@ class MessageModel {
     } else {
       sender = json['sender'] ?? json['senderId'];
     }
-
 
     type = json['type'];
 
@@ -196,6 +169,7 @@ class MessageModel {
   }
 
   bool get isAudio => type == 'audio';
+
   bool get isText => type == 'text';
 }
 
@@ -213,11 +187,7 @@ class AudioData {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'url': url,
-      'size': size,
-      'length': length,
-    };
+    return {'url': url, 'size': size, 'length': length};
   }
 
   String get formattedDuration {

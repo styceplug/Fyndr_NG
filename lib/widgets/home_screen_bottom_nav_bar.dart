@@ -20,7 +20,7 @@ class HomeScreenBottomNavBar extends StatelessWidget {
 
     return Obx(
       () => SizedBox(
-        height: Dimensions.height10 * 8.7,
+        height: Dimensions.height10 * 11,
         child: Stack(
           alignment: Alignment.bottomCenter,
           clipBehavior: Clip.none,
@@ -33,7 +33,7 @@ class HomeScreenBottomNavBar extends StatelessWidget {
               child: Container(
                 color: Colors.white,
                 padding: EdgeInsets.only(
-                  bottom: Dimensions.height30,
+                  bottom: Dimensions.height50,
                   left: Dimensions.width20,
                   right: Dimensions.width20,
                   top: Dimensions.height15,
@@ -142,7 +142,7 @@ class VendorBottomNavBar extends StatelessWidget {
               child: Container(
                 color: Colors.white,
                 padding: EdgeInsets.only(
-                  bottom: Dimensions.height30,
+                  bottom: Dimensions.height10,
                   left: Dimensions.width20,
                   right: Dimensions.width20,
                   top: Dimensions.height15,
@@ -158,7 +158,7 @@ class VendorBottomNavBar extends StatelessWidget {
                       onClick: () => appController.changeCurrentAppPage(0),
                     ),
                     BottomBarItem(
-                      name: 'Market',
+                      name: 'Declutter',
                       image: 'browse-icon',
                       isActive: appController.currentAppPage.value == 1,
                       onClick: () => appController.changeCurrentAppPage(1),
@@ -184,7 +184,7 @@ class VendorBottomNavBar extends StatelessWidget {
             ),
 
             Positioned(
-              bottom: Dimensions.height30,
+              bottom: Dimensions.height10,
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(

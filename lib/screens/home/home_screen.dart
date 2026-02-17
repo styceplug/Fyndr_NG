@@ -65,7 +65,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Stack(
                   children: [
                     SizedBox(
-                      height: Dimensions.screenHeight,
+                      height: double.maxFinite,
                       width: double.maxFinite,
                     ),
                     PageView.builder(

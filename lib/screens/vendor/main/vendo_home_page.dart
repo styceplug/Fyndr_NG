@@ -54,44 +54,48 @@ class _HomeScreenState extends State<VendorHomePage> {
         }
       },
       child: Scaffold(
-        body: GetBuilder<AppController>(
-          builder: (appController) {
-            return SizedBox(
-              height: Dimensions.screenHeight,
-              width: double.maxFinite,
-              child: Stack(
-                children: [
-                  SizedBox(
-                    height: Dimensions.screenHeight,
-                    width: double.maxFinite,
-                  ),
-                  PageView.builder(
-                    controller: appController.pageController,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: appController.vendorPages.length,
-                    itemBuilder: (context, index) => appController.vendorPages[index],
-                    onPageChanged: (index) {
-                      if (appController.currentAppPage.value != index) {
-                        appController.changeCurrentAppPage(
-                          index,
-                          movePage: false,
-                        );
-                      }
-                      if (index == 1) {
-                        //fetch quick references
-                      }
-                    },
-                  ),
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    child: VendorBottomNavBar(),
-                  ),
-                ],
-              ),
-            );
-          },
+        body: SafeArea(
+          bottom: true,
+          top: false,
+          child: GetBuilder<AppController>(
+            builder: (appController) {
+              return SizedBox(
+                height: Dimensions.screenHeight,
+                width: double.maxFinite,
+                child: Stack(
+                  children: [
+                    SizedBox(
+                      height: Dimensions.screenHeight,
+                      width: double.maxFinite,
+                    ),
+                    PageView.builder(
+                      controller: appController.pageController,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: appController.vendorPages.length,
+                      itemBuilder: (context, index) => appController.vendorPages[index],
+                      onPageChanged: (index) {
+                        if (appController.currentAppPage.value != index) {
+                          appController.changeCurrentAppPage(
+                            index,
+                            movePage: false,
+                          );
+                        }
+                        if (index == 1) {
+                          //fetch quick references
+                        }
+                      },
+                    ),
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      child: VendorBottomNavBar(),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
         ),
       ),
     );

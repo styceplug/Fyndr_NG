@@ -24,6 +24,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 
 import '../data/repo/app_repo.dart';
+import '../helpers/push_notification.dart';
 import '../routes/routes.dart';
 
 class AppController extends GetxController {
@@ -82,10 +83,14 @@ class AppController extends GetxController {
       authController.apiClient.updateHeader(token);
       await productController.getProducts();
       await authController.getUserProfile();
-      String? firebaseToken = await FirebaseMessaging.instance.getToken();
-      if (firebaseToken != null) {
-        await saveDeviceToken(firebaseToken);
-      }
+
+      await NotificationService().initializeAndSyncToken(
+        upsertDeviceToken: ({required String token, required String platform}) async {
+          await saveDeviceToken(token);
+
+
+        },
+      );
 
     } else {
       print("No token found -> Get Started");
@@ -94,6 +99,16 @@ class AppController extends GetxController {
   }
 
   Future<void> saveDeviceToken(String token) async {
+    final prefs = appRepo.sharedPreferences;
+
+    // 🔎 Get last saved token
+    String? lastToken = prefs.getString('last_uploaded_fcm_token');
+
+    if (lastToken == token) {
+      print("🔁 FCM Token unchanged. Skipping upload. - $token");
+      return;
+    }
+
     String platform = Platform.isAndroid ? 'android' : 'ios';
 
     print("🔔 Updating Device Token: $platform");
@@ -102,6 +117,10 @@ class AppController extends GetxController {
 
     if (response.statusCode == 200) {
       print("✅ Device Token Updated Successfully");
+
+      // 💾 Save new token locally
+      await prefs.setString('last_uploaded_fcm_token', token);
+
     } else {
       print("⚠️ Failed to update token: ${response.body}");
     }
@@ -147,9 +166,14 @@ class AppController extends GetxController {
 
   void clearSharedData() {
     changeCurrentAppPage(0);
+
     appRepo.sharedPreferences.remove(AppConstants.authToken);
+    appRepo.sharedPreferences.remove('last_uploaded_fcm_token');
+
     apiClient.token = '';
     apiClient.updateHeader('');
+
     Get.offAllNamed(AppRoutes.getStartedScreen);
   }
+
 }

@@ -7,6 +7,7 @@ import 'package:fyndr_ng/controllers/app_controller.dart';
 import 'package:fyndr_ng/routes/routes.dart';
 import 'package:fyndr_ng/utils/colors.dart';
 import 'package:get/get.dart';
+import 'firebase_options.dart';
 import 'helpers/dependencies.dart' as dep;
 import 'helpers/global_loader_controller.dart';
 import 'helpers/push_notification.dart';
@@ -19,11 +20,19 @@ import 'widgets/app_loading_overlay.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  print(Firebase.apps);
+
+
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+
   await VersionService.init();
   await dep.init();
 
 
-  // Always register loader controller
   Get.put(GlobalLoaderController(), permanent: true);
 
   HardwareKeyboard.instance.clearState();

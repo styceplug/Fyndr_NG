@@ -11,6 +11,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../data/api/api_checker.dart';
 import '../data/repo/auth_repo.dart';
+import '../helpers/push_notification.dart';
 import '../model/user_model.dart';
 
 class AuthController extends GetxController {
@@ -23,8 +24,8 @@ class AuthController extends GetxController {
   late AppController appController = Get.find<AppController>();
   UserModel? _userModel;
   final ImagePicker _picker = ImagePicker();
-  UserModel? get userModel => _userModel;
 
+  UserModel? get userModel => _userModel;
 
   Future<void> toggleUserAvailability(bool newValue) async {
     // 1. Get current status to revert if API fails
@@ -41,7 +42,7 @@ class AuthController extends GetxController {
 
       if (response.statusCode == 200) {
         CustomSnackBar.success(
-            message: newValue ? "Account is now Active" : "Account Paused"
+          message: newValue ? "Account is now Active" : "Account Paused",
         );
       } else {
         // 4. Failure: Revert UI
@@ -77,9 +78,10 @@ class AuthController extends GetxController {
         Get.toNamed(AppRoutes.switchScreen);
       } else {
         // No -> Go to Become Vendor Screen (Passing flag to hide owner info)
-        Get.toNamed(AppRoutes.becomeVendorScreen, arguments: {
-          'isExistingUser': true
-        });
+        Get.toNamed(
+          AppRoutes.becomeVendorScreen,
+          arguments: {'isExistingUser': true},
+        );
       }
     }
   }
@@ -107,7 +109,9 @@ class AuthController extends GetxController {
         // Navigate based on NEW role
         if (newRole == "vendor") {
           print("✅ Switched to Vendor Mode");
-          CustomSnackBar.success(message: "Welcome back to your Vendor Dashboard");
+          CustomSnackBar.success(
+            message: "Welcome back to your Vendor Dashboard",
+          );
           appController.changeCurrentAppPage(0);
           await getUserProfile();
           Get.offAllNamed(AppRoutes.vendorHomePage);
@@ -118,7 +122,6 @@ class AuthController extends GetxController {
           await getUserProfile();
           Get.offAllNamed(AppRoutes.homeScreen);
         }
-
       } else if (response.statusCode == 400) {
         // --- INCOMPLETE VENDOR PROFILE CASE ---
         print("⚠️ Cannot switch: Vendor profile incomplete.");
@@ -127,20 +130,21 @@ class AuthController extends GetxController {
         Get.find<GlobalLoaderController>().hideLoader();
 
         CustomSnackBar.processing(
-            message: "Setup Required: Please complete your vendor registration."
+          message: "Setup Required: Please complete your vendor registration.",
         );
 
         appController.changeCurrentAppPage(0);
         // Redirect to Vendor Onboarding Flow (Existing User Mode)
-        Get.toNamed(AppRoutes.becomeVendorScreen, arguments: {
-          'isExistingUser': true
-        });
-
+        Get.toNamed(
+          AppRoutes.becomeVendorScreen,
+          arguments: {'isExistingUser': true},
+        );
       } else {
         // --- OTHER ERRORS ---
-        CustomSnackBar.failure(message: response.statusText ?? "Failed to switch role");
+        CustomSnackBar.failure(
+          message: response.statusText ?? "Failed to switch role",
+        );
       }
-
     } catch (e) {
       print("❌ Switch Role Error: $e");
       CustomSnackBar.failure(message: "An error occurred");
@@ -182,13 +186,13 @@ class AuthController extends GetxController {
         if (userModel != null) {
           userModel!.avatar = newAvatarUrl;
           _userModel = UserModel.fromJson(body['data']);
-
         }
 
         CustomSnackBar.success(message: "Profile picture updated!");
       } else {
         // Now safe to access ['message'] or ['error']
-        String errorMsg = body['message'] ?? body['error'] ?? "Failed to upload avatar";
+        String errorMsg =
+            body['message'] ?? body['error'] ?? "Failed to upload avatar";
         CustomSnackBar.failure(message: errorMsg);
       }
     } catch (e) {
@@ -200,7 +204,12 @@ class AuthController extends GetxController {
     }
   }
 
-  Future<void> updateProfile(String name, String email, String state, String lga) async {
+  Future<void> updateProfile(
+    String name,
+    String email,
+    String state,
+    String lga,
+  ) async {
     loader.showLoader();
     update();
 
@@ -261,16 +270,12 @@ class AuthController extends GetxController {
       final error = response.body['error']?.toString() ?? "Login failed";
 
       if (code == "INACTIVE_USER") {
-
         Get.toNamed(
           AppRoutes.phoneVerificationScreen,
-          arguments: {
-            "number": number,
-          },
+          arguments: {"number": number},
         );
         return;
       }
-
 
       CustomSnackBar.failure(message: error);
     } catch (e) {
@@ -348,7 +353,6 @@ class AuthController extends GetxController {
       print("Verification Success: User ${_userModel!.name} verified.");
 
       Get.offAllNamed(AppRoutes.verifiedScreen);
-
     } else {
       String errorMsg = response.body['error'] ?? "Verification failed";
       print("Error: $errorMsg");
@@ -379,27 +383,41 @@ class AuthController extends GetxController {
   Future<void> getUserProfile() async {
     update();
     Response response = await authRepo.getUserProfile();
+
     if (response.statusCode == 200) {
       var responseData = response.body['data'];
       _userModel = UserModel.fromJson(responseData);
+
       print("Profile Acquired: ${_userModel!.name}");
 
-      if (userModel?.currentRole == 'customer')
+      // Navigate first
+      if (userModel?.currentRole == 'customer') {
         Get.offAllNamed(AppRoutes.homeScreen);
-      else
+      } else {
         Get.offAllNamed(AppRoutes.vendorHomePage);
+      }
+
+      // ✅ Call once (not twice)
+      // Future.delayed(const Duration(seconds: 2), () {
+      //   NotificationService().initializeAndSyncToken(
+      //     upsertDeviceToken: ({required token, required platform}) async {
+      //       await appController.saveDeviceToken(token);
+      //     },
+      //   );
+      // });
+
     } else {
       if (response.statusCode == 401) {
         Get.offAllNamed(AppRoutes.getStartedScreen);
       }
       print("Failed to get profile: ${response.statusText}");
     }
+
     update();
   }
+
 
   bool isLoggedIn() {
     return authRepo.isLoggedIn();
   }
-
-
 }
