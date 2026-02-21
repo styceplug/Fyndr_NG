@@ -177,8 +177,7 @@ class _JobInProgressState extends State<JobInProgress> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-
-                                job.user?.businessDetails?.businessName ?? "Waiting for Vendor",
+                                job.user?.businessDetails?.businessName ?? job.user?.name ?? "Unknown Customer",
                                 style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
                               ),
                               SizedBox(height: 5),
@@ -196,7 +195,7 @@ class _JobInProgressState extends State<JobInProgress> {
                                 children: [
                                   Icon(Iconsax.call, color: Colors.grey, size: 16),
                                   SizedBox(width: 5),
-                                  Text(job.user?.number ?? "No Number"),
+                                  Text(job.user?.number ?? job.user?.businessDetails?.businessRegNumber ?? "No Number"),
                                 ],
                               ),
                             ],

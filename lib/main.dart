@@ -15,6 +15,13 @@ import 'helpers/version_service.dart';
 import 'widgets/app_loading_overlay.dart';
 
 @pragma('vm:entry-point')
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+
+  print("📩 BG message: ${message.messageId} | data: ${message.data}");
+}
+
 
 
 Future<void> main() async {

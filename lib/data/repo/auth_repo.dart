@@ -9,26 +9,26 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 
 class AuthRepo extends GetConnect {
-
   final ApiClient apiClient;
   final SharedPreferences sharedPreferences;
 
   AuthRepo({required this.apiClient, required this.sharedPreferences});
 
-
+  Future<Response> getChatCount() async {
+    return await apiClient.getData(AppConstants.GET_CHAT_COUNT);
+  }
 
   Future<Response> updateAvailability(bool isAvailable) async {
-    return await apiClient.putData(
-      AppConstants.UPDATE_AVAILABILITY,
-      {'isAvailable': isAvailable},
-    );
+    return await apiClient.putData(AppConstants.UPDATE_AVAILABILITY, {
+      'isAvailable': isAvailable,
+    });
   }
 
   Future<Response> registerVendor(
-      String uri,
-      Map<String, String> body,
-      List<MultipartBody> fileList,
-      ) async {
+    String uri,
+    Map<String, String> body,
+    List<MultipartBody> fileList,
+  ) async {
     final formData = FormData(body);
 
     for (final item in fileList) {
@@ -55,7 +55,6 @@ class AuthRepo extends GetConnect {
     return await apiClient.postData(uri, formData);
   }
 
-
   Future<Response> updateAvatar(File imageFile) async {
     String url = '${apiClient.appBaseUrl}/api/v1/user/avatar';
 
@@ -67,49 +66,42 @@ class AuthRepo extends GetConnect {
     });
 
     // 👇 FIX: Add contentType
-    request.files.add(await http.MultipartFile.fromPath(
-      'avatar',
-      imageFile.path,
-      contentType: MediaType('image', 'jpeg'),
-    ));
+    request.files.add(
+      await http.MultipartFile.fromPath(
+        'avatar',
+        imageFile.path,
+        contentType: MediaType('image', 'jpeg'),
+      ),
+    );
 
     return await apiClient.postMultipartData('/api/v1/user/avatar', request);
   }
-
 
   Future<Response> switchUserRole() async {
     return await apiClient.putData(AppConstants.SWITCH_ROLE_URI, {});
   }
 
   Future<Response> login(String number, String password) async {
-    final body = {
-      "number": number,
-      "password": password,
-    };
+    final body = {"number": number, "password": password};
     return await apiClient.postData(AppConstants.POST_LOGIN, body);
   }
 
-  Future<Response> registerCustomer(String name, String number, String password) async {
-    final body = {
-      "name": name,
-      "number": number,
-      "password": password,
-    };
+  Future<Response> registerCustomer(
+    String name,
+    String number,
+    String password,
+  ) async {
+    final body = {"name": name, "number": number, "password": password};
     return await apiClient.postData(AppConstants.POST_REGISTER_CUSTOMER, body);
   }
 
   Future<Response> verifyOtp(String number, String otp) async {
-    final body = {
-      "number": number,
-      "otp": otp,
-    };
+    final body = {"number": number, "otp": otp};
     return await apiClient.postData(AppConstants.POST_VERIFY_OTP, body);
   }
 
   Future<Response> resendOtp(String number) async {
-    final body = {
-      "number": number,
-    };
+    final body = {"number": number};
     return await apiClient.postData(AppConstants.POST_RESEND_OTP, body);
   }
 
@@ -130,17 +122,13 @@ class AuthRepo extends GetConnect {
         "state": state,
         "lga": lga,
         "type": "Point",
-        "coordinates": [0.00, 0.00]
-      }
+        "coordinates": [0.00, 0.00],
+      },
     };
     return await apiClient.putData(AppConstants.PUT_UPDATE_PROFILE, body);
   }
 
-
   bool isLoggedIn() {
     return sharedPreferences.containsKey(AppConstants.authToken);
   }
-
-
-
 }

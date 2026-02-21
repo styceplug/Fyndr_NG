@@ -88,7 +88,7 @@ class AppController extends GetxController {
       await notificationController.refreshUnreadCount();
 
 
-      await NotificationService().initializeAndSyncToken(
+      await NotificationService().init(
         upsertDeviceToken: ({required String token, required String platform}) async {
           await saveDeviceToken(token);
 

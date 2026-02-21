@@ -53,14 +53,18 @@ class ProductController extends GetxController {
   }
 
   Future<void> updateProduct(String productId, Map<String, dynamic> body) async {
-    CustomSnackBar.processing(message: "Updating product...");
 
+    if (body.isEmpty) {
+      CustomSnackBar.failure(message: "Nothing to update");
+      return;
+    }
+    loader.showLoader();
     try {
       Response response = await productRepo.updateProduct(productId, body);
 
       if (response.statusCode == 200) {
         Get.back(); // Close bottom sheet
-        getUserProducts(); // Refresh list
+        await getUserProducts(); // Refresh list
         CustomSnackBar.success(message: "Product updated!");
       } else {
         CustomSnackBar.failure(message: response.body['message'] ?? "Update failed");
@@ -68,6 +72,7 @@ class ProductController extends GetxController {
     } catch (e) {
       CustomSnackBar.failure(message: "Network error");
     }
+    loader.hideLoader();
   }
 
   Future<void> deleteProduct(String productId) async {

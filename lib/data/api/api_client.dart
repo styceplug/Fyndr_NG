@@ -124,46 +124,73 @@ class ApiClient extends GetConnect implements GetxService {
   }
 
 
-  Future<Response> patchData(String uri, dynamic body, {Map<String, String>? headers}) async {
+  Future<Response> putData(String uri, dynamic body, {Map<String, String>? headers}) async {
     try {
-      Response response = await patch(uri, body, headers: headers ?? _mainHeaders);
+      final requestHeaders = {
+        ..._mainHeaders,
+        ...(headers ?? {}),
+        'Content-Type': 'application/json; charset=UTF-8',
+      };
+
+      final encodedBody = body != null ? jsonEncode(body) : null;
 
       if (kDebugMode) {
-        print('patching $appBaseUrl$uri $body ${headers ?? _mainHeaders}');
-        print("response body ${response.body}");
+        print('PUT → $appBaseUrl$uri');
+        print('HEADERS → $requestHeaders');
+        print('BODY → ${_formatBody(body)}');
+      }
 
+      final response = await put(uri, encodedBody, headers: requestHeaders);
+
+      if (kDebugMode) {
+        print('RESPONSE → ${response.body}');
+        print('STATUS CODE → ${response.statusCode}');
         final responseSize = utf8.encode(response.body.toString()).length;
-        print('Response Size for $uri: $responseSize bytes (${(responseSize / 1024).toStringAsFixed(2)} KB)');
+        print('Response Size: $responseSize bytes (${(responseSize / 1024).toStringAsFixed(2)} KB)');
       }
 
       return response;
     } catch (e, s) {
       if (kDebugMode) {
-        print('from api patch client');
-        print(s);
-        print(e.toString());
+        print('API PUT ERROR');
+        print('STACK → $s');
+        print('ERROR → $e');
       }
       return Response(statusCode: 1, statusText: e.toString());
     }
   }
 
-  Future<Response> putData(String uri, dynamic body, {Map<String, String>? headers}) async {
+  Future<Response> patchData(String uri, dynamic body, {Map<String, String>? headers}) async {
     try {
+      final requestHeaders = {
+        ..._mainHeaders,
+        ...(headers ?? {}),
+        'Content-Type': 'application/json; charset=UTF-8',
+      };
 
-      Response response = await put(uri, body, headers: headers ?? _mainHeaders);
+      final encodedBody = body != null ? jsonEncode(body) : null;
+
       if (kDebugMode) {
-        print("putting ${response.body}");
-        print("response body ${response.body}");
-
-        final responseSize = utf8.encode(response.body.toString()).length;
-        print('Response Size for $uri: $responseSize bytes (${(responseSize / 1024).toStringAsFixed(2)} KB)');
+        print('PATCH → $appBaseUrl$uri');
+        print('HEADERS → $requestHeaders');
+        print('BODY → ${_formatBody(body)}');
       }
-      // ApiChecker.checkApi(response);
-      return response;
-    } catch (e) {
+
+      final response = await patch(uri, encodedBody, headers: requestHeaders);
+
       if (kDebugMode) {
-        print('from api put client');
-        print(e.toString());
+        print('RESPONSE → ${response.body}');
+        print('STATUS CODE → ${response.statusCode}');
+        final responseSize = utf8.encode(response.body.toString()).length;
+        print('Response Size: $responseSize bytes (${(responseSize / 1024).toStringAsFixed(2)} KB)');
+      }
+
+      return response;
+    } catch (e, s) {
+      if (kDebugMode) {
+        print('API PATCH ERROR');
+        print('STACK → $s');
+        print('ERROR → $e');
       }
       return Response(statusCode: 1, statusText: e.toString());
     }

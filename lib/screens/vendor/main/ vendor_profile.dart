@@ -69,8 +69,8 @@ class _VendorProfileScreenState extends State<VendorProfileScreen> {
                               ),
                               child: Image.asset(
                                 AppConstants.getPngAsset('bell-icon'),
-                                height: Dimensions.height20,
-                                width: Dimensions.width20,
+                                height: Dimensions.height30,
+                                width: Dimensions.width30,
                               ),
                             ),
                             if (notificationController.unreadCount > 0)
@@ -166,7 +166,7 @@ class _VendorProfileScreenState extends State<VendorProfileScreen> {
                         ],
                       ),
                       SizedBox(height: Dimensions.height5),
-                      Text(user?.name ?? '', style: TextStyle(fontSize: Dimensions.font20)),
+                      Text(user?.businessDetails?.businessName ?? '', style: TextStyle(fontSize: Dimensions.font20)),
                       SizedBox(height: Dimensions.height5),
                       IntrinsicWidth(
                         child: Container(

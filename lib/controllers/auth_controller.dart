@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -25,12 +26,50 @@ class AuthController extends GetxController {
   UserModel? _userModel;
   final ImagePicker _picker = ImagePicker();
   final chatUnreadCount = 0.obs;
+
   UserModel? get userModel => _userModel;
+  Timer? _chatCountTimer;
+  bool _chatPollingStarted = false;
 
+  @override
+  void onClose() {
+    stopChatUnreadPolling();
+    super.onClose();
+  }
 
+  Future<void> fetchChatUnreadCount() async {
+    try {
+      final res = await authRepo.getChatCount();
+      if (res.statusCode == 200) {
+        final count = res.body?['data'] ?? 0;
+        chatUnreadCount.value = int.tryParse(count.toString()) ?? 0;
+        update();
+      }
+    } catch (e) {
+      print(e);
+    }
+  }
 
+  void startChatUnreadPolling({
+    Duration interval = const Duration(seconds: 10),
+  }) {
+    if (_chatPollingStarted) return; // prevent duplicates
+    _chatPollingStarted = true;
 
+    // immediate fetch once
+    fetchChatUnreadCount();
 
+    _chatCountTimer?.cancel();
+    _chatCountTimer = Timer.periodic(interval, (_) {
+      fetchChatUnreadCount();
+    });
+  }
+
+  void stopChatUnreadPolling() {
+    _chatCountTimer?.cancel();
+    _chatCountTimer = null;
+    _chatPollingStarted = false;
+  }
 
   Future<void> getUserProfile() async {
     update();
@@ -42,6 +81,14 @@ class AuthController extends GetxController {
 
       print("Profile Acquired: ${_userModel!.name}");
 
+      // set initial count (if backend still returns it)
+      chatUnreadCount.value = _userModel?.chatUnreadCount ?? 0;
+
+      // start polling the dedicated endpoint (real-time-ish)
+      startChatUnreadPolling(interval: const Duration(seconds: 8));
+
+
+
       // Navigate first
       if (userModel?.currentRole == 'customer') {
         Get.offAllNamed(AppRoutes.homeScreen);
@@ -49,19 +96,12 @@ class AuthController extends GetxController {
         Get.offAllNamed(AppRoutes.vendorHomePage);
       }
 
-      _userModel = UserModel.fromJson(responseData);
-      chatUnreadCount.value = _userModel?.chatUnreadCount ?? 0;
+
       update();
 
-      // Future.delayed(const Duration(seconds: 2), () {
-      //   NotificationService().initializeAndSyncToken(
-      //     upsertDeviceToken: ({required token, required platform}) async {
-      //       await appController.saveDeviceToken(token);
-      //     },
-      //   );
-      // });
-
     } else {
+      stopChatUnreadPolling();
+
       if (response.statusCode == 401) {
         Get.offAllNamed(AppRoutes.getStartedScreen);
       }
@@ -70,7 +110,6 @@ class AuthController extends GetxController {
 
     update();
   }
-
 
   Future<void> toggleUserAvailability(bool newValue) async {
     // 1. Get current status to revert if API fails
@@ -424,8 +463,6 @@ class AuthController extends GetxController {
     loader.hideLoader();
     update();
   }
-
-
 
   bool isLoggedIn() {
     return authRepo.isLoggedIn();

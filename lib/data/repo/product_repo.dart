@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_image_compress/flutter_image_compress.dart';
@@ -37,10 +38,14 @@ class ProductRepo {
   }
 
   Future<Response> updateProduct(String productId, Map<String, dynamic> body) async {
-    return await apiClient.putData(
-        '${AppConstants.BASE_URL}/api/v1/product/$productId',
-        body
-    );
+    final url = '/api/v1/product/$productId';
+
+    print('UPDATE PRODUCT body: ${jsonEncode(body)}'); // debug
+    print('UPDATE PRODUCT url: $url');
+    return await apiClient.putData(url, body);
+
+
+
   }
 
   Future<Response> getProducts({

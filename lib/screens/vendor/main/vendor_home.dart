@@ -200,7 +200,7 @@ class _VendorHomeState extends State<VendorHome> {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Text(
-                          'N0.',
+                          'N${user?.todayEarnings ?? '0.'}',
                           style: TextStyle(
                             color: AppColors.black,
                             fontSize: Dimensions.font25,
@@ -253,7 +253,7 @@ class _VendorHomeState extends State<VendorHome> {
                                   style: TextStyle(color: AppColors.grey3),
                                 ),
                                 Text(
-                                  '0',
+                                  '${user?.activeJobs ?? 0}',
                                   style: TextStyle(
                                     color: AppColors.black,
                                     fontSize: Dimensions.font17,
@@ -262,6 +262,7 @@ class _VendorHomeState extends State<VendorHome> {
                                 ),
                               ],
                             ),
+                            SizedBox(width: Dimensions.width10,),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
@@ -279,22 +280,25 @@ class _VendorHomeState extends State<VendorHome> {
                                 ),
                               ],
                             ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text(
-                                  'Total Earnings',
-                                  style: TextStyle(color: AppColors.grey3),
-                                ),
-                                Text(
-                                  'N0.00',
-                                  style: TextStyle(
-                                    color: AppColors.black,
-                                    fontSize: Dimensions.font17,
-                                    fontWeight: FontWeight.w500,
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    'Total Earnings',
+                                    style: TextStyle(color: AppColors.grey3),
                                   ),
-                                ),
-                              ],
+                                  Text(
+                                    'N${user?.totalEarnings ?? '0'}',
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      color: AppColors.black,
+                                      fontSize: Dimensions.font17,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
                         ),
@@ -321,7 +325,7 @@ class _VendorHomeState extends State<VendorHome> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              '0 New Leads',
+                              '${user?.newLeads ?? 0} New Leads',
                               textAlign: TextAlign.left,
                               style: TextStyle(
                                 fontWeight: FontWeight.w600,

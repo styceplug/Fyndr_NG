@@ -1,25 +1,30 @@
 import 'dart:async';
+import 'dart:io';
+import 'dart:math' as math;
+import 'dart:typed_data';
+
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import 'package:fyndr_ng/widgets/custom_appbar.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'dart:io';
-import 'package:flutter/services.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
+import 'package:permission_handler/permission_handler.dart';
 
+import 'custom_appbar.dart';
 
 class FaceVerificationScreen extends StatelessWidget {
   final VoidCallback onVerificationSuccess;
 
-  const FaceVerificationScreen({Key? key, required this.onVerificationSuccess}) : super(key: key);
+  const FaceVerificationScreen({
+    super.key,
+    required this.onVerificationSuccess,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFF0B0B0B),
       appBar: CustomAppbar(
-        leadingIcon: BackButton(color: Colors.black),
-        title: "Please Verify Your Identity",
+        leadingIcon: const BackButton(color: Colors.white),
+        title: "Verify your identity",
       ),
       body: FaceLivenessCam(
         onSuccess: onVerificationSuccess,
@@ -28,58 +33,124 @@ class FaceVerificationScreen extends StatelessWidget {
   }
 }
 
-// --- 2. THE REAL ML WIDGET ---
+
+enum LivenessStep {
+  positionFace,
+  turnLeft,
+  turnRight,
+  blink,
+  openMouth,
+  holdStill,
+  verified,
+  failed,
+}
+
 class FaceLivenessCam extends StatefulWidget {
   final VoidCallback onSuccess;
 
-  const FaceLivenessCam({Key? key, required this.onSuccess}) : super(key: key);
+  const FaceLivenessCam({super.key, required this.onSuccess});
 
   @override
   State<FaceLivenessCam> createState() => _FaceLivenessCamState();
 }
 
-class _FaceLivenessCamState extends State<FaceLivenessCam> {
+class _FaceLivenessCamState extends State<FaceLivenessCam>
+    with WidgetsBindingObserver {
   CameraController? _controller;
-  FaceDetector? _faceDetector;
-  bool _isCameraInitialized = false;
-  bool _isBusy = false; // Prevents processing multiple frames at once
-  String _instructionText = "Initializing...";
+  FaceDetector? _detector;
 
-  // Liveness Logic State
-  bool _faceDetected = false;
-  bool _isBlinking = false; // Has the user closed their eyes?
-  int _consecutiveFrames = 0; // Debounce logic
+  bool _cameraReady = false;
+  bool _processing = false;
+  bool _streaming = false;
+
+  String _titleText = "Initializing…";
+  String _hintText = "Please wait";
+
+  // ---- Bank-grade-ish logic ----
+  final List<LivenessStep> _sequence = [];
+  LivenessStep _step = LivenessStep.positionFace;
+
+  DateTime? _stepStartedAt;
+  int _goodFrames = 0;
+
+  // Debounce thresholds
+  static const int requiredGoodFrames = 6; // stable confirmation
+
+  // anti-spoof heuristics
+  double _lastYaw = 0;
+  double _lastPitch = 0;
+  double _lastRoll = 0;
+
+  int _faceLostFrames = 0;
+
+  // Blink tracking
+  bool _eyesWereClosed = false;
 
   @override
   void initState() {
     super.initState();
-    _initializeCameraAndDetector();
+    WidgetsBinding.instance.addObserver(this);
+
+    // Build a randomized but consistent sequence
+    // FaceID-ish: head turn left/right + blink + mouth open + hold
+    _sequence
+      ..clear()
+      ..addAll([
+        LivenessStep.positionFace,
+        ..._randomTurns(), // left/right order randomized
+        LivenessStep.blink,
+        LivenessStep.openMouth,
+        LivenessStep.holdStill,
+      ]);
+
+    _step = _sequence.first;
+    _initialize();
   }
 
-  Future<void> _initializeCameraAndDetector() async {
-    // 1. Initialize ML Kit Face Detector
-    final options = FaceDetectorOptions(
-      enableClassification: true, // Needed for Eyes/Smile
-      enableLandmarks: true,
-      enableTracking: true,
-      performanceMode: FaceDetectorMode.fast,
+  List<LivenessStep> _randomTurns() {
+    final turns = [LivenessStep.turnLeft, LivenessStep.turnRight];
+    turns.shuffle(math.Random());
+    return turns;
+  }
+
+  Future<void> _initialize() async {
+    setState(() {
+      _titleText = "Preparing camera…";
+      _hintText = "Grant camera access";
+    });
+
+    // 1) Permission
+    final status = await Permission.camera.request();
+    if (!status.isGranted) {
+      setState(() {
+        _titleText = "Camera permission needed";
+        _hintText = "Enable Camera permission in Settings";
+        _step = LivenessStep.failed;
+      });
+      return;
+    }
+
+    // 2) MLKit detector
+    _detector = FaceDetector(
+      options: FaceDetectorOptions(
+        enableClassification: true, // eye probs
+        enableLandmarks: true,      // mouth landmarks
+        enableTracking: true,
+        performanceMode: FaceDetectorMode.accurate, // iOS stability
+        minFaceSize: 0.15,          // ignore tiny far faces
+      ),
     );
-    _faceDetector = FaceDetector(options: options);
 
-    // 2. Permission Check
-    var status = await Permission.camera.request();
-    if (status.isDenied) return;
-
-    // 3. Initialize Camera
+    // 3) Camera
     final cameras = await availableCameras();
-    final frontCamera = cameras.firstWhere(
+    final front = cameras.firstWhere(
           (c) => c.lensDirection == CameraLensDirection.front,
       orElse: () => cameras.first,
     );
 
     _controller = CameraController(
-      frontCamera,
-      ResolutionPreset.medium, // Medium is usually sufficient for ML
+      front,
+      ResolutionPreset.medium,
       enableAudio: false,
       imageFormatGroup: Platform.isAndroid
           ? ImageFormatGroup.nv21
@@ -87,156 +158,453 @@ class _FaceLivenessCamState extends State<FaceLivenessCam> {
     );
 
     await _controller!.initialize();
-
     if (!mounted) return;
 
-    // 4. Start Image Stream for Real-time Processing
-    _controller!.startImageStream(_processCameraImage);
-
     setState(() {
-      _isCameraInitialized = true;
-      _instructionText = "Position your face in the oval";
+      _cameraReady = true;
+      _titleText = "Center your face";
+      _hintText = "Align your face inside the oval";
     });
+
+    _startStreamSafely();
   }
 
-  Future<void> _processCameraImage(CameraImage image) async {
-    if (_isBusy || _faceDetector == null) return;
-    _isBusy = true;
+  Future<void> _startStreamSafely() async {
+    if (_controller == null) return;
+    if (_streaming) return;
+    if (!_controller!.value.isInitialized) return;
 
     try {
-      // Convert CameraImage to ML Kit InputImage
-      final inputImage = _inputImageFromCameraImage(image);
-      if (inputImage == null) return;
-
-      // Detect Faces
-      final faces = await _faceDetector!.processImage(inputImage);
-
-      _handleFaceLogic(faces);
-
+      await _controller!.startImageStream(_onFrame);
+      _streaming = true;
     } catch (e) {
-      print("Error processing face: $e");
-    } finally {
-      _isBusy = false;
+      // If already streaming, ignore safely
+      debugPrint("⚠️ startImageStream error: $e");
     }
   }
 
-  void _handleFaceLogic(List<Face> faces) {
+  Future<void> _stopStreamSafely() async {
+    if (_controller == null) return;
+    if (!_streaming) return;
+
+    try {
+      await _controller!.stopImageStream();
+    } catch (e) {
+      debugPrint("⚠️ stopImageStream error: $e");
+    } finally {
+      _streaming = false;
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) async {
+    // This prevents your crash:
+    // startImageStream called while already streaming + disposed controller usage
+    final ctrl = _controller;
+    if (ctrl == null) return;
+
+    if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused) {
+      await _stopStreamSafely();
+    } else if (state == AppLifecycleState.resumed) {
+      if (mounted && _cameraReady) {
+        await _startStreamSafely();
+      }
+    }
+  }
+
+  Future<void> _onFrame(CameraImage image) async {
+    if (_processing) return;
+    if (_detector == null) return;
+    if (!mounted) return;
+
+    _processing = true;
+    try {
+      final input = _inputImageFromCameraImage(image);
+      if (input == null) return;
+
+      final faces = await _detector!.processImage(input);
+      _handleFaces(faces, input.metadata?.size);
+    } catch (e) {
+      debugPrint("❌ Frame processing error: $e");
+    } finally {
+      _processing = false;
+    }
+  }
+
+  void _handleFaces(List<Face> faces, Size? imageSize) {
     if (faces.isEmpty) {
-      // Reset state if face is lost
-      if (mounted) setState(() {
-        _faceDetected = false;
-        _isBlinking = false;
-        _instructionText = "Position your face in the oval";
+      _faceLostFrames++;
+      if (_faceLostFrames > 10) {
+        _goodFrames = 0;
+        _eyesWereClosed = false;
+        setState(() {
+          _titleText = "Face not detected";
+          _hintText = "Move into the oval with good lighting";
+        });
+      }
+      return;
+    }
+
+    _faceLostFrames = 0;
+    final face = faces.first;
+
+    // --------- Anti-spoof / quality gates ----------
+    // 1) Face too small (far away)
+    if (face.boundingBox.width < 120 || face.boundingBox.height < 120) {
+      _resetGoodFrames();
+      setState(() {
+        _titleText = "Move closer";
+        _hintText = "Your face is too far";
       });
       return;
     }
 
-    // We assume the primary face is the first one
-    final face = faces.first;
+    // 2) Strong roll/pitch out of range (phone tilted)
+    final yaw = face.headEulerAngleY ?? 0;  // left/right
+    final pitch = face.headEulerAngleX ?? 0; // up/down
+    final roll = face.headEulerAngleZ ?? 0;  // tilt
 
-
-
-    if (!_faceDetected) {
-      if (mounted) setState(() {
-        _faceDetected = true;
-        _instructionText = "Please Blink to verify";
+    if (pitch.abs() > 20) {
+      _resetGoodFrames();
+      setState(() {
+        _titleText = "Hold phone steady";
+        _hintText = "Keep your head level";
       });
+      return;
     }
 
+    // 3) Require some natural micro-movement over time (prevents static photo)
+    // We don’t fail instantly—just use it as a “must change a bit” signal.
+    final movementScore =
+        (yaw - _lastYaw).abs() + (roll - _lastRoll).abs() + (pitch - _lastPitch).abs();
+    _lastYaw = yaw;
+    _lastPitch = pitch;
+    _lastRoll = roll;
 
-    double leftEyeOpen = face.leftEyeOpenProbability ?? 1.0;
-    double rightEyeOpen = face.rightEyeOpenProbability ?? 1.0;
+    // If user is on steps that require motion, we accept movement.
+    // If they NEVER move across many frames, we’ll fail later via timeout.
+    // (Handled below with timeouts.)
 
-    const double openThreshold = 0.85;
-    const double closedThreshold = 0.15;
+    // --------- Step Machine ----------
+    _ensureStepTimerStarted();
 
+    switch (_step) {
+      case LivenessStep.positionFace:
+      // Need stable center for a few frames
+        _passIfStable(
+          condition: () => _isFaceCentered(face),
+          onPrompt: () {
+            setState(() {
+              _titleText = "Center your face";
+              _hintText = "Align within the oval";
+            });
+          },
+          onPassed: _advanceStep,
+        );
+        break;
 
+      case LivenessStep.turnLeft:
+        _passIfStable(
+          condition: () => yaw < -18,
+          onPrompt: () {
+            setState(() {
+              _titleText = "Turn your head left";
+              _hintText = "Slowly look to your left";
+            });
+          },
+          onPassed: _advanceStep,
+        );
+        break;
 
-    if (!_isBlinking) {
-      if (leftEyeOpen < closedThreshold && rightEyeOpen < closedThreshold) {
-        _isBlinking = true;
-        if (mounted) setState(() => _instructionText = "Keep blinking...");
+      case LivenessStep.turnRight:
+        _passIfStable(
+          condition: () => yaw > 18,
+          onPrompt: () {
+            setState(() {
+              _titleText = "Turn your head right";
+              _hintText = "Slowly look to your right";
+            });
+          },
+          onPassed: _advanceStep,
+        );
+        break;
+
+      case LivenessStep.blink:
+        _passIfStable(
+          condition: () => _detectBlink(face),
+          onPrompt: () {
+            setState(() {
+              _titleText = "Blink";
+              _hintText = "Close and open both eyes";
+            });
+          },
+          onPassed: () {
+            _eyesWereClosed = false;
+            _advanceStep();
+          },
+        );
+        break;
+
+      case LivenessStep.openMouth:
+        _passIfStable(
+          condition: () => _isMouthOpen(face),
+          onPrompt: () {
+            setState(() {
+              _titleText = "Open your mouth";
+              _hintText = "Open slightly, then close";
+            });
+          },
+          onPassed: _advanceStep,
+        );
+        break;
+
+      case LivenessStep.holdStill:
+      // Hold still for a short time while face stays centered
+        final heldLongEnough = _elapsedStepMs() > 900; // ~1 sec hold
+        final centered = _isFaceCentered(face);
+        final veryLowMovement = movementScore < 1.4;
+
+        if (centered && veryLowMovement) {
+          if (heldLongEnough) {
+            _verifySuccess();
+          } else {
+            setState(() {
+              _titleText = "Hold still…";
+              _hintText = "Almost done";
+            });
+          }
+        } else {
+          // Don’t accumulate; reset timer by restarting step start
+          _stepStartedAt = DateTime.now();
+          setState(() {
+            _titleText = "Hold still…";
+            _hintText = "Keep your face centered";
+          });
+        }
+        break;
+
+      case LivenessStep.verified:
+      case LivenessStep.failed:
+        break;
+    }
+
+    // ---------- Timeouts (bank-grade-ish) ----------
+    // Each step gets a max time; if exceeded, fail.
+    if (_elapsedStepMs() > 8500 && _step != LivenessStep.verified) {
+      _fail("Timed out", "Try again in better lighting");
+    }
+  }
+
+  bool _isFaceCentered(Face face) {
+    // Simple center check – if you want, you can map to overlay oval more exactly.
+    // This already feels FaceID-ish because user must align.
+    final box = face.boundingBox;
+    final cx = box.left + box.width / 2;
+    final cy = box.top + box.height / 2;
+
+    // These are rough “screen-space” rules (works well enough).
+    // If you want perfect oval mapping, we’ll compute from preview size.
+    return cx > 120 && cx < 520 && cy > 160 && cy < 520;
+  }
+
+  void _passIfStable({
+    required bool Function() condition,
+    required VoidCallback onPrompt,
+    required VoidCallback onPassed,
+  }) {
+    onPrompt();
+
+    if (condition()) {
+      _goodFrames++;
+      if (_goodFrames >= requiredGoodFrames) {
+        _goodFrames = 0;
+        onPassed();
       }
     } else {
-      if (leftEyeOpen > openThreshold && rightEyeOpen > openThreshold) {
-        _finishVerification();
-      }
+      _resetGoodFrames();
     }
   }
 
-  void _finishVerification() async {
-    // Stop processing
-    await _controller?.stopImageStream();
-    _faceDetector?.close();
+  void _resetGoodFrames() {
+    _goodFrames = 0;
+  }
 
-    if (mounted) {
-      setState(() => _instructionText = "Verified!");
-      // Trigger success callback
-      widget.onSuccess();
+  void _ensureStepTimerStarted() {
+    _stepStartedAt ??= DateTime.now();
+  }
+
+  int _elapsedStepMs() {
+    final start = _stepStartedAt;
+    if (start == null) return 0;
+    return DateTime.now().difference(start).inMilliseconds;
+  }
+
+  void _advanceStep() {
+    final idx = _sequence.indexOf(_step);
+    if (idx == -1) return;
+
+    final nextIdx = idx + 1;
+    if (nextIdx >= _sequence.length) {
+      _verifySuccess();
+      return;
+    }
+
+    setState(() {
+      _step = _sequence[nextIdx];
+      _stepStartedAt = DateTime.now();
+      _goodFrames = 0;
+      _eyesWereClosed = false;
+    });
+  }
+
+  bool _detectBlink(Face face) {
+    final left = face.leftEyeOpenProbability ?? 1.0;
+    final right = face.rightEyeOpenProbability ?? 1.0;
+
+    const closed = 0.18;
+    const open = 0.82;
+
+    final bothClosed = left < closed && right < closed;
+    final bothOpen = left > open && right > open;
+
+    if (!_eyesWereClosed) {
+      if (bothClosed) _eyesWereClosed = true;
+      return false;
+    } else {
+      // blink completed: closed -> open
+      return bothOpen;
     }
   }
 
-  // --- HELPER: Convert CameraImage to InputImage ---
+  bool _isMouthOpen(Face face) {
+    final ratio = _mouthOpenLandmarkRatio(face);
+    if (ratio == null) return false;
+    // Tune: 0.28~0.35 works on most faces.
+    return ratio > 0.30;
+  }
+
+  double? _mouthOpenLandmarkRatio(Face face) {
+    // ✅ Correct enum names (new API)
+    final left = face.landmarks[FaceLandmarkType.leftMouth]?.position;
+    final right = face.landmarks[FaceLandmarkType.rightMouth]?.position;
+    final bottom = face.landmarks[FaceLandmarkType.bottomMouth]?.position;
+
+    if (left == null || right == null || bottom == null) return null;
+
+    final mouthWidth = (right.x - left.x).abs();
+    if (mouthWidth <= 0) return null;
+
+    final midY = (left.y + right.y) / 2;
+    final openDistance = (bottom.y - midY).abs();
+
+    return openDistance / mouthWidth;
+  }
+
+  Future<void> _verifySuccess() async {
+    if (_step == LivenessStep.verified) return;
+
+    setState(() {
+      _step = LivenessStep.verified;
+      _titleText = "Verified";
+      _hintText = "Identity confirmed";
+    });
+
+    await _stopStreamSafely();
+    await _detector?.close();
+    _detector = null;
+
+    if (!mounted) return;
+    widget.onSuccess();
+  }
+
+  void _fail(String title, String hint) async {
+    if (_step == LivenessStep.failed) return;
+
+    setState(() {
+      _step = LivenessStep.failed;
+      _titleText = title;
+      _hintText = hint;
+    });
+
+    await _stopStreamSafely();
+  }
+
+  // -------- InputImage conversion (kept similar, but safer) --------
   InputImage? _inputImageFromCameraImage(CameraImage image) {
-    if (_controller == null) return null;
+    final ctrl = _controller;
+    if (ctrl == null) return null;
 
-    final camera = _controller!.description;
-    final sensorOrientation = camera.sensorOrientation;
-
-    // Logic to handle rotation (critical for ML Kit)
-    final orientations = {
-      DeviceOrientation.portraitUp: 0,
-      DeviceOrientation.landscapeLeft: 90,
-      DeviceOrientation.portraitDown: 180,
-      DeviceOrientation.landscapeRight: 270,
-    };
-
-    // Note: You might need to check SystemChrome.preferredOrientations
-    // For now assuming Portrait Up
-    final rotationCompensation = (sensorOrientation + orientations[DeviceOrientation.portraitUp]! + 360) % 360;
-
-    InputImageRotation? rotation;
-    if (rotationCompensation == 0) rotation = InputImageRotation.rotation0deg;
-    else if (rotationCompensation == 90) rotation = InputImageRotation.rotation90deg;
-    else if (rotationCompensation == 180) rotation = InputImageRotation.rotation180deg;
-    else if (rotationCompensation == 270) rotation = InputImageRotation.rotation270deg;
-
+    final camera = ctrl.description;
+    final rotation = _rotationFromSensor(camera.sensorOrientation);
     if (rotation == null) return null;
 
-    // Handle Format
     final format = InputImageFormatValue.fromRawValue(image.format.raw);
     if (format == null) return null;
 
-    // Since we are concatenating planes, this mostly applies to Android (NV21)
-    // iOS (BGRA8888) usually has one plane
     if (image.planes.isEmpty) return null;
 
-    final plane = image.planes.first;
+    // Concatenate planes (works for NV21 / BGRA8888 use-case)
+    final bytes = Uint8List.fromList(
+      image.planes.fold<List<int>>(
+        <int>[],
+            (prev, plane) => prev..addAll(plane.bytes),
+      ),
+    );
 
     return InputImage.fromBytes(
-      bytes: Uint8List.fromList(
-        image.planes.fold<List<int>>([], (previousValue, element) => previousValue..addAll(element.bytes)),
-      ),
+      bytes: bytes,
       metadata: InputImageMetadata(
         size: Size(image.width.toDouble(), image.height.toDouble()),
         rotation: rotation,
         format: format,
-        bytesPerRow: plane.bytesPerRow,
+        bytesPerRow: image.planes.first.bytesPerRow,
       ),
     );
   }
 
+  InputImageRotation? _rotationFromSensor(int sensorOrientation) {
+    // Assuming portraitUp lock
+    // (If you allow rotation, we can compute from device orientation)
+    final rotationCompensation = (sensorOrientation + 0 + 360) % 360;
+    switch (rotationCompensation) {
+      case 0:
+        return InputImageRotation.rotation0deg;
+      case 90:
+        return InputImageRotation.rotation90deg;
+      case 180:
+        return InputImageRotation.rotation180deg;
+      case 270:
+        return InputImageRotation.rotation270deg;
+      default:
+        return null;
+    }
+  }
+
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _stopStreamSafely();
     _controller?.dispose();
-    _faceDetector?.close();
+    _detector?.close();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (!_isCameraInitialized || _controller == null) {
-      return Center(child: CircularProgressIndicator());
+    if (!_cameraReady || _controller == null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircularProgressIndicator(),
+            const SizedBox(height: 16),
+            Text(_titleText, style: const TextStyle(color: Colors.white)),
+            const SizedBox(height: 6),
+            Text(_hintText, style: const TextStyle(color: Colors.white70)),
+          ],
+        ),
+      );
     }
 
     return Stack(
@@ -244,24 +612,35 @@ class _FaceLivenessCamState extends State<FaceLivenessCam> {
       children: [
         CameraPreview(_controller!),
 
+        // overlay
         CustomPaint(
           painter: FaceOverlayPainter(),
-          child: Container(),
+          child: const SizedBox.expand(),
         ),
 
+        // text UI (FaceID-ish)
         Positioned(
-          bottom: 100,
-          left: 0,
-          right: 0,
+          left: 24,
+          right: 24,
+          bottom: 90,
           child: Column(
             children: [
               Text(
-                _instructionText,
+                _titleText,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                _hintText,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.white70,
                 ),
               ),
             ],
@@ -272,33 +651,40 @@ class _FaceLivenessCamState extends State<FaceLivenessCam> {
   }
 }
 
-// --- 3. PAINTER (Same as before) ---
+
 class FaceOverlayPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = Colors.white;
-    final center = Offset(size.width / 2, size.height / 2.5);
-    final radiusX = size.width * 0.35;
-    final radiusY = size.height * 0.25;
+    final overlayPaint = Paint()..color = Colors.black.withOpacity(0.55);
 
-    final holePath = Path()
-      ..addOval(Rect.fromCenter(center: center, width: radiusX * 2, height: radiusY * 2));
-    final screenPath = Path()
-      ..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
+    final center = Offset(size.width / 2, size.height / 2.4);
+    final radiusX = size.width * 0.34;
+    final radiusY = size.height * 0.22;
 
-    final overlayPath = Path.combine(PathOperation.difference, screenPath, holePath);
-    canvas.drawPath(overlayPath, paint);
+    final hole = Path()
+      ..addOval(Rect.fromCenter(
+        center: center,
+        width: radiusX * 2,
+        height: radiusY * 2,
+      ));
 
-    final borderPaint = Paint()
-      ..color = Colors.green
+    final screen = Path()..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
+    final overlay = Path.combine(PathOperation.difference, screen, hole);
+
+    canvas.drawPath(overlay, overlayPaint);
+
+    final border = Paint()
+      ..color = Colors.white.withOpacity(0.9)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.0;
+      ..strokeWidth = 2.5;
 
     canvas.drawOval(
-        Rect.fromCenter(center: center, width: radiusX * 2, height: radiusY * 2),
-        borderPaint
+      Rect.fromCenter(center: center, width: radiusX * 2, height: radiusY * 2),
+      border,
     );
   }
+
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
+

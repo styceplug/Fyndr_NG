@@ -181,8 +181,8 @@ class _HomePageState extends State<HomePage> {
                               ),
                               child: Image.asset(
                                 AppConstants.getPngAsset('bell-icon'),
-                                height: Dimensions.height20,
-                                width: Dimensions.width20,
+                                height: Dimensions.height30,
+                                width: Dimensions.width30,
                               ),
                             ),
                             if (notificationController.unreadCount > 0)

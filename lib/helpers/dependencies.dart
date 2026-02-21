@@ -13,6 +13,7 @@ import 'package:fyndr_ng/data/repo/chat_repo.dart';
 import 'package:fyndr_ng/data/repo/job_repo.dart';
 import 'package:fyndr_ng/data/repo/notification_repo.dart';
 import 'package:fyndr_ng/data/repo/product_repo.dart';
+import 'package:fyndr_ng/helpers/push_notification.dart';
 import 'package:fyndr_ng/helpers/socket_service.dart';
 import 'package:get/get.dart';
 
@@ -53,6 +54,7 @@ Future<void> init() async {
   Get.lazyPut(() => ChatRepo(apiClient: Get.find()), fenix: true);
   Get.lazyPut(() => ProductRepo(apiClient: Get.find()), fenix: true);
   Get.lazyPut(() => NotificationRepo(apiClient: Get.find()), fenix: true);
+  Get.lazyPut(() => NotificationService(),fenix: true);
 
   //controllers
   Get.lazyPut(
