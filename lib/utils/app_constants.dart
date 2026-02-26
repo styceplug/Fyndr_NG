@@ -61,6 +61,8 @@ class AppConstants {
 
   static const String GET_CHAT_COUNT = '/api/v1/user/chat/count';
 
+  static const String GET_EARNINGS_DATA = '/api/v1/user/me/earnings';
+
   static String getPngAsset(String image) {
     return 'assets/images/$image.png';
   }

@@ -30,8 +30,14 @@ class _BrowseScreenState extends State<BrowseScreen> {
   @override
   void initState() {
     productController.getProducts();
-
+    authController.startChatUnreadPolling(interval: const Duration(seconds: 8));
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    authController.stopChatUnreadPolling();
+    super.dispose();
   }
 
   @override

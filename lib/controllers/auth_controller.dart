@@ -37,6 +37,20 @@ class AuthController extends GetxController {
     super.onClose();
   }
 
+  Future<void> fetchEarningData() async {
+    try {
+      final res = await authRepo.getEarningData();
+      if (res.statusCode == 200) {
+
+        update();
+      }
+    } catch (e) {
+      print(e);
+    }
+  }
+
+
+
   Future<void> fetchChatUnreadCount() async {
     try {
       final res = await authRepo.getChatCount();
@@ -84,8 +98,7 @@ class AuthController extends GetxController {
       // set initial count (if backend still returns it)
       chatUnreadCount.value = _userModel?.chatUnreadCount ?? 0;
 
-      // start polling the dedicated endpoint (real-time-ish)
-      startChatUnreadPolling(interval: const Duration(seconds: 8));
+
 
 
 
@@ -100,7 +113,7 @@ class AuthController extends GetxController {
       update();
 
     } else {
-      stopChatUnreadPolling();
+      // stopChatUnreadPolling();
 
       if (response.statusCode == 401) {
         Get.offAllNamed(AppRoutes.getStartedScreen);

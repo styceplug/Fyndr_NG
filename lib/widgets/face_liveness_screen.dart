@@ -391,7 +391,7 @@ class _FaceLivenessCamState extends State<FaceLivenessCam>
 
     // ---------- Timeouts (bank-grade-ish) ----------
     // Each step gets a max time; if exceeded, fail.
-    if (_elapsedStepMs() > 8500 && _step != LivenessStep.verified) {
+    if (_elapsedStepMs() > 15000 && _step != LivenessStep.verified) {
       _fail("Timed out", "Try again in better lighting");
     }
   }

@@ -15,6 +15,7 @@ class UserModel {
   int? newLeads;
   num? totalEarnings;
   num? todayEarnings;
+  int? completedJobs;
 
   // Status flags
   bool? isEmailValidated;
@@ -43,7 +44,7 @@ class UserModel {
   BusinessDetails? businessDetails;
   BusinessDocs? businessDocs;
 
-  // NEW: device tokens list from backend
+  NearbyJobsInfo? nearbyJobsInfo;
   List<DeviceTokenModel>? deviceTokens;
 
   UserModel({
@@ -83,7 +84,7 @@ class UserModel {
 
     this.businessDetails,
     this.businessDocs,
-
+    this.nearbyJobsInfo,
     this.deviceTokens,
   });
 
@@ -142,6 +143,9 @@ class UserModel {
           ?.map((e) => DeviceTokenModel.fromJson(e))
           .toList() ??
           [],
+      nearbyJobsInfo: json['nearbyJobsInfo'] != null
+          ? NearbyJobsInfo.fromJson(json['nearbyJobsInfo'])
+          : null,
     );
   }
 
@@ -183,7 +187,7 @@ class UserModel {
 
       'businessDetails': businessDetails?.toJson(),
       'businessDocs': businessDocs?.toJson(),
-
+      'nearbyJobsInfo': nearbyJobsInfo?.toJson(),
       'deviceTokens': deviceTokens?.map((e) => e.toJson()).toList(),
     };
   }
@@ -452,4 +456,30 @@ class Notifications {
   Map<String, dynamic> toJson() {
     return {'email': email, 'text': text, 'whatsapp': whatsapp, 'inApp': inApp};
   }
+}
+
+class NearbyJobsInfo {
+  final String? category;
+  final bool hasJobsNearby;
+  final int nearbyJobCount;
+
+  NearbyJobsInfo({
+    this.category,
+    required this.hasJobsNearby,
+    required this.nearbyJobCount,
+  });
+
+  factory NearbyJobsInfo.fromJson(Map<String, dynamic> json) {
+    return NearbyJobsInfo(
+      category: json['category'],
+      hasJobsNearby: json['hasJobsNearby'] ?? false,
+      nearbyJobCount: json['nearbyJobCount'] ?? 0,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'category': category,
+    'hasJobsNearby': hasJobsNearby,
+    'nearbyJobCount': nearbyJobCount,
+  };
 }

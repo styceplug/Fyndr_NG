@@ -10,6 +10,7 @@ import '../../../routes/routes.dart';
 import '../../../utils/app_constants.dart';
 import '../../../utils/colors.dart';
 import '../../../utils/dimensions.dart';
+import '../../in_app/web_view_screen.dart';
 
 class VendorProfileScreen extends StatefulWidget {
   const VendorProfileScreen({super.key});
@@ -344,14 +345,62 @@ class _VendorProfileScreenState extends State<VendorProfileScreen> {
                 ),
                 child: Column(
                   children: [
-                    OptionCard('help-icon', 'Help Center',onTap: (){
-                      Get.toNamed(AppRoutes.helpCenter);
-                    }),
+                    OptionCard(
+                      'help-icon',
+                      'Service Provider Guide',
+                      onTap: () {
+                        Get.to(() => InAppWebViewScreen(
+                          url: 'https://fyndr.ng/service-provider-guide/',
+                          title: 'Service Provider Guide',
+                        ));
+                      },
+                    ),
                     Divider(color: AppColors.grey2),
-                    OptionCard('terms', 'Terms and condition'),
+                    OptionCard(
+                      'terms',
+                      'Terms and condition',
+                      onTap: () {
+                        Get.to(
+                              () => InAppWebViewScreen(
+                            url: 'https://fyndr.ng/fyndr-terms-and-conditions/',
+                            title: 'Terms and Conditions',
+                          ),
+                        );
+                      },
+                    ),
+                    Divider(color: AppColors.grey2),
+                    OptionCard(
+                      'terms',
+                      'Privacy Policy',
+                      onTap: () {
+                        Get.to(
+                              () => InAppWebViewScreen(
+                            url: 'https://fyndr.ng/privacy-policy/',
+                            title: 'Privacy Policy',
+                          ),
+                        );
+                      },
+                    ),
+
+                    Divider(color: AppColors.grey2),
+                    OptionCard(
+                      'terms',
+                      'Refund Cancellation Policy',
+                      onTap: () {
+                        Get.to(
+                              () => InAppWebViewScreen(
+                            url:
+                            'https://fyndr.ng/fyndr-refund-cancellation-policy/',
+                            title: 'Refund Cancellation Policy',
+                          ),
+                        );
+                      },
+                    ),
                   ],
                 ),
               ),
+              SizedBox(height: Dimensions.height50,)
+
             ],
           ),
         ),

@@ -200,7 +200,7 @@ class _VendorHomeState extends State<VendorHome> {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Text(
-                          'N${user?.todayEarnings ?? '0.'}',
+                          'N${user?.todayEarnings ?? '0'}.',
                           style: TextStyle(
                             color: AppColors.black,
                             fontSize: Dimensions.font25,
@@ -245,47 +245,55 @@ class _VendorHomeState extends State<VendorHome> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Active Jobs',
-                                  style: TextStyle(color: AppColors.grey3),
-                                ),
-                                Text(
-                                  '${user?.activeJobs ?? 0}',
-                                  style: TextStyle(
-                                    color: AppColors.black,
-                                    fontSize: Dimensions.font17,
-                                    fontWeight: FontWeight.w500,
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Active Jobs',
+                                    style: TextStyle(color: AppColors.grey3),
                                   ),
-                                ),
-                              ],
+                                  Text(
+                                    '${user?.activeJobs ?? 0}',
+                                    style: TextStyle(
+                                      color: AppColors.black,
+                                      fontSize: Dimensions.font17,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                             SizedBox(width: Dimensions.width10,),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'Jobs Completed',
-                                  style: TextStyle(color: AppColors.grey3),
-                                ),
-                                Text(
-                                  '0',
-                                  style: TextStyle(
-                                    color: AppColors.black,
-                                    fontSize: Dimensions.font17,
-                                    fontWeight: FontWeight.w500,
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    'Jobs Done',
+                                    style: TextStyle(color: AppColors.grey3),
                                   ),
-                                ),
-                              ],
+                                  Text(
+                                    '${user?.completedJobs ?? 0}',
+                                    style: TextStyle(
+                                      color: AppColors.black,
+                                      fontSize: Dimensions.font17,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
+                            SizedBox(width: Dimensions.width10,),
+
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
                                   Text(
                                     'Total Earnings',
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
                                     style: TextStyle(color: AppColors.grey3),
                                   ),
                                   Text(
@@ -334,7 +342,7 @@ class _VendorHomeState extends State<VendorHome> {
                               ),
                             ),
                             Text(
-                              '0 plumbing requests nearby',
+                              '${user?.nearbyJobsInfo?.nearbyJobCount} ${user?.nearbyJobsInfo?.category} requests nearby',
                               textAlign: TextAlign.left,
                               style: TextStyle(
                                 fontWeight: FontWeight.w400,

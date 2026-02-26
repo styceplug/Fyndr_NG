@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fyndr_ng/controllers/auth_controller.dart';
+import 'package:fyndr_ng/screens/in_app/web_view_screen.dart';
 import 'package:get/get.dart';
 
 import '../../../routes/routes.dart';
@@ -9,8 +10,6 @@ import '../../../utils/dimensions.dart';
 import '../../../widgets/custom_button.dart';
 import '../../../widgets/custom_textfield.dart';
 import 'package:country_code_picker/country_code_picker.dart';
-
-
 
 class CreateAccountScreen extends StatefulWidget {
   const CreateAccountScreen({Key? key}) : super(key: key);
@@ -89,7 +88,8 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
     _calculatePasswordStrength(pass);
 
     // 3. Check Overall Form Validity
-    final isValid = nameController.text.trim().isNotEmpty &&
+    final isValid =
+        nameController.text.trim().isNotEmpty &&
         _validatePhoneLogic(phoneController.text) == null &&
         _validatePasswordLogic(pass) == null;
 
@@ -104,13 +104,15 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
 
     switch (_countryCode) {
       case "NG":
-        if (clean.length != 10 && clean.length != 11) return "Enter valid 10-11 digit number";
+        if (clean.length != 10 && clean.length != 11)
+          return "Enter valid 10-11 digit number";
         break;
       case "US":
         if (clean.length != 10) return "Enter valid 10 digit US number";
         break;
       case "GB":
-        if (clean.length < 9 || clean.length > 11) return "Enter valid UK number";
+        if (clean.length < 9 || clean.length > 11)
+          return "Enter valid UK number";
         break;
       default:
         if (clean.length < 6) return "Enter valid phone number";
@@ -129,7 +131,8 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   void _calculatePasswordStrength(String value) {
     // Only calculate strength if basic requirements are met
     if (_validatePasswordLogic(value) != null) {
-      if (passwordStrengthText.isNotEmpty) setState(() => passwordStrengthText = "");
+      if (passwordStrengthText.isNotEmpty)
+        setState(() => passwordStrengthText = "");
       return;
     }
 
@@ -300,9 +303,18 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _PasswordCheckItem(label: "At least 8 characters", isValid: hasMinLength),
-                      _PasswordCheckItem(label: "One capital letter (A-Z)", isValid: hasUppercase),
-                      _PasswordCheckItem(label: "One number (0-9)", isValid: hasNumber),
+                      _PasswordCheckItem(
+                        label: "At least 8 characters",
+                        isValid: hasMinLength,
+                      ),
+                      _PasswordCheckItem(
+                        label: "One capital letter (A-Z)",
+                        isValid: hasUppercase,
+                      ),
+                      _PasswordCheckItem(
+                        label: "One number (0-9)",
+                        isValid: hasNumber,
+                      ),
                     ],
                   ),
                 ),
@@ -317,9 +329,10 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                       style: TextStyle(
                         fontSize: Dimensions.font12,
                         fontWeight: FontWeight.w600,
-                        color: passwordStrengthText.contains("Strong")
-                            ? Colors.green
-                            : Colors.orange,
+                        color:
+                            passwordStrengthText.contains("Strong")
+                                ? Colors.green
+                                : Colors.orange,
                       ),
                     ),
                   ),
@@ -334,6 +347,47 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                 isDisabled: !isFormFilled,
               ),
 
+              SizedBox(height: Dimensions.height20),
+              RichText(
+                textAlign: TextAlign.center,
+                text: TextSpan(
+                  style: TextStyle(color: AppColors.grey3),
+                  children: [
+                    const TextSpan(text: 'By Proceeding, you agree to our '),
+                    WidgetSpan(
+                      child: InkWell(
+                        onTap: () => Get.to(() => InAppWebViewScreen(
+                          url: 'https://fyndr.ng/fyndr-terms-and-conditions/',
+                          title: 'Terms and Conditions',
+                        )),
+                        child: Text(
+                          'Terms of Service',
+                          style: TextStyle(
+                            color: AppColors.color2,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const TextSpan(text: ' and '),
+                    WidgetSpan(
+                      child: InkWell(
+                        onTap: () => Get.to(() => InAppWebViewScreen(
+                          url: 'https://fyndr.ng/privacy-policy/',
+                          title: 'Privacy Policy',
+                        )),
+                        child: Text(
+                          'Privacy Policy',
+                          style: TextStyle(
+                            color: AppColors.color2,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               SizedBox(height: Dimensions.height15),
 
               // --- LOGIN LINK ---

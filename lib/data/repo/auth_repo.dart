@@ -14,6 +14,10 @@ class AuthRepo extends GetConnect {
 
   AuthRepo({required this.apiClient, required this.sharedPreferences});
 
+  Future<Response> getEarningData() async {
+    return await apiClient.getData(AppConstants.GET_EARNINGS_DATA);
+  }
+
   Future<Response> getChatCount() async {
     return await apiClient.getData(AppConstants.GET_CHAT_COUNT);
   }
