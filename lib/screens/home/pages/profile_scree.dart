@@ -25,6 +25,36 @@ class _ProfileScreeState extends State<ProfileScree> {
   AuthController authController = Get.find<AuthController>();
   NotificationService notificationService = Get.find<NotificationService>();
 
+  void deleteAccountPrompt() async {
+    Get.dialog(
+      AlertDialog(
+        title: Text("Delete Account"),
+        content: Text(
+          "Are you sure you want to delete your account? This action cannot be undone.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: Text("Cancel", style: TextStyle(color: Colors.grey)),
+          ),
+          TextButton(
+            onPressed: () {
+              Get.back();
+              authController.deleteAccount();
+            },
+            child: Text(
+              "Yes, Delete",
+              style: TextStyle(
+                color: AppColors.color1,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = authController.userModel;
@@ -318,6 +348,12 @@ class _ProfileScreeState extends State<ProfileScree> {
                       onTap: () {
                         authController.handleSwitchAccountTap();
                       },
+                    ),
+                    Divider(color: AppColors.grey2),
+                    OptionCard(
+                      'delete-2',
+                      'Delete your account',
+                      onTap: deleteAccountPrompt,
                     ),
                   ],
                 ),

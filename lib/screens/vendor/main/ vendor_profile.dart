@@ -33,6 +33,37 @@ class _VendorProfileScreenState extends State<VendorProfileScreen> {
     super.initState();
   }
 
+  void deleteAccountPrompt() async {
+    Get.dialog(
+      AlertDialog(
+        title: Text("Delete Account"),
+        content: Text(
+          "Are you sure you want to delete your account? This action cannot be undone.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: Text("Cancel", style: TextStyle(color: Colors.grey)),
+          ),
+          TextButton(
+            onPressed: () {
+              Get.back();
+              authController.deleteAccount();
+            },
+            child: Text(
+              "Yes, Delete",
+              style: TextStyle(
+                color: AppColors.color1,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -281,6 +312,10 @@ class _VendorProfileScreenState extends State<VendorProfileScreen> {
                     Divider(color: AppColors.grey2),
                     OptionCard('switch-icon', 'Switch Account',onTap: (){
                       authController.handleSwitchAccountTap();
+                    }),
+                    Divider(color: AppColors.grey2),
+                    OptionCard('delete-2', 'Delete Account',onTap: (){
+                      deleteAccountPrompt();
                     }),
                   ],
                 ),

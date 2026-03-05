@@ -10,9 +10,11 @@ import 'package:intl/intl.dart';
 import 'package:timeago/timeago.dart';
 import '../../controllers/chat_controller.dart';
 import '../../model/chat_model.dart';
+import '../../routes/routes.dart';
 import '../../utils/app_constants.dart';
 import '../../utils/colors.dart';
 import '../../widgets/custom_textfield.dart';
+import '../../widgets/snackbars.dart';
 
 class ChatScreen extends StatelessWidget {
   ChatScreen({Key? key}) : super(key: key);
@@ -113,7 +115,8 @@ class ChatScreen extends StatelessWidget {
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
-                            if (otherUser?.businessDetails?.businessName != null)
+                            if (otherUser?.businessDetails?.businessName !=
+                                null)
                               Expanded(
                                 child: Text(
                                   '- ${otherUser?.businessDetails?.businessName}',
@@ -134,23 +137,31 @@ class ChatScreen extends StatelessWidget {
                             final otherId = ctrl.otherUserId;
 
                             // socket truth
-                            final socketOnline = ctrl.statuses.any((s) =>
-                            s['userId'] == otherId && s['isOnline'] == true);
+                            final socketOnline = ctrl.statuses.any(
+                              (s) =>
+                                  s['userId'] == otherId &&
+                                  s['isOnline'] == true,
+                            );
 
-                            final currentlyOnline = socketOnline || ctrl.isOtherUserOnline.value;
+                            final currentlyOnline =
+                                socketOnline || ctrl.isOtherUserOnline.value;
 
                             // offline timestamp preference: model first, then socket
                             String? displayTimestamp = otherUser?.lastSeen;
-                            if (displayTimestamp == null || displayTimestamp.isEmpty) {
+                            if (displayTimestamp == null ||
+                                displayTimestamp.isEmpty) {
                               displayTimestamp = ctrl.otherUserLastSeen;
                             }
 
                             String lastSeenText = "Offline";
-                            final ts = otherUser?.lastSeen; // ✅ always from response body
+                            final ts =
+                                otherUser
+                                    ?.lastSeen; // ✅ always from response body
                             if (ts != null && ts.isNotEmpty) {
                               try {
                                 final dt = DateTime.parse(ts).toLocal();
-                                lastSeenText = "Last seen ${GetTimeAgo.parse(dt)}";
+                                lastSeenText =
+                                    "Last seen ${GetTimeAgo.parse(dt)}";
                               } catch (_) {}
                             }
 
@@ -168,11 +179,18 @@ class ChatScreen extends StatelessWidget {
                             if (currentlyOnline) {
                               return Row(
                                 children: [
-                                  const Icon(Icons.circle, size: 8, color: Colors.green),
+                                  const Icon(
+                                    Icons.circle,
+                                    size: 8,
+                                    color: Colors.green,
+                                  ),
                                   const SizedBox(width: 4),
                                   const Text(
                                     'Online',
-                                    style: TextStyle(fontSize: 10, color: Colors.grey),
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: Colors.grey,
+                                    ),
                                   ),
                                 ],
                               );
@@ -180,11 +198,13 @@ class ChatScreen extends StatelessWidget {
 
                             return Text(
                               lastSeenText,
-                              style: const TextStyle(fontSize: 10, color: Colors.grey),
+                              style: const TextStyle(
+                                fontSize: 10,
+                                color: Colors.grey,
+                              ),
                             );
                           },
                         ),
-
                       ],
                     ),
                   ),
@@ -199,24 +219,51 @@ class ChatScreen extends StatelessWidget {
                   _buildProductInfo(ctrl.currentChat!.product!),
 
                 //warning
-                Container(
-                  margin: EdgeInsets.symmetric(
-                    horizontal: Dimensions.width20,
-                    vertical: Dimensions.height20,
-                  ),
-                  padding: EdgeInsets.symmetric(
-                    horizontal: Dimensions.width10,
-                    vertical: Dimensions.height10,
-                  ),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: AppColors.color1),
-                    borderRadius: BorderRadius.circular(Dimensions.radius20),
-                    color: AppColors.color5,
-                  ),
-                  child: Text(
-                    'Avoid Paying in advance, and remember this chat room is being monitored for moderation.',
-                    style: TextStyle(fontSize: Dimensions.font12),
-                    textAlign: TextAlign.center,
+                InkWell(
+                  // inside your ChatScreen warning InkWell onTap:
+                  onTap: () {
+                    final chat = ctrl.currentChat;
+
+                    final vendorId =
+                        ctrl.otherUserId; // ✅ in your chat this is the vendor/other party id
+                    final chatId = chat?.id;
+
+                    if (vendorId == null || chatId == null) {
+                      CustomSnackBar.failure(message: "Unable to report this chat right now.");
+                      return;
+                    }
+
+                    Get.toNamed(
+                      AppRoutes.createDisputeScreen,
+                      arguments: {
+                        'vendorId': vendorId,
+                        'chatId': chatId,
+                        // optional if you have it:
+                        // 'transactionRef': chat?.transactionRef,
+                        // optional helper:
+                        'vendorName': ctrl.otherUser?.businessDetails?.businessName ?? ctrl.otherUser?.name,
+                      },
+                    );
+                  },
+                  child: Container(
+                    margin: EdgeInsets.symmetric(
+                      horizontal: Dimensions.width20,
+                      vertical: Dimensions.height20,
+                    ),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: Dimensions.width10,
+                      vertical: Dimensions.height10,
+                    ),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: AppColors.color1),
+                      borderRadius: BorderRadius.circular(Dimensions.radius20),
+                      color: AppColors.color5,
+                    ),
+                    child: Text(
+                      'Avoid paying in advance, and remember this chat room is being monitored for moderation — tap here to report this conversation.',
+                      style: TextStyle(fontSize: Dimensions.font12),
+                      textAlign: TextAlign.center,
+                    ),
                   ),
                 ),
 
@@ -301,7 +348,9 @@ class ChatScreen extends StatelessWidget {
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
                             color:
-                                ctrl.isRecording ? Colors.red : AppColors.color2,
+                                ctrl.isRecording
+                                    ? Colors.red
+                                    : AppColors.color2,
                             shape: BoxShape.circle,
                           ),
                           child:

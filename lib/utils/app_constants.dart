@@ -14,6 +14,9 @@ class AppConstants {
   static const String REGISTER_EXISTING_BUSINESS =
       '/api/v1/user/register/vendor';
 
+  static const String DELETE_ACCOUNT = '/api/v1/user/me/delete';
+
+
   static const String PUT_DEVICE_TOKEN = '/api/v1/user/device-tokens';
   static const String POST_LOGIN = '/api/v1/auth/login';
   static const String POST_VERIFY_OTP = '/api/v1/auth/otp/verify';
@@ -24,6 +27,7 @@ class AppConstants {
   static const String PUT_UPDATE_PROFILE = '/api/v1/user/me';
   static const String POST_NEW_JOB = '/api/v1/job';
   static const String GET_USER_JOBS = '/api/v1/job/user';
+  static const String DISPUTES = '/api/v1/dispute';
   static const String UNREAD_NOTIFICATION_COUNT =
       '/api/v1/notification/unread-count';
 

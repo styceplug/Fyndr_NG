@@ -1,14 +1,26 @@
 import 'dart:io';
+import 'package:fyndr_ng/utils/app_constants.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:get/get.dart';
 import 'package:fyndr_ng/data/api/api_client.dart';
 import 'package:http/http.dart' as http;
+
+import '../../model/dispute_model.dart';
 
 
 class ChatRepo {
   final ApiClient apiClient;
 
   ChatRepo({required this.apiClient});
+
+
+
+
+  // ==================== CREATE_DISPUTE ====================
+  Future<Response> createDispute(CreateDisputeRequest payload) async {
+    return await apiClient.postData(AppConstants.DISPUTES, payload.toJson());
+  }
+
 
   // ==================== INITIATE CHAT ====================
 

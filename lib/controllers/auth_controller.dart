@@ -41,15 +41,12 @@ class AuthController extends GetxController {
     try {
       final res = await authRepo.getEarningData();
       if (res.statusCode == 200) {
-
         update();
       }
     } catch (e) {
       print(e);
     }
   }
-
-
 
   Future<void> fetchChatUnreadCount() async {
     try {
@@ -98,10 +95,6 @@ class AuthController extends GetxController {
       // set initial count (if backend still returns it)
       chatUnreadCount.value = _userModel?.chatUnreadCount ?? 0;
 
-
-
-
-
       // Navigate first
       if (userModel?.currentRole == 'customer') {
         Get.offAllNamed(AppRoutes.homeScreen);
@@ -109,9 +102,7 @@ class AuthController extends GetxController {
         Get.offAllNamed(AppRoutes.vendorHomePage);
       }
 
-
       update();
-
     } else {
       // stopChatUnreadPolling();
 
@@ -432,6 +423,21 @@ class AuthController extends GetxController {
 
     loader.hideLoader();
     update();
+  }
+
+  Future<void> deleteAccount() async {
+    loader.showLoader();
+    update();
+
+    Response response = await authRepo.deleteAccount();
+
+    if (response.statusCode == 200) {
+      CustomSnackBar.success(message: "Account deleted successfully");
+      Get.offAllNamed(AppRoutes.getStartedScreen);
+    } else {
+      String message = response.body['error'] ?? "Failed to delete account";
+      CustomSnackBar.failure(message: message);
+    }
   }
 
   Future<void> verifyOtp(String number, String otp) async {

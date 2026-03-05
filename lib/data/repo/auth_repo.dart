@@ -14,6 +14,11 @@ class AuthRepo extends GetConnect {
 
   AuthRepo({required this.apiClient, required this.sharedPreferences});
 
+
+  Future<Response> deleteAccount() async {
+    return await apiClient.deleteData(AppConstants.DELETE_ACCOUNT);
+  }
+
   Future<Response> getEarningData() async {
     return await apiClient.getData(AppConstants.GET_EARNINGS_DATA);
   }

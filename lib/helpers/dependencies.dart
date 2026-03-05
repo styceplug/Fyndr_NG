@@ -2,6 +2,7 @@ import 'package:flutter/src/widgets/framework.dart';
 import 'package:fyndr_ng/controllers/app_controller.dart';
 import 'package:fyndr_ng/controllers/auth_controller.dart';
 import 'package:fyndr_ng/controllers/chat_controller.dart';
+import 'package:fyndr_ng/controllers/dispute_controller.dart';
 import 'package:fyndr_ng/controllers/earning_controller.dart';
 import 'package:fyndr_ng/controllers/job_controller.dart';
 import 'package:fyndr_ng/controllers/leads_controller.dart';
@@ -55,7 +56,7 @@ Future<void> init() async {
   Get.lazyPut(() => ChatRepo(apiClient: Get.find()), fenix: true);
   Get.lazyPut(() => ProductRepo(apiClient: Get.find()), fenix: true);
   Get.lazyPut(() => NotificationRepo(apiClient: Get.find()), fenix: true);
-  Get.lazyPut(() => NotificationService(),fenix: true);
+  Get.lazyPut(() => NotificationService(), fenix: true);
 
   //controllers
   Get.lazyPut(
@@ -81,4 +82,5 @@ Future<void> init() async {
   Get.lazyPut(() => ProductController(productRepo: Get.find()), fenix: true);
   Get.lazyPut(() => NotificationController(repo: Get.find()), fenix: true);
   Get.lazyPut(() => EarningController(authRepo: Get.find()), fenix: true);
+  Get.lazyPut(() => DisputeController(disputeRepo: Get.find()), fenix: true);
 }

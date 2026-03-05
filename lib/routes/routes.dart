@@ -24,6 +24,7 @@ import 'package:fyndr_ng/screens/in_app/toasts/service_completed.dart';
 import 'package:fyndr_ng/screens/in_app/toasts/thank_you_screen.dart';
 import 'package:fyndr_ng/screens/in_app/vendor_quotes.dart';
 import 'package:fyndr_ng/screens/messaging/chat_screen.dart';
+import 'package:fyndr_ng/screens/messaging/create_dispute_screen.dart';
 import 'package:fyndr_ng/screens/settings/edit_profile.dart';
 import 'package:fyndr_ng/screens/settings/help_center.dart';
 import 'package:fyndr_ng/screens/settings/payment_method_screen.dart';
@@ -82,6 +83,7 @@ class AppRoutes {
   static const String sellItemScreen = '/sell-item-screen';
   static const String myProductsScreen = '/my-products-screen';
   static const String productChatScreen = '/product-chat-screen';
+  static const String createDisputeScreen = '/create-dispute-screen';
 
   //settings
   static const String editProfile = '/edit-profile';
@@ -118,6 +120,13 @@ class AppRoutes {
 
 
 
+    GetPage(
+      name: createDisputeScreen,
+      page: () {
+        return DisputeScreen();
+      },
+      transition: Transition.fadeIn,
+    ),
     GetPage(
       name: productChatScreen,
       page: () {
