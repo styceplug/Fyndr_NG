@@ -20,7 +20,7 @@ class ChatModel {
   JobModel? service; // Make sure you have this model
   List<MessageModel>? messages;
   MessageModel? lastMessageData;
-
+  String? blockedBy;
   int? customerUnreadCount;
   int? vendorUnreadCount;
   String? createdAt;
@@ -30,7 +30,7 @@ class ChatModel {
     this.productId, this.serviceId, this.customer, this.vendor,
     this.product, this.service, this.lastMessageData,
     this.customerUnreadCount, this.vendorUnreadCount,
-    this.createdAt, this.messages,
+    this.createdAt, this.messages, this.blockedBy,
   });
 
   ChatModel.fromJson(Map<String, dynamic> json) {
@@ -39,9 +39,10 @@ class ChatModel {
     createdAt = json['createdAt'];
     customerUnreadCount = json['customerUnreadCount'] ?? 0;
     vendorUnreadCount = json['vendorUnreadCount'] ?? 0;
+    blockedBy = json['blockedBy']?.toString();
+    if (blockedBy == 'null') blockedBy = null;
 
-    // --- Helper for Model vs ID parsing ---
-    // This keeps your code DRY (Don't Repeat Yourself)
+
     void parseField<T>(
         dynamic data,
         Function(T) onModel,

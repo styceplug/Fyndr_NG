@@ -61,13 +61,28 @@ class HomeScreenBottomNavBar extends StatelessWidget {
                       name: 'My jobs',
                       image: 'jobs-icon',
                       isActive: appController.currentAppPage.value == 3,
-                      onClick: () => appController.changeCurrentAppPage(3),
+                      onClick: () {
+                        appController.requireLogin(
+                          title: "Sign in to view jobs",
+                          message: "You need an account to access your jobs.",
+                          onAllowed:
+                              () => appController.changeCurrentAppPage(3),
+                        );
+                      },
                     ),
+
                     BottomBarItem(
                       name: 'Profile',
                       image: 'profile-icon',
                       isActive: appController.currentAppPage.value == 4,
-                      onClick: () => appController.changeCurrentAppPage(4),
+                      onClick: () {
+                        appController.requireLogin(
+                          title: "Sign in to view profile",
+                          message: "Please sign in to access your profile.",
+                          onAllowed:
+                              () => appController.changeCurrentAppPage(4),
+                        );
+                      },
                     ),
                   ],
                 ),

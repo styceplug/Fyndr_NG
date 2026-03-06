@@ -58,7 +58,7 @@ class _ProfileScreeState extends State<ProfileScree> {
   @override
   Widget build(BuildContext context) {
     final user = authController.userModel;
-    final memberSince = user?.getAccountAge(user.createdAt);
+    final memberSince = user?.getAccountAge(user.createdAt) ?? '';
 
     return Scaffold(
       appBar: CustomAppbar(
@@ -306,7 +306,7 @@ class _ProfileScreeState extends State<ProfileScree> {
                   children: [
                     DataCard('0', 'Total Requests'),
                     DataCard('0', 'Completed'),
-                    DataCard(memberSince!, 'Member'),
+                    DataCard(memberSince, 'Member'),
                   ],
                 ),
               ),

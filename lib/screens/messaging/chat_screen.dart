@@ -210,6 +210,85 @@ class ChatScreen extends StatelessWidget {
                   ),
                 ],
               ),
+              actionIcon: PopupMenuButton<String>(
+                tooltip: 'Chat actions',
+                elevation: 8,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(Dimensions.radius15),
+                ),
+                color: Colors.white,
+                surfaceTintColor: Colors.white,
+                splashRadius: 20,
+                icon: Container(
+                  padding: EdgeInsets.all(Dimensions.width10 * 0.8),
+                  decoration: BoxDecoration(
+                    color: AppColors.grey2.withOpacity(0.6),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.more_vert,
+                    size: Dimensions.iconSize20,
+                    color: AppColors.black,
+                  ),
+                ),
+                onSelected: (value) {
+                  if (value == 'block') {
+                    ctrl.blockCurrentChat();
+                  } else if (value == 'unblock') {
+                    ctrl.unblockCurrentChat();
+                  }
+                },
+                itemBuilder: (context) => [
+                  if (!ctrl.isChatBlocked)
+                    PopupMenuItem<String>(
+                      value: 'block',
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.block_rounded,
+                            color: Colors.red,
+                            size: Dimensions.iconSize20,
+                          ),
+                          SizedBox(width: Dimensions.width10),
+                          Expanded(
+                            child: Text(
+                              'Block chat',
+                              style: TextStyle(
+                                fontSize: Dimensions.font14,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.red,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  if (ctrl.isChatBlocked && ctrl.iBlockedThisChat)
+                    PopupMenuItem<String>(
+                      value: 'unblock',
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.lock_open_rounded,
+                            color: Colors.green,
+                            size: Dimensions.iconSize20,
+                          ),
+                          SizedBox(width: Dimensions.width10),
+                          Expanded(
+                            child: Text(
+                              'Unblock chat',
+                              style: TextStyle(
+                                fontSize: Dimensions.font14,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.green,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
             ),
 
             body: Column(
@@ -266,6 +345,34 @@ class ChatScreen extends StatelessWidget {
                     ),
                   ),
                 ),
+                if (ctrl.isChatBlocked)
+                  Container(
+                    width: double.infinity,
+                    margin: EdgeInsets.symmetric(
+                      horizontal: Dimensions.width20,
+                      vertical: Dimensions.height10,
+                    ),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: Dimensions.width10,
+                      vertical: Dimensions.height10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.08),
+                      border: Border.all(color: Colors.red.withOpacity(0.4)),
+                      borderRadius: BorderRadius.circular(Dimensions.radius20),
+                    ),
+                    child: Text(
+                      ctrl.iBlockedThisChat
+                          ? 'You blocked this chat. Unblock it to continue messaging.'
+                          : 'This chat has been blocked. Messaging is disabled.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: Dimensions.font12,
+                        color: Colors.red,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
 
                 // ==================== MESSAGE LIST ====================
                 Expanded(

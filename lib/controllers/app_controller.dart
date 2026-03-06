@@ -23,7 +23,6 @@ import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
-
 import '../data/repo/app_repo.dart';
 import '../helpers/push_notification.dart';
 import '../routes/routes.dart';
@@ -31,7 +30,11 @@ import '../routes/routes.dart';
 class AppController extends GetxController {
   final AppRepo appRepo;
 
-  AppController({required this.appRepo, required this.apiClient, required this.apiChecker});
+  AppController({
+    required this.appRepo,
+    required this.apiClient,
+    required this.apiChecker,
+  });
 
   Rx<ThemeMode> themeMode = Rx<ThemeMode>(ThemeMode.system);
 
@@ -40,12 +43,15 @@ class AppController extends GetxController {
   PageController pageController = PageController();
   AuthController authController = Get.find<AuthController>();
   ProductController productController = Get.find<ProductController>();
-  NotificationController notificationController = Get.find<NotificationController>();
+  NotificationController notificationController =
+      Get.find<NotificationController>();
   ApiClient apiClient;
   ApiChecker apiChecker;
 
+  String? get token =>
+      appRepo.sharedPreferences.getString(AppConstants.authToken);
 
-
+  bool get isLoggedIn => (token != null && token!.isNotEmpty);
 
   final List<Widget> pages = [
     HomePage(),
@@ -54,6 +60,7 @@ class AppController extends GetxController {
     JobsScreen(),
     ProfileScree(),
   ];
+
   final List<Widget> vendorPages = [
     VendorHome(),
     BrowseScreen(),
@@ -87,15 +94,14 @@ class AppController extends GetxController {
       await authController.getUserProfile();
       await notificationController.refreshUnreadCount();
 
-
       await NotificationService().init(
-        upsertDeviceToken: ({required String token, required String platform}) async {
+        upsertDeviceToken: ({
+          required String token,
+          required String platform,
+        }) async {
           await saveDeviceToken(token);
-
-
         },
       );
-
     } else {
       print("No token found -> Get Started");
       Get.offAllNamed(AppRoutes.getStartedScreen);
@@ -124,7 +130,6 @@ class AppController extends GetxController {
 
       // 💾 Save new token locally
       await prefs.setString('last_uploaded_fcm_token', token);
-
     } else {
       print("⚠️ Failed to update token: ${response.body}");
     }
@@ -170,7 +175,7 @@ class AppController extends GetxController {
 
   void clearSharedData() {
     changeCurrentAppPage(0);
-
+    appRepo.sharedPreferences.clear();
     appRepo.sharedPreferences.remove(AppConstants.authToken);
     appRepo.sharedPreferences.remove('last_uploaded_fcm_token');
 
@@ -180,4 +185,13 @@ class AppController extends GetxController {
     Get.offAllNamed(AppRoutes.getStartedScreen);
   }
 
+  void requireLogin({
+    required VoidCallback onAllowed,
+    String title = "Sign in required",
+    String message = "Please sign in to continue.",
+  }) {
+    if (isLoggedIn) return onAllowed();
+
+    AuthPrompt.show(title: title, message: message);
+  }
 }

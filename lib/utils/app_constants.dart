@@ -57,6 +57,9 @@ class AppConstants {
 
   static String CREATE_CHAT(String jobId) => '/api/v1/job/$jobId/chat';
 
+  static String BLOCK_CHAT(String chatId) => '/api/v1/chat/$chatId/block';
+  static String UNBLOCK_CHAT(String chatId) => '/api/v1/chat/$chatId/unblock';
+
   static const String CREATE_PRODUCT = '/api/v1/product';
   static const String GET_PRODUCT = '/api/v1/product';
 

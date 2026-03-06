@@ -55,8 +55,13 @@ class ChatController extends GetxController {
   Timer? _lastSeenTicker;
   DateTime _now = DateTime.now();
   DateTime get now => _now;
-
-
+  String? _blockedBy;
+  String? get blockedBy => _blockedBy;
+  bool get isChatBlocked => _blockedBy != null && _blockedBy!.isNotEmpty;
+  bool get iBlockedThisChat {
+    if (_blockedBy == null || currentUserId == null) return false;
+    return _blockedBy == currentUserId;
+  }
 
 
 
@@ -119,6 +124,78 @@ class ChatController extends GetxController {
   }
 
   String? get chatPartnerId => chatPartner?.id ?? chatPartner?.id;
+
+
+  void _syncBlockedStateFromChat() {
+    _blockedBy = currentChat?.blockedBy;
+  }
+
+
+  Future<void> blockCurrentChat() async {
+    final chatId = currentChat?.id;
+    if (chatId == null || chatId.isEmpty) {
+      CustomSnackBar.failure(message: 'Unable to block this chat.');
+      return;
+    }
+
+    loader.showLoader();
+    update();
+
+    final response = await chatRepo.blockChat(chatId);
+
+    loader.hideLoader();
+
+    if (response.statusCode == 200 && response.body?['success'] == true) {
+      final data = response.body?['data'];
+
+      _blockedBy = data?['blockedBy']?.toString();
+      if (currentChat != null) {
+        currentChat!.blockedBy = _blockedBy;
+      }
+
+      update();
+      CustomSnackBar.success(message: response.body?['message'] ?? 'Chat blocked');
+      return;
+    }
+
+    update();
+  }
+
+  Future<void> unblockCurrentChat() async {
+    final chatId = currentChat?.id;
+    if (chatId == null || chatId.isEmpty) {
+      CustomSnackBar.failure(message: 'Unable to unblock this chat.');
+      return;
+    }
+
+    loader.showLoader();
+    update();
+
+    final response = await chatRepo.unblockChat(chatId);
+
+    loader.hideLoader();
+
+    if (response.statusCode == 200 && response.body?['success'] == true) {
+      final data = response.body?['data'];
+
+      _blockedBy = data?['blockedBy']?.toString();
+      if (_blockedBy == 'null') _blockedBy = null;
+
+      if (currentChat != null) {
+        currentChat!.blockedBy = _blockedBy;
+      }
+
+      update();
+      CustomSnackBar.success(
+        message: response.body?['message'] ?? 'Chat unblocked',
+      );
+      return;
+    }
+
+
+    update();
+  }
+
 
 
   void _startLastSeenTicker() {
@@ -501,7 +578,7 @@ class ChatController extends GetxController {
       return;
     }
 
-    loader.showLoader;
+    loader.showLoader();
     update();
 
     final body = {
@@ -536,7 +613,7 @@ class ChatController extends GetxController {
       print('❌ Error initiating product chat: $e');
       CustomSnackBar.failure(message: "Network error");
     } finally {
-      loader.hideLoader;
+      loader.hideLoader();
       update();
     }
   }
@@ -552,6 +629,7 @@ class ChatController extends GetxController {
       if (response.statusCode == 200) {
         currentChat = ChatModel.fromJson(response.body['data']);
         messages = currentChat?.messages ?? [];
+        _syncBlockedStateFromChat();
 
         // 1. Connection Check
         if (!socketService.isConnected()) {
@@ -618,6 +696,15 @@ class ChatController extends GetxController {
   // ==================== SEND TEXT MESSAGE ====================
 
   Future<void> sendMessage() async {
+    if (isChatBlocked) {
+      CustomSnackBar.failure(
+        message: iBlockedThisChat
+            ? 'You blocked this chat. Unblock it to continue messaging.'
+            : 'This chat has been blocked. Messaging is disabled.',
+      );
+      return;
+    }
+
     String text = messageCtrl.text.trim();
     if (text.isEmpty || currentChat?.id == null) return;
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fyndr_ng/controllers/app_controller.dart';
 import 'package:fyndr_ng/utils/app_constants.dart';
 import 'package:fyndr_ng/widgets/custom_textfield.dart';
 import 'package:get/get.dart';
@@ -32,6 +33,8 @@ class ProductDetailsScreen extends StatefulWidget {
 class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   int _currentImageIndex = 0;
   String _address = "Loading location...";
+
+  AppController appController = Get.find<AppController>();
 
   void _loadAddress() async {
     double? lat = widget.product.lat;
@@ -109,10 +112,11 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                               widget.product.images![index],
                               fit: BoxFit.cover,
                               errorBuilder:
-                                  (_, __, ___) => Icon(
-                                Icons.broken_image,
-                                color: Colors.grey,
-                              ),
+                                  (_, __, ___) =>
+                                  Icon(
+                                    Icons.broken_image,
+                                    color: Colors.grey,
+                                  ),
                             );
                           },
                         )
@@ -149,21 +153,22 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: List.generate(
                               widget.product.images!.length,
-                                  (index) => Container(
-                                width: 8,
-                                height: 8,
-                                margin: const EdgeInsets.symmetric(
-                                  horizontal: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color:
-                                  _currentImageIndex == index
-                                      ? AppColors
-                                      .color1 // Active color
-                                      : Colors.white.withOpacity(0.5),
-                                ),
-                              ),
+                                  (index) =>
+                                  Container(
+                                    width: 8,
+                                    height: 8,
+                                    margin: const EdgeInsets.symmetric(
+                                      horizontal: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color:
+                                      _currentImageIndex == index
+                                          ? AppColors
+                                          .color1 // Active color
+                                          : Colors.white.withOpacity(0.5),
+                                    ),
+                                  ),
                             ),
                           ),
                         ),
@@ -342,13 +347,21 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                       print("Product ID: ${widget.product.id}");
                       print("Seller ID: ${widget.product.user?.id}");
 
+
                       if (widget.product.id != null &&
                           widget.product.user?.id != null) {
-                        controller.initiateProductChat(
-                          productId: widget.product.id!,
-                          sellerId: widget.product.user!.id!,
-                          userId: Get.find<AuthController>().userModel!.id!,
-                        );
+                        appController.requireLogin(
+                            title: "Sign in to make enquiries",
+                            message: "You need an account to contact seller",
+                            onAllowed: () =>
+                            controller.initiateProductChat(
+                              productId: widget.product.id!,
+                              sellerId: widget.product.user!.id!,
+                              userId: Get
+                                  .find<AuthController>()
+                                  .userModel!
+                                  .id!,
+                            ));
                       } else {
                         CustomSnackBar.failure(
                           message: "Invalid product data: Seller ID missing",

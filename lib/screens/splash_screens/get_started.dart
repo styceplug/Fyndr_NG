@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fyndr_ng/utils/app_constants.dart';
 import 'package:fyndr_ng/utils/colors.dart';
 import 'package:fyndr_ng/utils/dimensions.dart';
+import 'package:fyndr_ng/widgets/custom_button.dart';
 import 'package:get/get.dart';
 
 import '../../routes/routes.dart';
@@ -34,6 +35,7 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 SizedBox(height: Dimensions.height100),
+
                 Text(
                   'Let\'s Get Started',
                   textAlign: TextAlign.left,

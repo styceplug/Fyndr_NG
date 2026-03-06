@@ -356,10 +356,14 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                     const TextSpan(text: 'By Proceeding, you agree to our '),
                     WidgetSpan(
                       child: InkWell(
-                        onTap: () => Get.to(() => InAppWebViewScreen(
-                          url: 'https://fyndr.ng/fyndr-terms-and-conditions/',
-                          title: 'Terms and Conditions',
-                        )),
+                        onTap:
+                            () => Get.to(
+                              () => InAppWebViewScreen(
+                                url:
+                                    'https://fyndr.ng/fyndr-terms-and-conditions/',
+                                title: 'Terms and Conditions',
+                              ),
+                            ),
                         child: Text(
                           'Terms of Service',
                           style: TextStyle(
@@ -372,10 +376,13 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                     const TextSpan(text: ' and '),
                     WidgetSpan(
                       child: InkWell(
-                        onTap: () => Get.to(() => InAppWebViewScreen(
-                          url: 'https://fyndr.ng/privacy-policy/',
-                          title: 'Privacy Policy',
-                        )),
+                        onTap:
+                            () => Get.to(
+                              () => InAppWebViewScreen(
+                                url: 'https://fyndr.ng/privacy-policy/',
+                                title: 'Privacy Policy',
+                              ),
+                            ),
                         child: Text(
                           'Privacy Policy',
                           style: TextStyle(
@@ -406,6 +413,14 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                     ),
                   ],
                 ),
+              ),
+              SizedBox(height: Dimensions.height150),
+
+              CustomButton(
+                text: 'Proceed as Guest',
+                onPressed: () {
+                  Get.offAllNamed(AppRoutes.homeScreen);
+                },
               ),
             ],
           ),

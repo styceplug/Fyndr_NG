@@ -155,7 +155,7 @@ class _HomePageState extends State<HomePage> {
                           style: TextStyle(fontSize: Dimensions.font17),
                         ),
                         Text(
-                          user?.name ?? 'User',
+                          user?.name ?? 'Guest',
                           overflow: TextOverflow.ellipsis,
                           maxLines: 1,
                           style: TextStyle(
