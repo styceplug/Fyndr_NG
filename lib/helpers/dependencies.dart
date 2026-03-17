@@ -1,6 +1,7 @@
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:fyndr_ng/controllers/app_controller.dart';
 import 'package:fyndr_ng/controllers/auth_controller.dart';
+import 'package:fyndr_ng/controllers/banner_controller.dart';
 import 'package:fyndr_ng/controllers/chat_controller.dart';
 import 'package:fyndr_ng/controllers/dispute_controller.dart';
 import 'package:fyndr_ng/controllers/earning_controller.dart';
@@ -11,6 +12,7 @@ import 'package:fyndr_ng/controllers/product_controller.dart';
 import 'package:fyndr_ng/controllers/vendor_controller.dart';
 import 'package:fyndr_ng/data/repo/app_repo.dart';
 import 'package:fyndr_ng/data/repo/auth_repo.dart';
+import 'package:fyndr_ng/data/repo/banner_repo.dart';
 import 'package:fyndr_ng/data/repo/chat_repo.dart';
 import 'package:fyndr_ng/data/repo/job_repo.dart';
 import 'package:fyndr_ng/data/repo/notification_repo.dart';
@@ -57,6 +59,7 @@ Future<void> init() async {
   Get.lazyPut(() => ProductRepo(apiClient: Get.find()), fenix: true);
   Get.lazyPut(() => NotificationRepo(apiClient: Get.find()), fenix: true);
   Get.lazyPut(() => NotificationService(), fenix: true);
+  Get.lazyPut(() => BannerRepo(apiClient: Get.find()), fenix: true);
 
   //controllers
   Get.lazyPut(
@@ -83,4 +86,5 @@ Future<void> init() async {
   Get.lazyPut(() => NotificationController(repo: Get.find()), fenix: true);
   Get.lazyPut(() => EarningController(authRepo: Get.find()), fenix: true);
   Get.lazyPut(() => DisputeController(disputeRepo: Get.find()), fenix: true);
+  Get.lazyPut(() => BannerController(bannerRepo: Get.find()), fenix: true);
 }

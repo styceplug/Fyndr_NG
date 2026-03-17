@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fyndr_ng/controllers/auth_controller.dart';
+import 'package:fyndr_ng/controllers/banner_controller.dart';
 import 'package:fyndr_ng/controllers/job_controller.dart';
 import 'package:fyndr_ng/controllers/notification_controller.dart';
 import 'package:fyndr_ng/model/user_model.dart';
@@ -7,6 +8,7 @@ import 'package:fyndr_ng/utils/app_constants.dart';
 import 'package:fyndr_ng/utils/colors.dart';
 import 'package:fyndr_ng/utils/dimensions.dart';
 import 'package:get/get.dart';
+import 'package:shimmer/shimmer.dart';
 
 import '../../../model/job_model.dart';
 import '../../../routes/routes.dart';
@@ -21,6 +23,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   AuthController authController = Get.find<AuthController>();
   JobController jobController = Get.find<JobController>();
+  BannerController bannerController = Get.find<BannerController>();
 
   UserModel? get user => authController.userModel;
 
@@ -32,47 +35,56 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-
-    // 1. Initialize List & Controller IMMEDIATELY
-    pages = [
-      AppConstants.getPngAsset('slider1'),
-      AppConstants.getPngAsset('slider5'),
-      AppConstants.getPngAsset('slider2'),
-      AppConstants.getPngAsset('slider3'),
-      AppConstants.getPngAsset('slider4'),
-    ];
     pageController = PageController();
 
-    // 2. Start API Calls & Auto Scroll
+    bannerController.getBanners();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Get.find<JobController>().getUserJobs();
+      jobController.getUserJobs();
       _startAutoScroll();
     });
   }
 
   @override
   void dispose() {
-    // 3. Clean up controller to prevent memory leaks
     pageController.dispose();
     super.dispose();
   }
 
   void _startAutoScroll() {
-    Future.delayed(const Duration(seconds: 3), () {
-      // Check 'mounted' to ensure widget still exists before animating
+    Future.delayed(const Duration(seconds: 4), () {
       if (mounted && pageController.hasClients) {
-        int nextPageIndex = (currentPageIndex.value + 1) % pages.length;
+        // Use the API list length, fallback to 1 to avoid division by zero
+        int bannerCount = bannerController.bannerList.length;
 
-        pageController.animateToPage(
-          nextPageIndex,
-          duration: const Duration(milliseconds: 700),
-          curve: Curves.easeInOut,
-        );
+        if (bannerCount > 0) {
+          int nextPageIndex = (currentPageIndex.value + 1) % bannerCount;
 
-        // Recursive call
+          pageController.animateToPage(
+            nextPageIndex,
+            duration: const Duration(milliseconds: 800),
+            curve: Curves.easeInOut,
+          );
+        }
         _startAutoScroll();
       }
     });
+  }
+
+  Widget _buildBannerShimmer() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: Container(
+        margin: EdgeInsets.symmetric(horizontal: Dimensions.width20),
+        height: Dimensions.height100 * 2.15,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(Dimensions.radius15),
+        ),
+      ),
+    );
   }
 
   void onPageChanged(int index) {
@@ -358,30 +370,67 @@ class _HomePageState extends State<HomePage> {
 
             SizedBox(height: Dimensions.height10),
 
-            SizedBox(
-              height: Dimensions.height100 * 2.15,
-              width: double.infinity,
-              child: PageView.builder(
-                controller: pageController,
-                itemCount: pages.length,
-                onPageChanged: onPageChanged,
-                itemBuilder: (context, index) {
-                  return Container(
-                    margin: EdgeInsets.symmetric(
-                      horizontal: Dimensions.width10,
+            Obx(() {
+              if (bannerController.isLoading) {
+                return _buildBannerShimmer();
+              }
+
+              if (bannerController.bannerList.isEmpty) {
+                return const SizedBox.shrink();
+              }
+
+              return Column(
+                children: [
+                  SizedBox(
+                    height: Dimensions.height100 * 2.15,
+                    width: double.infinity,
+                    child: PageView.builder(
+                      controller: pageController,
+                      onPageChanged: (i) => currentPageIndex.value = i,
+                      itemCount: bannerController.bannerList.length,
+                      itemBuilder: (context, index) {
+                        var banner = bannerController.bannerList[index];
+                        String imageUrl = banner.image!.startsWith('http')
+                            ? banner.image!
+                            : "${AppConstants.BASE_URL}${banner.image}";
+
+                        return Container(
+                          margin: EdgeInsets.symmetric(horizontal: Dimensions.width10),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(Dimensions.radius15),
+                            border: Border.all(color: AppColors.grey4.withOpacity(0.5)),
+                            image: DecorationImage(
+                              fit: BoxFit.cover,
+                              image: NetworkImage(imageUrl),
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(Dimensions.radius15),
-                      image: DecorationImage(
-                        fit: BoxFit.cover,
-                        image: AssetImage(pages[index]),
-                      ),
-                      border: Border.all(color: AppColors.grey4),
+                  ),
+
+                  // Optional: Dots Indicator
+                  SizedBox(height: Dimensions.height10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(
+                      bannerController.bannerList.length,
+                          (index) => Obx(() => Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        width: currentPageIndex.value == index ? 20 : 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(4),
+                          color: currentPageIndex.value == index
+                              ? AppColors.color1
+                              : AppColors.grey4,
+                        ),
+                      )),
                     ),
-                  );
-                },
-              ),
-            ),
+                  ),
+                ],
+              );
+            }),
 
             SizedBox(height: Dimensions.height20),
           ],

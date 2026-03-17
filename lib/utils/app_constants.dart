@@ -70,6 +70,9 @@ class AppConstants {
 
   static const String GET_EARNINGS_DATA = '/api/v1/user/me/earnings';
 
+
+  static const String GET_BANNER_IMAGES = '/api/v1/banner';
+
   static String getPngAsset(String image) {
     return 'assets/images/$image.png';
   }

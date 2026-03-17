@@ -2,7 +2,7 @@ name: fyndr_ng
 description: "A new Flutter project."
 
 
-version: 1.0.0+3
+version: 1.0.0+4
 
 environment:
   sdk: ^3.7.2
@@ -54,6 +54,7 @@ dependencies:
   audioplayers: ^6.5.1
   get_time_ago: ^2.3.2
   flutter_rating: ^2.0.2
+  shimmer: ^3.0.0
 
 
 dev_dependencies:
