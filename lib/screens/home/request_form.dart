@@ -357,32 +357,35 @@ class _RequestFormState extends State<RequestForm> {
         bool isActive = index == _currentStep;
         bool isCompleted = index < _currentStep;
 
-        return Column(
-          children: [
-            Text(
-              _stages[index],
-              style: TextStyle(
-                fontSize: Dimensions.font12,
-                fontWeight: FontWeight.w500,
+        return Expanded(
+          child: Column(
+            children: [
+              Text(
+                _stages[index],
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: Dimensions.font12,
+                  fontWeight: FontWeight.w500,
 
-                color:
-                (isActive || isCompleted) ? Colors.black : AppColors.grey3,
+                  color:
+                  (isActive || isCompleted) ? Colors.black : AppColors.grey3,
+                ),
               ),
-            ),
-            SizedBox(height: Dimensions.height5),
-            Container(
-              height: Dimensions.height5,
+              SizedBox(height: Dimensions.height5),
+              Container(
+                height: Dimensions.height5,
 
-              width: Dimensions.width10 * 8,
-              decoration: BoxDecoration(
-                color:
-                (isActive || isCompleted)
-                    ? AppColors.color1
-                    : AppColors.grey3,
-                borderRadius: BorderRadius.circular(Dimensions.radius10),
+                width: Dimensions.width10 * 8,
+                decoration: BoxDecoration(
+                  color:
+                  (isActive || isCompleted)
+                      ? AppColors.color1
+                      : AppColors.grey3,
+                  borderRadius: BorderRadius.circular(Dimensions.radius10),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         );
       }),
     );

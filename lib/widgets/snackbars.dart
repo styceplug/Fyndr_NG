@@ -2,8 +2,6 @@ import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 
 
-
-
 class CustomSnackBar {
   static OverlayEntry? _overlayEntry;
   static bool _isVisible = false;
@@ -15,11 +13,15 @@ class CustomSnackBar {
     required IconData icon,
   }) {
     if (_isVisible) return;
+
+    // FIX: Use Get.key.currentState to get the NavigatorState
+    final overlay = Get.key.currentState?.overlay;
+    if (overlay == null) return;
+
     _isVisible = true;
 
-    final overlay = Overlay.of(Get.overlayContext!);
     final animationController = AnimationController(
-      vsync: overlay!,
+      vsync: overlay, // OverlayState implements TickerProvider
       duration: const Duration(milliseconds: 300),
     );
 
@@ -32,7 +34,7 @@ class CustomSnackBar {
 
     _overlayEntry = OverlayEntry(
       builder: (context) => Positioned(
-        top: MediaQuery.of(context).padding.top + 10,
+        top: MediaQuery.of(Get.context!).padding.top + 10,
         left: 15,
         right: 15,
         child: SlideTransition(
@@ -80,48 +82,24 @@ class CustomSnackBar {
     animationController.forward();
 
     Future.delayed(const Duration(seconds: 2), () async {
-      await animationController.reverse();
-      _overlayEntry?.remove();
-      _overlayEntry = null;
+      if (_overlayEntry != null) {
+        await animationController.reverse();
+        _overlayEntry?.remove();
+        _overlayEntry = null;
+      }
       _isVisible = false;
       animationController.dispose();
     });
   }
 
-  // ✅ SUCCESS
-  static void success({required String message}) {
-    _show(
-      message: message,
-      color: Colors.green,
-      icon: Icons.check_circle_rounded,
-    );
-  }
-
-  // ❌ FAILURE
-  static void failure({required String message}) {
-    _show(
-      message: message,
-      color: Colors.redAccent,
-      icon: Icons.error_outline,
-    );
-  }
-
-  // ⏳ PROCESSING
-  static void processing({required String message}) {
-    _show(
-      message: message,
-      color: Colors.blueAccent,
-      icon: Icons.hourglass_empty,
-    );
-  }
-
-  /// --- 🔹 Bottom Toast (Fade In / Fade Out)
+  /// --- 🔹 Bottom Toast
   static void showToast({
     required String message,
     Color backgroundColor = Colors.black12,
     Duration duration = const Duration(seconds: 2),
   }) {
-    final overlay = Overlay.of(Get.overlayContext!);
+    // FIX: Consistent use of the Global Key for the overlay
+    final overlay = Get.key.currentState?.overlay;
     if (overlay == null) return;
 
     final opacityNotifier = ValueNotifier<double>(0.0);
@@ -141,8 +119,7 @@ class CustomSnackBar {
                 child: Material(
                   color: Colors.transparent,
                   child: Container(
-                    padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     decoration: BoxDecoration(
                       color: backgroundColor.withOpacity(0.3),
                       borderRadius: BorderRadius.circular(25),
@@ -150,7 +127,7 @@ class CustomSnackBar {
                     child: Text(
                       message,
                       textAlign: TextAlign.center,
-                      style:  TextStyle(
+                      style: TextStyle(
                         color: Colors.white.withOpacity(0.7),
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
@@ -167,16 +144,20 @@ class CustomSnackBar {
     );
 
     overlay.insert(overlayEntry);
-
-    // Fade in
     opacityNotifier.value = 1.0;
 
-    // Wait for duration
     Future.delayed(duration, () {
       opacityNotifier.value = 0.0;
       Future.delayed(const Duration(milliseconds: 250), () {
-        overlayEntry.remove();
+        if (overlayEntry.mounted) {
+          overlayEntry.remove();
+        }
       });
     });
   }
+
+  // Wrappers (unchanged)
+  static void success({required String message}) => _show(message: message, color: Colors.green, icon: Icons.check_circle_rounded);
+  static void failure({required String message}) => _show(message: message, color: Colors.redAccent, icon: Icons.error_outline);
+  static void processing({required String message}) => _show(message: message, color: Colors.blueAccent, icon: Icons.hourglass_empty);
 }

@@ -17,14 +17,11 @@ import 'package:intl/intl.dart';
 
 import '../../../widgets/snackbars.dart';
 
-
 class ProductDetailsScreen extends StatefulWidget {
-
-
   final ProductModel product;
 
   const ProductDetailsScreen({Key? key, required this.product})
-      : super(key: key);
+    : super(key: key);
 
   @override
   State<ProductDetailsScreen> createState() => _ProductDetailsScreenState();
@@ -98,47 +95,76 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                         width: double.infinity,
                         color: AppColors.grey3,
                         child:
-                        (widget.product.images != null &&
-                            widget.product.images!.isNotEmpty)
-                            ? PageView.builder(
-                          itemCount: widget.product.images!.length,
-                          onPageChanged: (index) {
-                            setState(() {
-                              _currentImageIndex = index;
-                            });
-                          },
-                          itemBuilder: (context, index) {
-                            return Image.network(
-                              widget.product.images![index],
-                              fit: BoxFit.cover,
-                              errorBuilder:
-                                  (_, __, ___) =>
-                                  Icon(
-                                    Icons.broken_image,
+                            (widget.product.images != null &&
+                                    widget.product.images!.isNotEmpty)
+                                ? PageView.builder(
+                                  itemCount: widget.product.images!.length,
+                                  onPageChanged: (index) {
+                                    setState(() {
+                                      _currentImageIndex = index;
+                                    });
+                                  },
+                                  itemBuilder: (context, index) {
+                                    return Image.network(
+                                      widget.product.images![index],
+                                      fit: BoxFit.cover,
+                                      errorBuilder:
+                                          (_, __, ___) => Icon(
+                                            Icons.broken_image,
+                                            color: Colors.grey,
+                                          ),
+                                    );
+                                  },
+                                )
+                                : const Center(
+                                  child: Icon(
+                                    Icons.image,
+                                    size: 50,
                                     color: Colors.grey,
                                   ),
-                            );
-                          },
-                        )
-                            : const Center(
-                          child: Icon(
-                            Icons.image,
-                            size: 50,
-                            color: Colors.grey,
-                          ),
-                        ),
+                                ),
                       ),
 
                       // Back Button
                       Positioned(
                         top: Dimensions.height50,
                         left: Dimensions.width20,
-                        child: InkWell(
-                          onTap: () => Get.back(),
-                          child: const CircleAvatar(
-                            backgroundColor: Colors.white,
-                            child: Icon(Icons.arrow_back, color: Colors.black),
-                          ),
+                        right: Dimensions.width20,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            InkWell(
+                              onTap: () => Get.back(),
+                              child: const CircleAvatar(
+                                backgroundColor: Colors.white,
+                                child: Icon(
+                                  Icons.arrow_back,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ),
+                            InkWell(
+                              onTap: () {
+                                Get.snackbar(
+                                  'Report Received',
+                                  'Thanks for raising awareness. Our team will review this product shortly.',
+                                  snackPosition: SnackPosition.BOTTOM,
+                                  backgroundColor: Colors.black87,
+                                  colorText: Colors.white,
+                                  margin: EdgeInsets.all(Dimensions.height20),
+                                  duration: const Duration(seconds: 3),
+                                );
+                              },
+                              child: Text(
+                                'Report',
+                                style: TextStyle(
+                                  fontSize: Dimensions.font16,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
 
@@ -153,22 +179,21 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: List.generate(
                               widget.product.images!.length,
-                                  (index) =>
-                                  Container(
-                                    width: 8,
-                                    height: 8,
-                                    margin: const EdgeInsets.symmetric(
-                                      horizontal: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color:
+                              (index) => Container(
+                                width: 8,
+                                height: 8,
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color:
                                       _currentImageIndex == index
                                           ? AppColors
-                                          .color1 // Active color
+                                              .color1 // Active color
                                           : Colors.white.withOpacity(0.5),
-                                    ),
-                                  ),
+                                ),
+                              ),
                             ),
                           ),
                         ),
@@ -197,8 +222,8 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                               (widget.product.isFree ?? false)
                                   ? "FREE"
                                   : currencyFormatter.format(
-                                widget.product.price ?? 0,
-                              ),
+                                    widget.product.price ?? 0,
+                                  ),
                               style: TextStyle(
                                 fontSize: Dimensions.font20,
                                 fontWeight: FontWeight.bold,
@@ -263,18 +288,18 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                               radius: 25,
                               backgroundColor: AppColors.grey3,
                               backgroundImage:
-                              (widget.product.user?.profilePicture != null)
-                                  ? NetworkImage(
-                                widget.product.user!.profilePicture!,
-                              )
-                                  : null,
+                                  (widget.product.user?.profilePicture != null)
+                                      ? NetworkImage(
+                                        widget.product.user!.profilePicture!,
+                                      )
+                                      : null,
                               child:
-                              (widget.product.user?.profilePicture == null)
-                                  ? const Icon(
-                                Icons.person,
-                                color: AppColors.grey5,
-                              )
-                                  : null,
+                                  (widget.product.user?.profilePicture == null)
+                                      ? const Icon(
+                                        Icons.person,
+                                        color: AppColors.grey5,
+                                      )
+                                      : null,
                             ),
                             SizedBox(width: Dimensions.width10),
                             Column(
@@ -347,21 +372,19 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                       print("Product ID: ${widget.product.id}");
                       print("Seller ID: ${widget.product.user?.id}");
 
-
                       if (widget.product.id != null &&
                           widget.product.user?.id != null) {
                         appController.requireLogin(
-                            title: "Sign in to make enquiries",
-                            message: "You need an account to contact seller",
-                            onAllowed: () =>
-                            controller.initiateProductChat(
-                              productId: widget.product.id!,
-                              sellerId: widget.product.user!.id!,
-                              userId: Get
-                                  .find<AuthController>()
-                                  .userModel!
-                                  .id!,
-                            ));
+                          title: "Sign in to make enquiries",
+                          message: "You need an account to contact seller",
+                          onAllowed:
+                              () => controller.initiateProductChat(
+                                productId: widget.product.id!,
+                                sellerId: widget.product.user!.id!,
+                                userId:
+                                    Get.find<AuthController>().userModel!.id!,
+                              ),
+                        );
                       } else {
                         CustomSnackBar.failure(
                           message: "Invalid product data: Seller ID missing",
@@ -369,23 +392,23 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                       }
                     },
                     child:
-                    controller.isLoading
-                        ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
-                      ),
-                    )
-                        : const Text(
-                      "Make Enquiries",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
+                        controller.isLoading
+                            ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                            : const Text(
+                              "Make Enquiries",
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
                   );
                 },
               ),

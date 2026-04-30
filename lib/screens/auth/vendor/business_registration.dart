@@ -32,7 +32,7 @@ class _BusinessRegistrationState extends State<BusinessRegistration> {
   String? passErrorText;
   String passwordStrengthText = "";
   static final RegExp _specialCharRegex = RegExp(r'[!@#$%^&*(),.?":{}|<>]');
-
+  bool isAgreed = false;
   late TextEditingController locationDisplayController;
 
   void _onPasswordChanged() {
@@ -42,7 +42,7 @@ class _BusinessRegistrationState extends State<BusinessRegistration> {
       hasMinLength = value.length >= 8;
       hasUppercase = value.contains(RegExp(r'[A-Z]'));
       hasNumber = value.contains(RegExp(r'[0-9]'));
-
+      isAgreed;
       if (passErrorText != null) passErrorText = null;
     });
 
@@ -465,55 +465,92 @@ class _BusinessRegistrationState extends State<BusinessRegistration> {
                   ),
 
                   SizedBox(height: Dimensions.height40),
+                  Row(
+                    children: [
+                      SizedBox(
+                        height: 24,
+                        width: 24,
+                        child: Checkbox(
+                          value: isAgreed,
+                          activeColor: AppColors.color2,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          onChanged: (bool? value) {
+                            setState(() {
+                              isAgreed = value ?? false;
+                            });
+                            _onPasswordChanged();
+                          },
+                        ),
+                      ),
+                      SizedBox(width: Dimensions.width10),
+                      Expanded(
+                        child: RichText(
+                          text: TextSpan(
+                            style: TextStyle(
+                              color: AppColors.grey3,
+                              fontSize: Dimensions.font14,
+                            ),
+                            children: [
+                              const TextSpan(text: 'I agree to the '),
+                              WidgetSpan(
+                                alignment: PlaceholderAlignment.middle,
+                                child: InkWell(
+                                  onTap:
+                                      () => Get.to(
+                                        () => InAppWebViewScreen(
+                                          url:
+                                              'https://fyndr.ng/fyndr-terms-and-conditions/',
+                                          title: 'Terms and Conditions',
+                                        ),
+                                      ),
+                                  child: Text(
+                                    'Terms of Service',
+                                    style: TextStyle(
+                                      color: AppColors.color2,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const TextSpan(text: ' and '),
+                              WidgetSpan(
+                                alignment: PlaceholderAlignment.middle,
+                                child: InkWell(
+                                  onTap:
+                                      () => Get.to(
+                                        () => InAppWebViewScreen(
+                                          url:
+                                              'https://fyndr.ng/privacy-policy/',
+                                          title: 'Privacy Policy',
+                                        ),
+                                      ),
+                                  child: Text(
+                                    'Privacy Policy',
+                                    style: TextStyle(
+                                      color: AppColors.color2,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: Dimensions.height20),
 
                   CustomButton(
                     text: 'Continue to verification',
+                    isDisabled: !isAgreed,
                     onPressed: () {
                       ctrl.proceedToVerification();
                     },
                   ),
 
-                  SizedBox(height: Dimensions.height20),
-                  RichText(
-                    textAlign: TextAlign.center,
-                    text: TextSpan(
-                      style: TextStyle(color: AppColors.grey3),
-                      children: [
-                        const TextSpan(text: 'By Proceeding, you agree to our '),
-                        WidgetSpan(
-                          child: InkWell(
-                            onTap: () => Get.to(() => InAppWebViewScreen(
-                              url: 'https://fyndr.ng/fyndr-terms-and-conditions/',
-                              title: 'Terms and Conditions',
-                            )),
-                            child: Text(
-                              'Terms of Service',
-                              style: TextStyle(
-                                color: AppColors.color2,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const TextSpan(text: ' and '),
-                        WidgetSpan(
-                          child: InkWell(
-                            onTap: () => Get.to(() => InAppWebViewScreen(
-                              url: 'https://fyndr.ng/privacy-policy/',
-                              title: 'Privacy Policy',
-                            )),
-                            child: Text(
-                              'Privacy Policy',
-                              style: TextStyle(
-                                color: AppColors.color2,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                   SizedBox(height: Dimensions.height20),
 
                   // Show "Already have account" only if we are in New User mode

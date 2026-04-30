@@ -394,6 +394,10 @@ class AuthController extends GetxController {
 
     Response response = await authRepo.registerCustomer(name, number, password);
 
+    loader.hideLoader();
+
+    update();
+
     if (response.statusCode == 201) {
       var responseData = response.body['data'];
       _userModel = UserModel.fromJson(responseData);
@@ -421,8 +425,6 @@ class AuthController extends GetxController {
       print("Error: $message");
     }
 
-    loader.hideLoader();
-    update();
   }
 
   Future<void> deleteAccount() async {

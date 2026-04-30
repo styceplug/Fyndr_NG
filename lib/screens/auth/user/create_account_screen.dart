@@ -40,7 +40,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
 
   bool isFormFilled = false;
   bool isPassHidden = true;
-
+  bool isAgreed = false;
   String _dialCode = "+234";
   String _countryCode = "NG";
 
@@ -91,7 +91,8 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
     final isValid =
         nameController.text.trim().isNotEmpty &&
         _validatePhoneLogic(phoneController.text) == null &&
-        _validatePasswordLogic(pass) == null;
+        _validatePasswordLogic(pass) == null &&
+        isAgreed;
 
     if (isFormFilled != isValid) {
       setState(() => isFormFilled = isValid);
@@ -340,6 +341,85 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
 
               SizedBox(height: Dimensions.height20),
 
+              // --- AGREEMENT CHECKBOX ---
+              Row(
+                children: [
+                  SizedBox(
+                    height: 24,
+                    width: 24,
+                    child: Checkbox(
+                      value: isAgreed,
+                      activeColor: AppColors.color2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      onChanged: (bool? value) {
+                        setState(() {
+                          isAgreed = value ?? false;
+                        });
+                        _onInputChanged(); // Trigger validation check
+                      },
+                    ),
+                  ),
+                  SizedBox(width: Dimensions.width10),
+                  Expanded(
+                    child: RichText(
+                      text: TextSpan(
+                        style: TextStyle(
+                          color: AppColors.grey3,
+                          fontSize: Dimensions.font14,
+                        ),
+                        children: [
+                          const TextSpan(text: 'I agree to the '),
+                          WidgetSpan(
+                            alignment: PlaceholderAlignment.middle,
+                            child: InkWell(
+                              onTap:
+                                  () => Get.to(
+                                    () => InAppWebViewScreen(
+                                      url:
+                                          'https://fyndr.ng/fyndr-terms-and-conditions/',
+                                      title: 'Terms and Conditions',
+                                    ),
+                                  ),
+                              child: Text(
+                                'Terms of Service',
+                                style: TextStyle(
+                                  color: AppColors.color2,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const TextSpan(text: ' and '),
+                          WidgetSpan(
+                            alignment: PlaceholderAlignment.middle,
+                            child: InkWell(
+                              onTap:
+                                  () => Get.to(
+                                    () => InAppWebViewScreen(
+                                      url: 'https://fyndr.ng/privacy-policy/',
+                                      title: 'Privacy Policy',
+                                    ),
+                                  ),
+                              child: Text(
+                                'Privacy Policy',
+                                style: TextStyle(
+                                  color: AppColors.color2,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              SizedBox(height: Dimensions.height20),
+
               // --- SUBMIT BUTTON ---
               CustomButton(
                 text: 'Create account',
@@ -347,54 +427,6 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                 isDisabled: !isFormFilled,
               ),
 
-              SizedBox(height: Dimensions.height20),
-              RichText(
-                textAlign: TextAlign.center,
-                text: TextSpan(
-                  style: TextStyle(color: AppColors.grey3),
-                  children: [
-                    const TextSpan(text: 'By Proceeding, you agree to our '),
-                    WidgetSpan(
-                      child: InkWell(
-                        onTap:
-                            () => Get.to(
-                              () => InAppWebViewScreen(
-                                url:
-                                    'https://fyndr.ng/fyndr-terms-and-conditions/',
-                                title: 'Terms and Conditions',
-                              ),
-                            ),
-                        child: Text(
-                          'Terms of Service',
-                          style: TextStyle(
-                            color: AppColors.color2,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const TextSpan(text: ' and '),
-                    WidgetSpan(
-                      child: InkWell(
-                        onTap:
-                            () => Get.to(
-                              () => InAppWebViewScreen(
-                                url: 'https://fyndr.ng/privacy-policy/',
-                                title: 'Privacy Policy',
-                              ),
-                            ),
-                        child: Text(
-                          'Privacy Policy',
-                          style: TextStyle(
-                            color: AppColors.color2,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
               SizedBox(height: Dimensions.height15),
 
               // --- LOGIN LINK ---
@@ -414,14 +446,29 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                   ],
                 ),
               ),
-              SizedBox(height: Dimensions.height150),
+              SizedBox(height: Dimensions.height10 * 9),
 
               CustomButton(
                 text: 'Proceed as Guest',
+                isDisabled: isFormFilled,
                 onPressed: () {
                   Get.offAllNamed(AppRoutes.homeScreen);
                 },
               ),
+              if (isFormFilled) ...[
+                SizedBox(height: Dimensions.height5),
+                Align(
+                  alignment: AlignmentGeometry.center,
+                  child: Text(
+                    'Clear form to proceed as Guest',
+                    style: TextStyle(
+                      fontSize: Dimensions.font12,
+                      fontWeight: FontWeight.w300,
+                      color: Colors.red
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
