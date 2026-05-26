@@ -18,6 +18,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../widgets/rating_dialog.dart';
 import '../../../widgets/snackbars.dart';
 
 class VendorJobs extends StatefulWidget {
@@ -324,14 +325,27 @@ class _VendorJobsState extends State<VendorJobs> {
                 ],
               ),
             ],
-            //if job is completed, show rating
+            // If job is completed, show Rating Button
             if (job.status?.isCompleted == true) ...[
-              Row(
-                children: [
-                  Text('Rate Service:'),
-                  SizedBox(width: Dimensions.width10),
-                  StarRating(),
-                ],
+              SizedBox(height: Dimensions.height10),
+              CustomButton(
+                text: 'Rate Customer',
+                backgroundColor: Colors.amber,
+                onPressed: () {
+                  Get.dialog(
+                    RatingDialog(
+                      targetName: job.user?.name ?? "Customer",
+                      onSubmit: (rating, review) {
+                        jobController.submitRating(
+                          targetId: job.user!.id!,
+                          isRatingCustomer: true,
+                          rating: rating,
+                          review: review,
+                        );
+                      },
+                    ),
+                  );
+                },
               ),
             ],
           ],

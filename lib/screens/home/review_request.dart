@@ -12,13 +12,17 @@ import '../../routes/routes.dart';
 import '../../utils/dimensions.dart';
 import '../../widgets/custom_appbar.dart';
 
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
+
 class ReviewRequestScreen extends StatefulWidget {
-  const ReviewRequestScreen({super.key});
+  const ReviewRequestScreen({Key? key}) : super(key: key);
 
   @override
   State<ReviewRequestScreen> createState() => _ReviewRequestScreenState();
 }
-
 
 class _ReviewRequestScreenState extends State<ReviewRequestScreen> {
   ServiceRequestData? data;
@@ -33,7 +37,6 @@ class _ReviewRequestScreenState extends State<ReviewRequestScreen> {
     }
   }
 
-
   void _confirmAndSend() {
     if (data == null) return;
 
@@ -47,14 +50,13 @@ class _ReviewRequestScreenState extends State<ReviewRequestScreen> {
 
       // --- LOCATION BLOCK ---
       "location": {
-        "state": data!.state ?? "Unknown", // Passed correctly from form
-        "lga": data!.city ?? "Unknown",    // Passed correctly from form
+        "state": data!.state ?? "Unknown",
+        "lga": data!.city ?? "Unknown",
         "type": "Point",
         "coordinates": [data!.lng ?? 0.0, data!.lat ?? 0.0]
       },
 
       // --- ADDRESS BLOCK ---
-      // For non-real estate, we send basic info or Nil
       "address": {
         "street": (data!.street != null && data!.street!.isNotEmpty) ? data!.street : "Nil",
         "houseNumber": (data!.houseNumber != null && data!.houseNumber!.isNotEmpty)
@@ -84,7 +86,7 @@ class _ReviewRequestScreenState extends State<ReviewRequestScreen> {
     String lowerTitle = uiTitle.toLowerCase();
 
     if (lowerTitle.contains("cleaning")) {
-      return "cleaning"; // API expects just "cleaning"
+      return "cleaning";
     } else if (lowerTitle.contains("maintenance")) {
       return "home-maintenance";
     } else if (lowerTitle.contains("real estate")) {
@@ -95,37 +97,93 @@ class _ReviewRequestScreenState extends State<ReviewRequestScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (data == null) return Scaffold(body: Center(child: Text("No Data Provided")));
+    if (data == null) {
+      return const Scaffold(body: Center(child: Text("No Data Provided")));
+    }
 
     return Scaffold(
-      appBar: CustomAppbar(leadingIcon: BackButton(), title: 'Review Request'),
+      appBar: CustomAppbar(leadingIcon: const BackButton(), title: 'Review Request'),
       body: Container(
         height: Dimensions.screenHeight,
         width: Dimensions.screenWidth,
-        padding: EdgeInsets.symmetric(horizontal: Dimensions.width20, vertical: Dimensions.height10),
+        padding: EdgeInsets.symmetric(
+            horizontal: Dimensions.width20,
+            vertical: Dimensions.height10
+        ),
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ReviewCard('Service type', data!.serviceType),
-              SizedBox(height: Dimensions.height15),
-              if (data!.subcategory != null) ...[
-                ReviewCard('Sub Category', data!.subcategory!),
+
+              // --- STEP 0: LOCATION & SERVICE TYPE ---
+              if (data!.serviceType.isNotEmpty)
+                ReviewCard(
+                    'Service type',
+                    data!.serviceType,
+                    onEdit: () => Get.back(result: 0)
+                ),
+
+              if (data!.subcategory != null && data!.subcategory!.isNotEmpty) ...[
                 SizedBox(height: Dimensions.height15),
+                ReviewCard(
+                    'Sub Category',
+                    data!.subcategory!,
+                    // Subcategory is chosen on the Description screen (Step 3)
+                    onEdit: () => Get.back(result: 3)
+                ),
               ],
-              ReviewCard('Location', data!.displayLocation),
-              SizedBox(height: Dimensions.height15),
-              ReviewCard('Date & Time', data!.displayDate),
-              SizedBox(height: Dimensions.height15),
-              ReviewCard('Urgency', data!.urgency),
-              SizedBox(height: Dimensions.height15),
-              ReviewCard('Budget range', data!.displayBudget),
-              SizedBox(height: Dimensions.height15),
-              ReviewCard('Problem Description', data!.description),
+
+              if (data!.displayLocation.isNotEmpty) ...[
+                SizedBox(height: Dimensions.height15),
+                ReviewCard(
+                    'Location',
+                    data!.displayLocation,
+                    onEdit: () => Get.back(result: 0)
+                ),
+              ],
+
+              // --- STEP 1: DATE & TIME / URGENCY ---
+              if (data!.displayDate.isNotEmpty) ...[
+                SizedBox(height: Dimensions.height15),
+                ReviewCard(
+                    'Date & Time',
+                    data!.displayDate,
+                    onEdit: () => Get.back(result: 1)
+                ),
+              ],
+
+              if (data!.urgency.isNotEmpty) ...[
+                SizedBox(height: Dimensions.height15),
+                ReviewCard(
+                    'Urgency',
+                    data!.urgency,
+                    onEdit: () => Get.back(result: 1)
+                ),
+              ],
+
+              // --- STEP 2: BUDGET ---
+              if (data!.displayBudget.isNotEmpty) ...[
+                SizedBox(height: Dimensions.height15),
+                ReviewCard(
+                    'Budget range',
+                    data!.displayBudget,
+                    onEdit: () => Get.back(result: 2)
+                ),
+              ],
+
+              // --- STEP 3: DESCRIPTION ---
+              if (data!.description.isNotEmpty) ...[
+                SizedBox(height: Dimensions.height15),
+                ReviewCard(
+                    'Problem Description',
+                    data!.description,
+                    onEdit: () => Get.back(result: 3)
+                ),
+              ],
 
               SizedBox(height: Dimensions.height20),
 
-              // Fee Container
+              // --- FEE CONTAINER ---
               Container(
                 padding: EdgeInsets.all(Dimensions.width20),
                 width: Dimensions.screenWidth,
@@ -137,19 +195,67 @@ class _ReviewRequestScreenState extends State<ReviewRequestScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Connection Fee', style: TextStyle(fontSize: Dimensions.font16, fontWeight: FontWeight.w500, color: AppColors.color1)),
+                    Text(
+                        'Connection Fee',
+                        style: TextStyle(
+                            fontSize: Dimensions.font16,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.color1
+                        )
+                    ),
                     SizedBox(height: Dimensions.height5),
-                    Align(alignment: Alignment.center, child: Text('N 0', style: TextStyle(fontSize: Dimensions.font25, fontWeight: FontWeight.w600, color: AppColors.black))),
+                    Align(
+                        alignment: Alignment.center,
+                        child: Text(
+                            'N 0',
+                            style: TextStyle(
+                                fontSize: Dimensions.font25,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.black
+                            )
+                        )
+                    ),
                     SizedBox(height: Dimensions.height5),
-                    Text('One-time fee to send your requests to verified providers.', style: TextStyle(fontSize: Dimensions.font13, fontWeight: FontWeight.w300, color: AppColors.color1)),
+                    Text(
+                        'One-time fee to send your requests to verified providers.',
+                        style: TextStyle(
+                            fontSize: Dimensions.font13,
+                            fontWeight: FontWeight.w300,
+                            color: AppColors.color1
+                        )
+                    ),
                   ],
                 ),
               ),
 
-              // Add this under the Description ReviewCard
+              // --- PHOTOS (STEP 3) ---
               if (data!.images != null && data!.images!.isNotEmpty) ...[
                 SizedBox(height: Dimensions.height15),
-                Text("Attached Photos:", style: TextStyle(fontSize: Dimensions.font13, fontWeight: FontWeight.w300)),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                        "Attached Photos:",
+                        style: TextStyle(
+                            fontSize: Dimensions.font13,
+                            fontWeight: FontWeight.w300
+                        )
+                    ),
+                    InkWell(
+                      onTap: () => Get.back(result: 3), // Route back to Step 3 to edit photos
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+                        child: Text(
+                            'Edit',
+                            style: TextStyle(
+                                color: AppColors.color2,
+                                fontWeight: FontWeight.w500
+                            )
+                        ),
+                      ),
+                    )
+                  ],
+                ),
                 SizedBox(height: Dimensions.height10),
                 SizedBox(
                   height: 60,
@@ -158,7 +264,7 @@ class _ReviewRequestScreenState extends State<ReviewRequestScreen> {
                     itemCount: data!.images!.length,
                     itemBuilder: (context, index) {
                       return Container(
-                        margin: EdgeInsets.only(right: 10),
+                        margin: const EdgeInsets.only(right: 10),
                         width: 60,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(8),
@@ -175,9 +281,9 @@ class _ReviewRequestScreenState extends State<ReviewRequestScreen> {
 
               SizedBox(height: Dimensions.height50),
 
-              // Pay & Send Button with Loader state
+              // --- SUBMIT BUTTON ---
               CustomButton(
-                text:'Pay N0 & Send Request',
+                text:'Send Request',
                 onPressed: _confirmAndSend,
               ),
               SizedBox(height: Dimensions.height50),
@@ -189,19 +295,50 @@ class _ReviewRequestScreenState extends State<ReviewRequestScreen> {
     );
   }
 
-  Widget ReviewCard(String title, String subtitle) {
+  // --- HELPER WIDGET ---
+  Widget ReviewCard(String title, String subtitle, {required VoidCallback onEdit}) {
     return Container(
       padding: EdgeInsets.all(Dimensions.width10),
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(Dimensions.radius10), border: Border.all(color: AppColors.grey4)),
+      decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(Dimensions.radius10),
+          border: Border.all(color: AppColors.grey4)
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(title, style: TextStyle(fontSize: Dimensions.font13, fontWeight: FontWeight.w300)),
-            SizedBox(height: Dimensions.height10),
-            Text(subtitle, style: TextStyle(fontSize: Dimensions.font15, overflow: TextOverflow.ellipsis)),
-          ])),
-          Text('Edit', style: TextStyle(color: AppColors.color2)),
+          Expanded(
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                        title,
+                        style: TextStyle(
+                            fontSize: Dimensions.font13,
+                            fontWeight: FontWeight.w300
+                        )
+                    ),
+                    SizedBox(height: Dimensions.height10),
+                    Text(
+                        subtitle,
+                        style: TextStyle(fontSize: Dimensions.font15)
+                    ),
+                  ]
+              )
+          ),
+          InkWell(
+            onTap: onEdit,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 10.0, bottom: 10.0),
+              child: Text(
+                  'Edit',
+                  style: TextStyle(
+                      color: AppColors.color2,
+                      fontWeight: FontWeight.w500
+                  )
+              ),
+            ),
+          ),
         ],
       ),
     );
