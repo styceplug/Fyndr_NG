@@ -165,7 +165,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               child: AbsorbPointer( // Prevents keyboard from opening
                 child: CustomTextField(
                   controller: locationDisplayController,
-                  hintText: "Tap to select location",
+                  hintText: "Select your location",
                   prefixIcon: Padding(
                     padding: EdgeInsets.only(left: Dimensions.width20,right: Dimensions.width10),
                     child: Icon(Icons.location_on_outlined, color: AppColors.grey4),

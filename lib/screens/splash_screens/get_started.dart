@@ -112,7 +112,7 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Find services',
+                                  'Request services',
                                   style: TextStyle(
                                     fontSize: Dimensions.font20 * 0.95,
                                     fontWeight: FontWeight.w600,
@@ -168,7 +168,7 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Offer services',
+                                  'Get service Requests',
                                   style: TextStyle(
                                     fontSize: Dimensions.font20 * 0.95,
                                     fontWeight: FontWeight.w600,
