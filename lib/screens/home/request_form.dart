@@ -338,9 +338,10 @@ class _RequestFormState extends State<RequestForm> {
             ),
 
             CustomButton(
-              text:
-              _currentStep == _stages.length - 1
+              text: _currentStep == _stages.length - 1
                   ? 'Submit Request'
+                  : _stages[_currentStep + 1] == 'DESCRIPTION'
+                  ? 'Describe your Request'
                   : 'Continue to ${_stages[_currentStep + 1]}',
               onPressed: _nextStep,
             ),
@@ -358,33 +359,41 @@ class _RequestFormState extends State<RequestForm> {
         bool isCompleted = index < _currentStep;
 
         return Expanded(
-          child: Column(
-            children: [
-              Text(
-                _stages[index],
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: Dimensions.font12,
-                  fontWeight: FontWeight.w500,
-
-                  color:
-                  (isActive || isCompleted) ? Colors.black : AppColors.grey3,
+          child: GestureDetector(
+            // 🔹 Make the tab tappable
+            onTap: () {
+              setState(() {
+                _currentStep = index;
+              });
+            },
+            // Add HitTestBehavior.opaque so tapping anywhere in the Expanded area triggers the tap
+            behavior: HitTestBehavior.opaque,
+            child: Column(
+              children: [
+                Text(
+                  _stages[index],
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: Dimensions.font12,
+                    fontWeight: FontWeight.w500,
+                    color:
+                    (isActive || isCompleted) ? Colors.black : AppColors.grey3,
+                  ),
                 ),
-              ),
-              SizedBox(height: Dimensions.height5),
-              Container(
-                height: Dimensions.height5,
-
-                width: Dimensions.width10 * 8,
-                decoration: BoxDecoration(
-                  color:
-                  (isActive || isCompleted)
-                      ? AppColors.color1
-                      : AppColors.grey3,
-                  borderRadius: BorderRadius.circular(Dimensions.radius10),
+                SizedBox(height: Dimensions.height5),
+                Container(
+                  height: Dimensions.height5,
+                  width: Dimensions.width10 * 8,
+                  decoration: BoxDecoration(
+                    color:
+                    (isActive || isCompleted)
+                        ? AppColors.color1
+                        : AppColors.grey3,
+                    borderRadius: BorderRadius.circular(Dimensions.radius10),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       }),
@@ -425,7 +434,7 @@ class _RequestFormState extends State<RequestForm> {
               child: CustomTextField(
                 controller: jobController.locationController,
                 // Use AppController's
-                hintText: 'Generate Location',
+                hintText: 'Use your Location',
                 suffixIcon: Icon(Icons.location_searching),
               ),
             ),
@@ -673,11 +682,12 @@ class _RequestFormState extends State<RequestForm> {
                       )
                   ),
                   SizedBox(height: Dimensions.height10),
-                  // Note: Make this readOnly if you want them to ONLY use the slider
-                  // Otherwise, you need complex logic to parse text back to slider
+
                   CustomTextField(
                     hintText: 'N1,000',
                     controller: _minBudgetController,
+                    maxLines: 1,
+
                   ),
 
 
@@ -701,6 +711,7 @@ class _RequestFormState extends State<RequestForm> {
                   CustomTextField(
                     hintText: 'N1,000,000',
                     controller: _maxBudgetController,
+                    maxLines: 1,
 
                   ),
                 ],
@@ -809,7 +820,7 @@ class _RequestFormState extends State<RequestForm> {
         ),
         SizedBox(height: Dimensions.height10),
         CustomTextField(
-          hintText: 'Describe your request here...',
+          hintText: 'Tell providers exactly what you need.',
           maxLines: 4,
           controller: _descController,
         ),
