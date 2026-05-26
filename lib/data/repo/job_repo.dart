@@ -49,7 +49,7 @@ class JobRepo {
   }
 
 
-  Future<Response> submitQuoteMultipart({
+ /* Future<Response> submitQuoteMultipart({
     required Map<String, String> fields,
     required List<XFile> images,
   }) async {
@@ -64,6 +64,81 @@ class JobRepo {
         "Authorization": "Bearer ${apiClient.token}",
       });
       print('🔑 Authorization token: ${apiClient.token?.substring(0, 20)}...');
+
+      // Add fields
+      request.fields.addAll(fields);
+      print('📋 Request fields:');
+      fields.forEach((key, value) {
+        print('   $key: $value');
+      });
+
+      // Add images with proper content type
+      final selected = images.length > 10 ? images.take(10).toList() : images;
+      print('🖼️ Adding ${selected.length} images');
+
+      for (int i = 0; i < selected.length; i++) {
+        final img = selected[i];
+        print('   Image ${i + 1}: ${img.path}');
+
+        // Determine content type from file extension
+        String? mimeType = _getMimeType(img.path);
+        print('   MIME type: $mimeType');
+
+        final multipartFile = await http.MultipartFile.fromPath(
+          'images',
+          img.path,
+          contentType: mimeType != null ? MediaType.parse(mimeType) : null,
+        );
+
+        request.files.add(multipartFile);
+      }
+
+      print('🚀 Sending request...');
+      final streamed = await request.send();
+
+      print('📥 Response status: ${streamed.statusCode}');
+      print('📥 Response reason: ${streamed.reasonPhrase}');
+
+      final bodyString = await streamed.stream.bytesToString();
+      print('📥 Response body: $bodyString');
+
+      final decoded = bodyString.isNotEmpty ? jsonDecode(bodyString) : {};
+
+      return Response(
+        body: decoded,
+        statusCode: streamed.statusCode,
+        statusText: streamed.reasonPhrase,
+      );
+    } catch (e, stackTrace) {
+      print('❌ Error submitting quote: $e');
+      print('❌ Stack trace: $stackTrace');
+      return Response(
+        body: {"success": false, "message": e.toString()},
+        statusCode: 500,
+      );
+    }
+  }*/
+
+  Future<Response> submitQuoteMultipart({
+    required Map<String, String> fields,
+    required List<XFile> images,
+  }) async {
+    try {
+      final uri = Uri.parse(apiClient.appBaseUrl + AppConstants.POST_JOB_QUOTE);
+      print('📤 Submitting quote to: $uri');
+
+      final request = http.MultipartRequest('POST', uri);
+
+      request.headers.addAll({
+        "Accept": "application/json",
+        "Authorization": "Bearer ${apiClient.token}",
+      });
+
+      // ✅ FIX: Safely truncate the token for the print statement
+      final safeToken = (apiClient.token != null && apiClient.token!.length > 20)
+          ? '${apiClient.token!.substring(0, 20)}...'
+          : apiClient.token;
+      print('🔑 Authorization token: $safeToken');
 
       // Add fields
       request.fields.addAll(fields);

@@ -11,6 +11,8 @@ import '../../../controllers/job_controller.dart';
 import '../../../model/job_model.dart';
 import '../../../routes/routes.dart';
 import '../../../utils/colors.dart';
+import '../../../widgets/rating_dialog.dart';
+import '../../../widgets/snackbars.dart';
 
 class JobsScreen extends StatefulWidget {
   const JobsScreen({super.key});
@@ -149,18 +151,49 @@ class _JobsScreenState extends State<JobsScreen> {
         JobModel job = jobs[index];
         int quoteCount = job.quotes?.length ?? 0;
         String quoteText = quoteCount == 1 ? "1" : "$quoteCount";
+
         return JobCard(
           imageAsset: getImageForCategory(job.category),
           title: formatServiceTitle(job.category),
           location: "${job.location?.lga ?? ''}, ${job.location?.state ?? ''}",
-          distance: job.location?.state ?? "NG", // API doesn't give distance, showing State
+          distance: job.location?.state ?? "NG",
           date: formatDate(job.date),
-          dayTime: job.urgency?.capitalizeFirst ?? "Normal", // Using urgency as tag
+          dayTime: job.urgency?.capitalizeFirst ?? "Normal",
           timeAgo: timeAgo(job.createdAt),
           quote: quoteText,
+
+          // 🔹 PASS COMPLETED FLAG
+          isCompleted: job.status?.isCompleted == true,
+
+          // 🔹 PASS RATE CALLBACK
+          onRateTap: () {
+            // Look for the acceptedMerchant ID we just added to the model
+            String? vendorId = job.acceptedMerchant?.id;
+
+            if (vendorId == null) {
+              CustomSnackBar.failure(message: "Could not find merchant info.");
+              return;
+            }
+
+            Get.dialog(
+              RatingDialog(
+                targetName: job.acceptedMerchant?.name ?? "the Merchant",
+                onSubmit: (rating, review) {
+                  // Call your controller method (ensure you added it from the previous chat)
+                  Get.find<JobController>().submitRating(
+                    targetId: vendorId,
+                    isRatingCustomer: false, // Customer is rating Vendor
+                    rating: rating,
+                    review: review,
+                  );
+                },
+              ),
+            );
+          },
+
           onTap: () {
             Get.toNamed(AppRoutes.jobDetailsScreen, arguments: job);
-            if(job.status?.isCompleted == true){
+            if (job.status?.isCompleted == true) {
               Get.toNamed(AppRoutes.jobInProgress, arguments: job);
             }
           },
