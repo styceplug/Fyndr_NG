@@ -6,17 +6,15 @@ class AppNotification {
   final String id;
   final String title;
   final String message;
-  final String type; // chat, job, product, quote, announcement...
+  final String type;
   final bool isRead;
   final DateTime createdAt;
 
-  // IDs (fallbacks)
   final String? productId;
   final String? quoteId;
   final String? serviceId;
   final String? chatId;
 
-  // Populated models
   final ProductModel? product;
   final QuoteModel? quote;
   final JobModel? service;
@@ -40,7 +38,6 @@ class AppNotification {
   });
 
   factory AppNotification.fromJson(Map<String, dynamic> json) {
-    // helper: parse either object or string id
     T? parseModelOrNull<T>(
         dynamic value,
         T Function(Map<String, dynamic>) parser,

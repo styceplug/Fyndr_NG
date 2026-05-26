@@ -193,7 +193,6 @@ class NotificationController extends GetxController {
         final quoteId = n.quote?.id ?? n.quoteId;
         if (quoteId == null) return;
 
-        // await Get.find<JobController>().getQuoteDetails(quoteId);
         Get.toNamed(AppRoutes.jobDetailsScreen,arguments: {'jobId': n.quote?.job?.id});
         break;
 
