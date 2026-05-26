@@ -29,39 +29,52 @@ class JobController extends GetxController {
   Set<Marker> markers = {};
   List<JobModel> _jobList = [];
   bool _isLoaded = false;
+
   bool get isLoaded => _isLoaded;
   List<QuoteModel> _quotes = [];
+
   List<QuoteModel> get quotes => _quotes;
   bool jobLoading = false;
   JobModel? _singleJob;
   List<QuoteModel> _quotesList = [];
+
   JobModel? get singleJob => _singleJob;
+
   List<QuoteModel> get quotesList => _quotesList;
   QuoteModel? _quote;
+
   QuoteModel? get quote => _quote;
   List<JobModel> merchantActiveJobs = [];
   List<JobModel> merchantCompletedJobs = [];
   List<JobModel> merchantCancelledJobs = [];
 
-
   Future<void> markJobAsCompleted(String jobId) async {
-
-    bool confirm = await Get.dialog(
-      AlertDialog(
-        title: Text("Complete Job"),
-        content: Text("Are you sure you want to mark this job as completed? This action cannot be undone."),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(result: false),
-            child: Text("Cancel", style: TextStyle(color: Colors.grey)),
+    bool confirm =
+        await Get.dialog(
+          AlertDialog(
+            title: Text("Complete Job"),
+            content: Text(
+              "Are you sure you want to mark this job as completed? This action cannot be undone.",
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Get.back(result: false),
+                child: Text("Cancel", style: TextStyle(color: Colors.grey)),
+              ),
+              TextButton(
+                onPressed: () => Get.back(result: true),
+                child: Text(
+                  "Yes, Complete",
+                  style: TextStyle(
+                    color: AppColors.color1,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => Get.back(result: true),
-            child: Text("Yes, Complete", style: TextStyle(color: AppColors.color1, fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
-    ) ?? false;
+        ) ??
+        false;
 
     if (!confirm) return;
 
@@ -72,13 +85,17 @@ class JobController extends GetxController {
       Response response = await jobRepo.markJobAsCompleted(jobId);
 
       if (response.statusCode == 200) {
-        CustomSnackBar.success(message: "Job marked as completed successfully!");
+        CustomSnackBar.success(
+          message: "Job marked as completed successfully!",
+        );
 
         await getUserJobs();
         Get.back();
-
       } else {
-        String errorMsg = response.body['message'] ?? response.body['error'] ?? "Failed to complete job";
+        String errorMsg =
+            response.body['message'] ??
+            response.body['error'] ??
+            "Failed to complete job";
         CustomSnackBar.failure(message: errorMsg);
       }
     } catch (e) {
@@ -128,13 +145,17 @@ class JobController extends GetxController {
     }
   }
 
-  Future<void> counterQuoteAction(String quoteId, int amount, String reason) async {
+  Future<void> counterQuoteAction(
+    String quoteId,
+    int amount,
+    String reason,
+  ) async {
     loader.showLoader();
 
     Map<String, dynamic> body = {
       "amount": amount,
       "reason": reason,
-      "comment": ""
+      "comment": "",
     };
 
     Response response = await jobRepo.counterQuote(quoteId, body);
@@ -143,22 +164,25 @@ class JobController extends GetxController {
     if (response.statusCode == 200) {
       CustomSnackBar.success(message: "Counter offer sent!");
       Get.back();
-      Get.toNamed(AppRoutes.counterOfferScreen,
-      arguments: {
-        'quoteId' : quoteId
-      });
+      Get.toNamed(
+        AppRoutes.counterOfferScreen,
+        arguments: {'quoteId': quoteId},
+      );
     } else {
-      CustomSnackBar.failure(message: response.body['message'] ?? "Failed to send counter offer");
+      CustomSnackBar.failure(
+        message: response.body['message'] ?? "Failed to send counter offer",
+      );
     }
   }
 
-  Future<void> declineQuoteAction(String quoteId, String reason, String comment) async {
+  Future<void> declineQuoteAction(
+    String quoteId,
+    String reason,
+    String comment,
+  ) async {
     loader.showLoader();
 
-    Map<String, dynamic> body = {
-      "reason": reason,
-      "comment": comment
-    };
+    Map<String, dynamic> body = {"reason": reason, "comment": comment};
 
     Response response = await jobRepo.rejectQuote(quoteId, body);
 
@@ -167,7 +191,9 @@ class JobController extends GetxController {
       CustomSnackBar.success(message: "Quote declined");
       Get.back();
     } else {
-      CustomSnackBar.failure(message: response.body['message'] ?? "Failed to decline quote");
+      CustomSnackBar.failure(
+        message: response.body['message'] ?? "Failed to decline quote",
+      );
     }
   }
 
@@ -180,11 +206,14 @@ class JobController extends GetxController {
     loader.hideLoader();
     if (response.statusCode == 200) {
       CustomSnackBar.success(message: "Quote accepted successfully!");
-      Get.offNamed(AppRoutes.bookingConfirmedScreen,arguments: {
-        'quoteId':quoteId
-      });
+      Get.offNamed(
+        AppRoutes.bookingConfirmedScreen,
+        arguments: {'quoteId': quoteId},
+      );
     } else {
-      CustomSnackBar.failure(message: response.body['message'] ?? "Failed to accept quote");
+      CustomSnackBar.failure(
+        message: response.body['message'] ?? "Failed to accept quote",
+      );
     }
     update();
   }
@@ -218,10 +247,12 @@ class JobController extends GetxController {
       List<dynamic> data = response.body['data'];
       _quotes = data.map((e) => QuoteModel.fromJson(e)).toList();
     } else {
-      CustomSnackBar.failure(message: response.statusText ?? "Failed to load quotes");
+      CustomSnackBar.failure(
+        message: response.statusText ?? "Failed to load quotes",
+      );
     }
 
-   loader.hideLoader();
+    loader.hideLoader();
     update();
   }
 
@@ -396,6 +427,43 @@ class JobController extends GetxController {
       update();
       print("❌ CREATE JOB ERROR: $e");
       CustomSnackBar.failure(message: "An error occurred. Check connection.");
+    }
+  }
+
+  Future<void> submitRating({
+    required String targetId,
+    required bool isRatingCustomer,
+    required int rating,
+    required String review,
+  }) async {
+    loader.showLoader();
+    update();
+
+    try {
+      String endpoint =
+          isRatingCustomer
+              ? "/api/v1/user/rate/customer/$targetId"
+              : "/api/v1/user/rate/vendor/$targetId";
+
+      Response response = await jobRepo.apiClient.postData(endpoint, {
+        "rating": rating,
+        "review": review,
+      });
+
+      if (response.statusCode == 200) {
+        CustomSnackBar.success(message: "Rating submitted successfully!");
+      } else if (response.statusCode == 409) {
+        CustomSnackBar.failure(message: "You have already rated this user.");
+      } else {
+        CustomSnackBar.failure(
+          message: response.body['error'] ?? "Failed to submit rating",
+        );
+      }
+    } catch (e) {
+      CustomSnackBar.failure(message: "Something went wrong.");
+    } finally {
+      loader.hideLoader();
+      update();
     }
   }
 }

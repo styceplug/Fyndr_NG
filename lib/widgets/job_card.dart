@@ -8,17 +8,21 @@ import '../utils/dimensions.dart';
 import 'custom_button.dart';
 
 class JobCard extends StatelessWidget {
-  String imageAsset;
-  String title;
-  String location;
-  String distance;
-  String date;
-  String dayTime;
-  String timeAgo;
-  String quote;
-  VoidCallback onTap;
+  final String imageAsset;
+  final String title;
+  final String location;
+  final String distance;
+  final String date;
+  final String dayTime;
+  final String timeAgo;
+  final String quote;
+  final VoidCallback onTap;
 
-  JobCard({
+  // 🔹 ADD THESE TWO
+  final bool isCompleted;
+  final VoidCallback? onRateTap;
+
+  const JobCard({
     super.key,
     required this.imageAsset,
     required this.title,
@@ -27,8 +31,10 @@ class JobCard extends StatelessWidget {
     required this.date,
     required this.dayTime,
     required this.timeAgo,
-    required this.onTap,
     required this.quote,
+    required this.onTap,
+    this.isCompleted = false, // Default to false
+    this.onRateTap,
   });
 
   @override
@@ -120,19 +126,20 @@ class JobCard extends StatelessWidget {
                 ),
               ],
             ),
+
             Divider(color: AppColors.grey2),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Submitted ${timeAgo}',
+                  'Submitted $timeAgo',
                   style: TextStyle(
                     fontSize: Dimensions.font12,
                     fontWeight: FontWeight.w300,
                   ),
                 ),
                 Text(
-                  'View quote',
+                  'View Details',
                   style: TextStyle(
                     fontSize: Dimensions.font12,
                     fontWeight: FontWeight.w300,
@@ -140,6 +147,16 @@ class JobCard extends StatelessWidget {
                 ),
               ],
             ),
+
+            // 🔹 ADD THE RATING BUTTON IF COMPLETED
+            if (isCompleted && onRateTap != null) ...[
+              SizedBox(height: Dimensions.height15),
+              CustomButton(
+                text: 'Rate Merchant',
+                backgroundColor: Colors.amber,
+                onPressed: onRateTap,
+              ),
+            ],
           ],
         ),
       ),
