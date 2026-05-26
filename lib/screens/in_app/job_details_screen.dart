@@ -32,10 +32,13 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
 
     JobModel? passedJob;
 
-    // 1. Parse Arguments
+    // 1. Parse Arguments (FIXED)
     if (Get.arguments is JobModel) {
       passedJob = Get.arguments as JobModel;
       jobId = passedJob.id;
+    } else if (Get.arguments is Map) {
+      // Catch the Map sent from the Notification screen
+      jobId = Get.arguments['jobId'];
     } else if (Get.arguments is String) {
       jobId = Get.arguments;
     }

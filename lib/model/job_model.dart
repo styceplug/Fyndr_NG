@@ -18,6 +18,7 @@ class JobModel {
   String? subcategory;
   String? createdAt;
   List<String>? quotes;
+  UserModel? acceptedMerchant;
   List<BookingProgress>? bookingProgress;
 
 
@@ -37,6 +38,7 @@ class JobModel {
     this.subcategory,
     this.createdAt,
     this.quotes,
+    this.acceptedMerchant,
     this.bookingProgress
   });
 
@@ -49,6 +51,9 @@ class JobModel {
     urgency = json['urgency'];
     budget = json['budget'] != null ? JobBudget.fromJson(json['budget']) : null;
     category = json['category'];
+    if (json['acceptedMerchant'] != null) {
+      acceptedMerchant = UserModel.fromJson(json['acceptedMerchant']);
+    }
 
 
     // Parse Lists safely
@@ -113,7 +118,6 @@ class JobModel {
   }
 }
 
-
 class BookingProgress {
   String? id;
   String? status;
@@ -138,7 +142,6 @@ class BookingProgress {
     return data;
   }
 }
-
 
 class JobBudget {
   num? min;
